@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiCreditCard, FiUser, FiMapPin, FiPhone, FiCheckCircle, FiArrowLeft } from 'react-icons/fi';
+import { FiCreditCard, FiUser, FiMapPin, FiCheckCircle, FiArrowLeft } from 'react-icons/fi';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
@@ -244,7 +244,7 @@ const SuccessMessage = styled.div`
 const Checkout: React.FC = () => {
   const { items, getTotalPrice, getTotalItems, createOrder } = useCart();
   const { user } = useAuth();
-  const { orders, updateOrderStatus } = useAdmin();
+  // const { orders, updateOrderStatus } = useAdmin(); // Отключено для избежания неиспользуемых переменных
   const navigate = useNavigate();
   const [isOrderPlaced, setIsOrderPlaced] = useState(false);
   const [formData, setFormData] = useState({

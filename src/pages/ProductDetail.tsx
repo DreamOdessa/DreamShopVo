@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { FiShoppingCart, FiHeart, FiArrowLeft, FiZap, FiStar, FiMinus, FiPlus } from 'react-icons/fi';
+import { FiShoppingCart, FiHeart, FiArrowLeft, FiZap, FiMinus, FiPlus } from 'react-icons/fi';
 import { useAdmin } from '../contexts/AdminContext';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';

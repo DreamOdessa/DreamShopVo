@@ -161,7 +161,7 @@ const Header: React.FC = () => {
       <Nav>
         <Logo to="/">
           <LogoIcon>
-            <img src="/маленькая иконка.png" /> 
+            <img src="/маленькая иконка.png" alt="DreamShop Logo" /> 
             DreamShop
           </LogoIcon>
         </Logo>

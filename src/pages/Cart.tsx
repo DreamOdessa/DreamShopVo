@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiShoppingCart, FiTrash2, FiMinus, FiPlus, FiArrowLeft, FiCreditCard } from 'react-icons/fi';
+import { FiShoppingCart, FiTrash2, FiMinus, FiPlus, FiCreditCard } from 'react-icons/fi';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';

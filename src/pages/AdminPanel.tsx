@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiPercent, FiSave, FiX, FiGrid } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid } from 'react-icons/fi';
 import CategoryManager from '../components/CategoryManager';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
@@ -361,7 +361,7 @@ const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState('products');
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  // const [editingUser, setEditingUser] = useState<User | null>(null); // Отключено для избежания неиспользуемой переменной
   const [productForm, setProductForm] = useState({
     name: '',
     description: '',
@@ -472,16 +472,16 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending': return 'Ожидает';
-      case 'processing': return 'Обрабатывается';
-      case 'shipped': return 'Отправлен';
-      case 'delivered': return 'Доставлен';
-      case 'cancelled': return 'Отменен';
-      default: return status;
-    }
-  };
+  // const getStatusText = (status: string) => {
+  //   switch (status) {
+  //     case 'pending': return 'Ожидает';
+  //     case 'processing': return 'Обрабатывается';
+  //     case 'shipped': return 'Отправлен';
+  //     case 'delivered': return 'Доставлен';
+  //     case 'cancelled': return 'Отменен';
+  //     default: return status;
+  //   }
+  // }; // Отключено для избежания неиспользуемой функции
 
   return (
     <AdminContainer>

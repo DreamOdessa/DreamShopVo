@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { FiFilter, FiSearch, FiX } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
 import { useAdmin } from '../contexts/AdminContext';
-import { Product } from '../types';
+// import { Product } from '../types'; // Отключено для избежания неиспользуемого импорта
 
 const ProductsContainer = styled.div`
   padding: 2rem 0;

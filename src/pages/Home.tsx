@@ -217,7 +217,7 @@ const Home: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <img src="/лого.png" />
+            <img src="/лого.png" alt="DreamShop Welcome" />
             Ласкаво просимо до DreamShop
           </HeroTitle>
           <HeroSubtitle

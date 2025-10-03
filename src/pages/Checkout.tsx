@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { FiCreditCard, FiUser, FiMapPin, FiCheckCircle, FiArrowLeft } from 'react-icons/fi';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useAdmin } from '../contexts/AdminContext';
+// import { useAdmin } from '../contexts/AdminContext'; // Отключено для избежания неиспользуемого импорта
 import toast from 'react-hot-toast';
 
 const CheckoutContainer = styled.div`

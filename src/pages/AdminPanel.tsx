@@ -5,7 +5,7 @@ import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, Fi
 import CategoryManager from '../components/CategoryManager';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
-import { Product, User, Order } from '../types';
+import { Product, Order } from '../types';
 import toast from 'react-hot-toast';
 
 const AdminContainer = styled.div`

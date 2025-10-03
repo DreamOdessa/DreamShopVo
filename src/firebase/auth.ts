@@ -37,7 +37,7 @@ export const signInWithGoogle = async (): Promise<User> => {
     return user;
   } catch (error) {
     console.error('❌ Помилка входу через Google:', error);
-    console.error('❌ Детали ошибки:', error.message);
+    console.error('❌ Детали ошибки:', error instanceof Error ? error.message : String(error));
     throw error;
   }
 };

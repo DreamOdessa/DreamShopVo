@@ -21,15 +21,23 @@ const mapFirebaseUser = (firebaseUser: FirebaseUser): User => ({
 // Вход через Google
 export const signInWithGoogle = async (): Promise<User> => {
   try {
+    console.log('🔄 Начинаем вход через Google...');
+    console.log('🔧 Auth domain:', auth.app.options.authDomain);
+    console.log('🔧 Project ID:', auth.app.options.projectId);
+    
     const result = await signInWithPopup(auth, googleProvider);
+    console.log('✅ Google auth успешно:', result.user.email);
+    
     const user = mapFirebaseUser(result.user);
     
     // Сохраняем пользователя в базе данных
     await userService.createOrUpdate(user);
+    console.log('💾 Пользователь сохранен в базе данных');
     
     return user;
   } catch (error) {
-    console.error('Помилка входу через Google:', error);
+    console.error('❌ Помилка входу через Google:', error);
+    console.error('❌ Детали ошибки:', error.message);
     throw error;
   }
 };

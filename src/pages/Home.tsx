@@ -13,7 +13,7 @@ const HeroSection = styled.section`
   text-align: center;
   position: relative;
   overflow: hidden;
-  background-image: url('/фон первый.PNG');
+  background-image: url('/background-first.png');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -140,7 +140,7 @@ const FeatureDescription = styled.p`
 const ProductsSection = styled.section`
   padding: 6rem 0;
   background:rgba(248, 249, 250, 0);
-  background-image: url('/фон второй .jpg');
+  background-image: url('/background-second.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -217,7 +217,7 @@ const Home: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <img src="/лого.png" alt="DreamShop Welcome" />
+            <img src="/logo.png" alt="DreamShop Welcome" />
             Ласкаво просимо до DreamShop
           </HeroTitle>
           <HeroSubtitle

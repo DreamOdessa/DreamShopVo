@@ -637,9 +637,9 @@ const AdminPanel: React.FC = () => {
                         <span style={{ marginLeft: '0.5rem', color: '#6c757d' }}>%</span>
                       </TableCell>
                       <TableCell>
-                        <ActionButton variant="edit" onClick={() => setEditingUser(user)}>
+                        {/*<ActionButton variant="edit" onClick={() => setEditingUser(user)}>
                           <FiEdit />
-                        </ActionButton>
+                        </ActionButton>*/}
                       </TableCell>
                     </TableRow>
                   ))}

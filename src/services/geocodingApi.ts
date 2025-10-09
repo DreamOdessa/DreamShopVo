@@ -76,9 +76,15 @@ class GeocodingApiService {
     }
   }
 
-  // Автозаполнение адресов (Place Autocomplete)
+  // Автозаполнение адресов (Place Autocomplete) - ОТКЛЮЧЕНО из-за CORS
   async getAddressSuggestions(input: string, country: string = 'ua'): Promise<GeocodingSuggestion[]> {
     try {
+      // Временно отключаем Google Maps API из-за CORS проблем
+      console.log('⚠️ Google Maps API временно отключен из-за CORS проблем');
+      return [];
+      
+      // Код ниже закомментирован до решения CORS проблемы
+      /*
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&components=country:${country}&key=${this.GOOGLE_MAPS_API_KEY}`
       );
@@ -97,6 +103,7 @@ class GeocodingApiService {
       }
 
       return [];
+      */
     } catch (error) {
       console.error('Ошибка получения автозаполнения адресов:', error);
       return [];

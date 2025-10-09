@@ -379,9 +379,22 @@ const Checkout: React.FC = () => {
 
     // Логика для отделений Новой Почты
     if (field === 'deliveryDetails' && formData.deliveryMethod === 'post_office' && selectedCityRef) {
-      if (stringValue.length > 2) {
+      if (stringValue.length > 0) {
         try {
-          const warehouses = await novaPoshtaApi.searchWarehouses(stringValue, selectedCityRef);
+          let warehouses;
+          if (stringValue.length > 2) {
+            // Поиск по названию
+            warehouses = await novaPoshtaApi.searchWarehouses(stringValue, selectedCityRef);
+          } else {
+            // Получить все отделения города
+            warehouses = await novaPoshtaApi.getWarehouses(selectedCityRef);
+          }
+          
+          if (stringValue.length > 2 && warehouses.length === 0) {
+            // Если поиск не дал результатов, показать все отделения
+            warehouses = await novaPoshtaApi.getWarehouses(selectedCityRef);
+          }
+          
           setWarehouseSuggestions(warehouses);
           setShowWarehouseSuggestions(true);
         } catch (error) {
@@ -636,7 +649,12 @@ const Checkout: React.FC = () => {
                     type="text"
                     value={formData.deliveryDetails}
                     onChange={(e) => handleInputChange('deliveryDetails', e.target.value)}
-                    placeholder="Номер відділення або адреса"
+                    onFocus={() => {
+                      if (selectedCityRef && formData.deliveryDetails.length === 0) {
+                        handleInputChange('deliveryDetails', '');
+                      }
+                    }}
+                    placeholder="Натисніть для вибору відділення або введіть номер"
                     required
                   />
                   {showWarehouseSuggestions && warehouseSuggestions.length > 0 && (

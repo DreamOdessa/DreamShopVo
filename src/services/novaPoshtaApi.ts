@@ -118,6 +118,8 @@ class NovaPoshtaApiService {
   // Поиск городов по названию
   async searchCities(cityName: string): Promise<NovaPoshtaCity[]> {
     try {
+      console.log('🔍 Поиск городов Новой Почты для:', cityName);
+      
       const response = await fetch(this.API_URL, {
         method: 'POST',
         headers: {
@@ -135,14 +137,18 @@ class NovaPoshtaApiService {
       });
 
       const data = await response.json();
+      console.log('📡 Ответ API Новой Почты:', data);
       
       if (data.success && data.data && data.data.length > 0) {
-        return data.data[0].Addresses || [];
+        const addresses = data.data[0].Addresses || [];
+        console.log('✅ Найдено городов:', addresses.length);
+        return addresses;
       }
       
+      console.log('❌ Города не найдены или ошибка API');
       return [];
     } catch (error) {
-      console.error('Ошибка поиска городов Новой Почты:', error);
+      console.error('❌ Ошибка поиска городов Новой Почты:', error);
       return [];
     }
   }
@@ -150,6 +156,8 @@ class NovaPoshtaApiService {
   // Получение отделений по городу
   async getWarehouses(cityRef: string): Promise<NovaPoshtaWarehouse[]> {
     try {
+      console.log('🏢 Получение всех отделений для города:', cityRef);
+      
       const response = await fetch(this.API_URL, {
         method: 'POST',
         headers: {
@@ -161,20 +169,22 @@ class NovaPoshtaApiService {
           calledMethod: 'getWarehouses',
           methodProperties: {
             CityRef: cityRef,
-            TypeOfWarehouseRef: '841339c7-591a-42e2-8233-7a0a00f0edbd', // Все типы отделений
           },
         }),
       });
 
       const data = await response.json();
+      console.log('📡 Ответ API всех отделений:', data);
       
       if (data.success && data.data) {
+        console.log('✅ Найдено отделений:', data.data.length);
         return data.data;
       }
       
+      console.log('❌ Отделения не найдены');
       return [];
     } catch (error) {
-      console.error('Ошибка получения отделений Новой Почты:', error);
+      console.error('❌ Ошибка получения отделений Новой Почты:', error);
       return [];
     }
   }
@@ -182,6 +192,8 @@ class NovaPoshtaApiService {
   // Поиск отделений по названию
   async searchWarehouses(warehouseName: string, cityRef?: string): Promise<NovaPoshtaWarehouse[]> {
     try {
+      console.log('🏢 Поиск отделений Новой Почты для:', warehouseName, 'в городе:', cityRef);
+      
       const response = await fetch(this.API_URL, {
         method: 'POST',
         headers: {
@@ -200,14 +212,17 @@ class NovaPoshtaApiService {
       });
 
       const data = await response.json();
+      console.log('📡 Ответ API отделений Новой Почты:', data);
       
       if (data.success && data.data) {
+        console.log('✅ Найдено отделений:', data.data.length);
         return data.data;
       }
       
+      console.log('❌ Отделения не найдены или ошибка API');
       return [];
     } catch (error) {
-      console.error('Ошибка поиска отделений Новой Почты:', error);
+      console.error('❌ Ошибка поиска отделений Новой Почты:', error);
       return [];
     }
   }

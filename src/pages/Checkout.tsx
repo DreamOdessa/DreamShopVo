@@ -681,15 +681,15 @@ const Checkout: React.FC = () => {
 
             <OrderSummaryContent isExpanded={isOrderSummaryExpanded}>
               {items.map((item) => (
-                <OrderItem key={item.id}>
+                <OrderItem key={item.product.id}>
                   <div>
-                    <div>{item.name}</div>
+                    <div>{item.product.name}</div>
                     <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>
-                      {item.quantity} шт. × {item.price} грн
+                      {item.quantity} шт. × {item.product.price} грн
                     </div>
                   </div>
                   <div style={{ fontWeight: '600' }}>
-                    {(item.price * item.quantity).toFixed(2)} грн
+                    {(item.product.price * item.quantity).toFixed(2)} грн
                   </div>
                 </OrderItem>
               ))}

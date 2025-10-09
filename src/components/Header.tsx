@@ -4,8 +4,10 @@ import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
-import { FiShoppingCart, FiUser, FiMenu, FiX, FiHeart } from 'react-icons/fi';
+import { FiShoppingCart, FiUser, FiMenu, FiX, FiHeart, FiGrid } from 'react-icons/fi';
 import GoogleLogin from './GoogleLogin';
+import CategorySidebar from './CategorySidebar';
+import { useCategorySidebar } from '../contexts/CategorySidebarContext';
 
 const HeaderContainer = styled.header`
   background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
@@ -91,6 +93,23 @@ const UserActions = styled.div`
   gap: 1rem;
 `;
 
+const CategoryButton = styled.button`
+  position: relative;
+  color: white;
+  font-size: 1.5rem;
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+  }
+`;
+
 const CartButton = styled(Link)`
   position: relative;
   color: white;
@@ -151,6 +170,7 @@ const CloseButton = styled.button`
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { openSidebar, closeSidebar, isOpen: isCategorySidebarOpen } = useCategorySidebar();
   const { user } = useAuth();
   const { getTotalItems } = useCart();
   const { getTotalItems: getWishlistItems } = useWishlist();
@@ -223,6 +243,13 @@ const Header: React.FC = () => {
           )}
 
           <UserActions>
+            <CategoryButton 
+              onClick={openSidebar}
+              title="Категорії товарів"
+            >
+              <FiGrid />
+            </CategoryButton>
+
             <CartButton to="/cart" onClick={() => setIsMenuOpen(false)}>
               <FiShoppingCart />
               {getTotalItems() > 0 && (
@@ -260,6 +287,27 @@ const Header: React.FC = () => {
         </MobileMenuButton>
       </Nav>
     </HeaderContainer>
+
+    {/* Боковая панель категорий */}
+    <CategorySidebar
+      isOpen={isCategorySidebarOpen}
+      onClose={closeSidebar}
+      categories={[
+        { id: 'all', name: 'Всі товари', icon: '🏠' },
+        { id: 'chips', name: 'Фруктові чіпси', icon: '🍎' },
+        { id: 'decorations', name: 'Прикраси', icon: '✨' },
+        { id: 'syrups', name: 'Сиропи', icon: '🍯' },
+        { id: 'purees', name: 'Пюре', icon: '🥄' },
+        { id: 'dried_flowers', name: 'Сухоцвіти', icon: '🌸' }
+      ]}
+      selectedCategory="all"
+      onCategorySelect={(categoryId) => {
+        // Пока что просто закрываем панель
+        // В будущем можно добавить навигацию к товарам с фильтром
+        closeSidebar();
+        console.log('Selected category:', categoryId);
+      }}
+    />
   );
 };
 

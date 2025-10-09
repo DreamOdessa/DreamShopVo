@@ -3,7 +3,9 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FiFilter, FiSearch, FiX } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
+import CategorySidebar from '../components/CategorySidebar';
 import { useAdmin } from '../contexts/AdminContext';
+import { useCategorySidebar } from '../contexts/CategorySidebarContext';
 // import { Product } from '../types'; // Отключено для избежания неиспользуемого импорта
 
 const ProductsContainer = styled.div`
@@ -213,6 +215,7 @@ const categories = [
 
 const Products: React.FC = () => {
   const { products } = useAdmin();
+  const { closeSidebar, isOpen: isCategorySidebarOpen } = useCategorySidebar();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showOrganicOnly, setShowOrganicOnly] = useState(false);
@@ -306,6 +309,18 @@ const Products: React.FC = () => {
         )}
       </FiltersSection>
     </ProductsContainer>
+
+    {/* Боковая панель категорий */}
+    <CategorySidebar
+      isOpen={isCategorySidebarOpen}
+      onClose={closeSidebar}
+      categories={categories}
+      selectedCategory={selectedCategory}
+      onCategorySelect={(categoryId) => {
+        setSelectedCategory(categoryId);
+        closeSidebar();
+      }}
+    />
   );
 };
 

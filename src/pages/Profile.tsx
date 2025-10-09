@@ -317,6 +317,7 @@ const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     name: user?.name || '',
+    lastName: user?.lastName || '',
     email: user?.email || '',
     phone: user?.phone || '',
     city: user?.city || '',
@@ -339,6 +340,7 @@ const Profile: React.FC = () => {
     if (user) {
       setEditData({
         name: user.name || '',
+        lastName: user.lastName || '',
         email: user.email || '',
         phone: user.phone || '',
         city: user.city || '',
@@ -368,6 +370,7 @@ const Profile: React.FC = () => {
     setIsEditing(false);
     setEditData({
       name: user?.name || '',
+      lastName: user?.lastName || '',
       email: user?.email || '',
       phone: user?.phone || '',
       city: user?.city || '',
@@ -466,7 +469,7 @@ const Profile: React.FC = () => {
             <Avatar>
               <FiUser />
             </Avatar>
-            <UserName>{user.name}</UserName>
+            <UserName>{user.name} {user.lastName && user.lastName}</UserName>
             <UserEmail>{user.email}</UserEmail>
           </UserInfo>
 
@@ -499,6 +502,18 @@ const Profile: React.FC = () => {
                   value={editData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   disabled={!isEditing}
+                />
+              </FormField>
+
+              <FormField>
+                <Label htmlFor="lastName">Прізвище</Label>
+                <Input
+                  type="text"
+                  id="lastName"
+                  value={editData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  disabled={!isEditing}
+                  placeholder="Введіть прізвище"
                 />
               </FormField>
 

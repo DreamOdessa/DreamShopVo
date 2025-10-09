@@ -5,6 +5,13 @@ export interface User {
   avatar?: string;
   discount?: number; // процент скидки
   isAdmin?: boolean;
+  // Новые поля для профиля
+  phone?: string;
+  city?: string;
+  novaPoshtaOffice?: string;
+  address?: string;
+  establishmentName?: string;
+  isPrivatePerson?: boolean;
 }
 
 export interface Product {

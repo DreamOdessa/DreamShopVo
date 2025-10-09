@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiUser, FiLogOut, FiEdit3, FiSave, FiX } from 'react-icons/fi';
+import { FiUser, FiLogOut, FiEdit3, FiSave, FiX, FiMapPin, FiPhone } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
+import { useWishlist } from '../contexts/WishlistContext';
+import { novaPoshtaApi } from '../services/novaPoshtaApi';
+import { geocodingApi } from '../services/geocodingApi';
 import toast from 'react-hot-toast';
 
 const ProfileContainer = styled.div`
@@ -223,40 +226,247 @@ const EmptyState = styled.div`
   }
 `;
 
+// Новые стили для полей формы
+const FormField = styled.div`
+  margin-bottom: 1.5rem;
+`;
+
+const Label = styled.label`
+  display: block;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+`;
+
+const Input = styled.input<{ disabled?: boolean }>`
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background: ${props => props.disabled ? '#f8f9fa' : 'white'};
+  color: ${props => props.disabled ? '#6c757d' : '#2c3e50'};
+
+  &:focus {
+    outline: none;
+    border-color: #4dd0e1;
+    box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.1);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+`;
+
+const TextArea = styled.textarea<{ disabled?: boolean }>`
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background: ${props => props.disabled ? '#f8f9fa' : 'white'};
+  color: ${props => props.disabled ? '#6c757d' : '#2c3e50'};
+  resize: vertical;
+  min-height: 100px;
+
+  &:focus {
+    outline: none;
+    border-color: #4dd0e1;
+    box-shadow: 0 0 0 3px rgba(77, 208, 225, 0.1);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+`;
+
+const CheckboxContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+`;
+
+const Checkbox = styled.input`
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+`;
+
+const CheckboxLabel = styled.label`
+  font-weight: 600;
+  color: #2c3e50;
+  cursor: pointer;
+`;
+
+const SuggestionsList = styled.ul`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e1e8ed;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const SuggestionItem = styled.li`
+  padding: 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f8f9fa;
+
+  &:hover {
+    background: #f8f9fa;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
+const AutocompleteContainer = styled.div`
+  position: relative;
+`;
+
+// Украинские города для автоподсказок
+const ukrainianCities = [
+  'Київ', 'Харків', 'Одеса', 'Дніпро', 'Донецьк', 'Запоріжжя', 'Львів', 'Кривий Ріг',
+  'Миколаїв', 'Маріуполь', 'Луганськ', 'Вінниця', 'Херсон', 'Полтава', 'Чернігів',
+  'Черкаси', 'Суми', 'Житомир', 'Хмельницький', 'Чернівці', 'Рівне', 'Івано-Франківськ',
+  'Кропивницький', 'Тернопіль', 'Луцьк', 'Ужгород', 'Біла Церква', 'Кременчук'
+];
+
 
 const Profile: React.FC = () => {
   const { user, logout } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     name: user?.name || '',
-    email: user?.email || ''
+    email: user?.email || '',
+    phone: user?.phone || '',
+    city: user?.city || '',
+    novaPoshtaOffice: user?.novaPoshtaOffice || '',
+    address: user?.address || '',
+    establishmentName: user?.establishmentName || '',
+    isPrivatePerson: user?.isPrivatePerson ?? true
   });
+
+  // Состояние для автоподсказок
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const [warehouseSuggestions, setWarehouseSuggestions] = useState<any[]>([]);
+  const [showWarehouseSuggestions, setShowWarehouseSuggestions] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+
+  // Обновляем состояние при изменении пользователя
+  useEffect(() => {
+    if (user) {
+      setEditData({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+        city: user.city || '',
+        novaPoshtaOffice: user.novaPoshtaOffice || '',
+        address: user.address || '',
+        establishmentName: user.establishmentName || '',
+        isPrivatePerson: user.isPrivatePerson ?? true
+      });
+    }
+  }, [user]);
 
   const handleEdit = () => {
     setIsEditing(true);
-    setEditData({
-      name: user?.name || '',
-      email: user?.email || ''
-    });
   };
 
-  const handleSave = () => {
-    // В реальном приложении здесь был бы API вызов для обновления профиля
-    toast.success('Профиль обновлен!');
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      // Здесь будет логика сохранения данных пользователя через API
+      setIsEditing(false);
+      toast.success('Профіль оновлено!');
+    } catch (error) {
+      toast.error('Помилка при збереженні профілю');
+    }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     setEditData({
       name: user?.name || '',
-      email: user?.email || ''
+      email: user?.email || '',
+      phone: user?.phone || '',
+      city: user?.city || '',
+      novaPoshtaOffice: user?.novaPoshtaOffice || '',
+      address: user?.address || '',
+      establishmentName: user?.establishmentName || '',
+      isPrivatePerson: user?.isPrivatePerson ?? true
     });
   };
 
   const handleLogout = () => {
     logout();
-    toast.success('Вы вышли из системы');
+    toast.success('Ви вийшли з системи');
+  };
+
+  const handleInputChange = async (field: string, value: string | boolean) => {
+    setEditData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+
+    const stringValue = value as string;
+
+    // Логика для автоподсказок городов
+    if (field === 'city') {
+      if (stringValue.length > 1) {
+        const filtered = ukrainianCities.filter(city =>
+          city.toLowerCase().includes(stringValue.toLowerCase())
+        );
+        setCitySuggestions(filtered);
+        setShowCitySuggestions(true);
+      } else {
+        setShowCitySuggestions(false);
+      }
+    }
+
+    // Логика для отделений Новой Почты
+    if (field === 'novaPoshtaOffice' && editData.city) {
+      if (stringValue.length > 2) {
+        try {
+          const cities = await novaPoshtaApi.searchCities(editData.city);
+          if (cities.length > 0) {
+            const warehouses = await novaPoshtaApi.searchWarehouses(stringValue, cities[0].Ref);
+            setWarehouseSuggestions(warehouses);
+            setShowWarehouseSuggestions(true);
+          }
+        } catch (error) {
+          console.error('Ошибка поиска отделений Новой Почты:', error);
+        }
+      } else {
+        setShowWarehouseSuggestions(false);
+      }
+    }
+
+    // Логика для автоподсказок адресов
+    if (field === 'address') {
+      if (stringValue.length > 3) {
+        try {
+          const suggestions = await geocodingApi.getAddressSuggestions(stringValue);
+          setAddressSuggestions(suggestions);
+          setShowAddressSuggestions(true);
+        } catch (error) {
+          console.error('Ошибка получения автозаполнения адресов:', error);
+        }
+      } else {
+        setShowAddressSuggestions(false);
+      }
+    }
   };
 
   if (!user) {
@@ -276,8 +486,8 @@ const Profile: React.FC = () => {
     <ProfileContainer>
       <Header>
         <div className="container">
-          <Title>Мой профиль</Title>
-          <Subtitle>Управляйте своими данными и заказами</Subtitle>
+          <Title>Мій профіль</Title>
+          <Subtitle>Керуйте своїми даними та замовленнями</Subtitle>
         </div>
       </Header>
 
@@ -296,7 +506,7 @@ const Profile: React.FC = () => {
               isActive={true}
             >
               <FiUser />
-              Профиль
+              Профіль
             </MenuItem>
           </MenuItems>
         </ProfileSidebar>
@@ -309,52 +519,183 @@ const Profile: React.FC = () => {
           >
               <SectionTitle>
                 <FiUser />
-                Личная информация
+                Особиста інформація
               </SectionTitle>
 
-              <FormGroup>
-                <Label htmlFor="name">Имя</Label>
+              <FormField>
+                <Label htmlFor="name">Ім'я *</Label>
                 <Input
                   type="text"
                   id="name"
                   value={editData.name}
-                  onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
                   disabled={!isEditing}
                 />
-              </FormGroup>
+              </FormField>
 
-              <FormGroup>
-                <Label htmlFor="email">Email</Label>
+              <FormField>
+                <Label htmlFor="email">Email *</Label>
                 <Input
                   type="email"
                   id="email"
                   value={editData.email}
-                  onChange={(e) => setEditData(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
                   disabled={!isEditing}
                 />
-              </FormGroup>
+              </FormField>
+
+              <FormField>
+                <Label htmlFor="phone">Номер телефону *</Label>
+                <Input
+                  type="tel"
+                  id="phone"
+                  value={editData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  disabled={!isEditing}
+                  placeholder="+380 (XX) XXX XX XX"
+                />
+              </FormField>
+
+              <SectionTitle>
+                <FiMapPin />
+                Адресна інформація
+              </SectionTitle>
+
+              <FormField>
+                <Label htmlFor="city">Місто *</Label>
+                <AutocompleteContainer>
+                  <Input
+                    type="text"
+                    id="city"
+                    value={editData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                    disabled={!isEditing}
+                    placeholder="Введіть місто"
+                  />
+                  {showCitySuggestions && citySuggestions.length > 0 && (
+                    <SuggestionsList>
+                      {citySuggestions.map((city, index) => (
+                        <SuggestionItem 
+                          key={index}
+                          onClick={() => {
+                            handleInputChange('city', city);
+                            setShowCitySuggestions(false);
+                          }}
+                        >
+                          {city}
+                        </SuggestionItem>
+                      ))}
+                    </SuggestionsList>
+                  )}
+                </AutocompleteContainer>
+              </FormField>
+
+              <FormField>
+                <Label htmlFor="novaPoshtaOffice">Відділення Нової Пошти / Поштомат</Label>
+                <AutocompleteContainer>
+                  <Input
+                    type="text"
+                    id="novaPoshtaOffice"
+                    value={editData.novaPoshtaOffice}
+                    onChange={(e) => handleInputChange('novaPoshtaOffice', e.target.value)}
+                    disabled={!isEditing}
+                    placeholder="Введіть назву відділення"
+                  />
+                  {showWarehouseSuggestions && warehouseSuggestions.length > 0 && (
+                    <SuggestionsList>
+                      {warehouseSuggestions.map((warehouse, index) => (
+                        <SuggestionItem 
+                          key={index}
+                          onClick={() => {
+                            handleInputChange('novaPoshtaOffice', warehouse.Description);
+                            setShowWarehouseSuggestions(false);
+                          }}
+                        >
+                          {warehouse.Description}
+                        </SuggestionItem>
+                      ))}
+                    </SuggestionsList>
+                  )}
+                </AutocompleteContainer>
+              </FormField>
+
+              <FormField>
+                <Label htmlFor="address">Адреса</Label>
+                <AutocompleteContainer>
+                  <TextArea
+                    id="address"
+                    value={editData.address}
+                    onChange={(e) => handleInputChange('address', e.target.value)}
+                    disabled={!isEditing}
+                    placeholder="Введіть адресу для кур'єрської доставки"
+                  />
+                  {showAddressSuggestions && addressSuggestions.length > 0 && (
+                    <SuggestionsList>
+                      {addressSuggestions.map((suggestion, index) => (
+                        <SuggestionItem 
+                          key={index}
+                          onClick={() => {
+                            handleInputChange('address', suggestion.description);
+                            setShowAddressSuggestions(false);
+                          }}
+                        >
+                          {suggestion.description}
+                        </SuggestionItem>
+                      ))}
+                    </SuggestionsList>
+                  )}
+                </AutocompleteContainer>
+              </FormField>
+
+              <SectionTitle>
+                <FiUser />
+                Інформація про заклад
+              </SectionTitle>
+
+              <CheckboxContainer>
+                <Checkbox
+                  type="checkbox"
+                  id="isPrivatePerson"
+                  checked={editData.isPrivatePerson}
+                  onChange={(e) => handleInputChange('isPrivatePerson', e.target.checked)}
+                  disabled={!isEditing}
+                />
+                <CheckboxLabel htmlFor="isPrivatePerson">Приватна особа</CheckboxLabel>
+              </CheckboxContainer>
+
+              <FormField>
+                <Label htmlFor="establishmentName">Назва закладу</Label>
+                <Input
+                  type="text"
+                  id="establishmentName"
+                  value={editData.isPrivatePerson ? '' : editData.establishmentName}
+                  onChange={(e) => handleInputChange('establishmentName', e.target.value)}
+                  disabled={!isEditing || editData.isPrivatePerson}
+                  placeholder={editData.isPrivatePerson ? 'Не застосовується' : 'Введіть назву закладу'}
+                />
+              </FormField>
 
               <ButtonGroup>
                 {isEditing ? (
                   <>
                     <Button variant="primary" onClick={handleSave}>
                       <FiSave />
-                      Сохранить
+                      Зберегти
                     </Button>
                     <Button variant="secondary" onClick={handleCancel}>
                       <FiX />
-                      Отмена
+                      Скасувати
                     </Button>
                   </>
                 ) : (
                   <Button variant="primary" onClick={handleEdit}>
                     <FiEdit3 />
-                    Редактировать
+                    Редагувати
                   </Button>
                 )}
                 <Button variant="danger" onClick={handleLogout}>
                   <FiLogOut />
-                  Выйти
+                  Вийти
                 </Button>
               </ButtonGroup>
           </motion.div>

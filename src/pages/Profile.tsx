@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiUser, FiHeart, FiShoppingBag, FiLogOut, FiEdit3, FiSave, FiX } from 'react-icons/fi';
+import { FiUser, FiLogOut, FiEdit3, FiSave, FiX } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
-import { useAdmin } from '../contexts/AdminContext';
 import toast from 'react-hot-toast';
 
 const ProfileContainer = styled.div`
@@ -280,16 +279,11 @@ const RemoveButton = styled.button`
 
 const Profile: React.FC = () => {
   const { user, logout } = useAuth();
-  const { orders } = useAdmin();
-  const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     name: user?.name || '',
     email: user?.email || ''
   });
-
-  const userOrders = orders.filter(order => order.userId === user?.id);
-  const favoriteProducts: any[] = []; // В реальном приложении это было бы из контекста
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -358,20 +352,6 @@ const Profile: React.FC = () => {
               <FiUser />
               Профиль
             </MenuItem>
-            <MenuItem
-              isActive={activeTab === 'favorites'}
-              onClick={() => setActiveTab('favorites')}
-            >
-              <FiHeart />
-              Избранное
-            </MenuItem>
-            <MenuItem
-              isActive={activeTab === 'orders'}
-              onClick={() => setActiveTab('orders')}
-            >
-              <FiShoppingBag />
-              Заказы
-            </MenuItem>
           </MenuItems>
         </ProfileSidebar>
 
@@ -435,101 +415,6 @@ const Profile: React.FC = () => {
             </motion.div>
           )}
 
-          {activeTab === 'favorites' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <SectionTitle>
-                <FiHeart />
-                Избранные товары
-              </SectionTitle>
-
-              {favoriteProducts.length === 0 ? (
-                <EmptyState>
-                  <h3>Нет избранных товаров</h3>
-                  <p>Добавьте товары в избранное, чтобы они появились здесь</p>
-                </EmptyState>
-              ) : (
-                <FavoritesGrid>
-                  {favoriteProducts.map((product: any) => (
-                    <FavoriteItem key={product.id}>
-                      <FavoriteImage src={product.image} alt={product.name} />
-                      <FavoriteInfo>
-                        <FavoriteName>{product.name}</FavoriteName>
-                        <FavoritePrice>{product.price} ₴</FavoritePrice>
-                      </FavoriteInfo>
-                      <RemoveButton>
-                        <FiX />
-                      </RemoveButton>
-                    </FavoriteItem>
-                  ))}
-                </FavoritesGrid>
-              )}
-            </motion.div>
-          )}
-
-          {activeTab === 'orders' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <SectionTitle>
-                <FiShoppingBag />
-                История заказов
-              </SectionTitle>
-
-              {userOrders.length === 0 ? (
-                <EmptyState>
-                  <h3>Нет заказов</h3>
-                  <p>Ваши заказы будут отображаться здесь</p>
-                </EmptyState>
-              ) : (
-                <div>
-                  {userOrders.map(order => (
-                    <div
-                      key={order.id}
-                      style={{
-                        background: '#f8f9fa',
-                        borderRadius: '15px',
-                        padding: '1.5rem',
-                        marginBottom: '1rem'
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                        <h4 style={{ margin: 0, color: '#2c3e50' }}>Заказ #{order.id}</h4>
-                        <span style={{
-                          padding: '0.3rem 0.8rem',
-                          borderRadius: '15px',
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
-                          background: order.status === 'delivered' ? '#27ae60' : '#f39c12',
-                          color: 'white'
-                        }}>
-                          {order.status === 'pending' && 'Ожидает'}
-                          {order.status === 'processing' && 'Обрабатывается'}
-                          {order.status === 'shipped' && 'Отправлен'}
-                          {order.status === 'delivered' && 'Доставлен'}
-                          {order.status === 'cancelled' && 'Отменен'}
-                        </span>
-                      </div>
-                      <p style={{ color: '#6c757d', marginBottom: '0.5rem' }}>
-                        Товаров: {order.items.reduce((sum, item) => sum + item.quantity, 0)} шт.
-                      </p>
-                      <p style={{ color: '#6c757d', marginBottom: '0.5rem' }}>
-                        Сумма: {order.total} ₴
-                      </p>
-                      <p style={{ color: '#6c757d', fontSize: '0.9rem' }}>
-                        Дата: {new Date(order.createdAt).toLocaleDateString('ru-RU')}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
         </MainContent>
       </ProfileContent>
     </ProfileContainer>

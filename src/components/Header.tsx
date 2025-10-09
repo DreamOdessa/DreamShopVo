@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import { useWishlist } from '../contexts/WishlistContext';
 import { FiShoppingCart, FiUser, FiMenu, FiX, FiHeart } from 'react-icons/fi';
 import GoogleLogin from './GoogleLogin';
 
@@ -152,6 +153,7 @@ const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user } = useAuth();
   const { getTotalItems } = useCart();
+  const { getTotalItems: getWishlistItems } = useWishlist();
   const location = useLocation();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -189,12 +191,24 @@ const Header: React.FC = () => {
 
           {user && (
             <NavLink 
-              to="/profile" 
-              isActive={location.pathname === '/profile'}
+              to="/wishlist"
+              isActive={location.pathname === '/wishlist'}
               onClick={() => setIsMenuOpen(false)}
             >
               <FiHeart style={{ marginRight: '0.5rem' }} />
               Обране
+              {getWishlistItems() > 0 && (
+                <span style={{ 
+                  background: '#e74c3c', 
+                  color: 'white', 
+                  borderRadius: '50%', 
+                  padding: '2px 6px', 
+                  fontSize: '0.7rem',
+                  marginLeft: '0.5rem'
+                }}>
+                  {getWishlistItems()}
+                </span>
+              )}
             </NavLink>
           )}
 
@@ -217,10 +231,24 @@ const Header: React.FC = () => {
             </CartButton>
 
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Link 
+                to="/profile" 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem',
+                  color: 'white',
+                  textDecoration: 'none',
+                  padding: '0.5rem',
+                  borderRadius: '8px',
+                  transition: 'background 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
                 <FiUser />
                 <span>{user.name}</span>
-              </div>
+              </Link>
             ) : (
               <GoogleLogin />
             )}

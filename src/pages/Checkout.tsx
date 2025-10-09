@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { FiUser, FiMapPin, FiTruck, FiCreditCard, FiCheck, FiChevronDown, FiChevronUp, FiArrowLeft } from 'react-icons/fi';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { CartItem } from '../types';
 import toast from 'react-hot-toast';
 
 // Стили компонентов

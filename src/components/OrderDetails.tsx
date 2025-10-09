@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { FiUser, FiMapPin, FiTruck, FiCreditCard, FiPackage, FiCalendar, FiPhone, FiMail } from 'react-icons/fi';
+import { FiUser, FiTruck, FiCreditCard, FiPackage, FiCalendar } from 'react-icons/fi';
 import { Order } from '../types';
 
 interface OrderDetailsProps {

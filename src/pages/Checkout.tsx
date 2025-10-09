@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { FiUser, FiMapPin, FiTruck, FiCreditCard, FiCheck, FiChevronDown, FiChevronUp, FiArrowLeft } from 'react-icons/fi';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { novaPoshtaApi, NovaPoshtaWarehouse } from '../services/novaPoshtaApi';
+import { geocodingApi, GeocodingSuggestion } from '../services/geocodingApi';
 import toast from 'react-hot-toast';
 
 // Стили компонентов
@@ -317,6 +319,15 @@ const Checkout: React.FC = () => {
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
   
+  // Состояние для Новой Почты
+  const [warehouseSuggestions, setWarehouseSuggestions] = useState<NovaPoshtaWarehouse[]>([]);
+  const [showWarehouseSuggestions, setShowWarehouseSuggestions] = useState(false);
+  const [selectedCityRef, setSelectedCityRef] = useState<string>('');
+  
+  // Состояние для геокодирования
+  const [addressSuggestions, setAddressSuggestions] = useState<GeocodingSuggestion[]>([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  
   // Состояние для блока заказа
   const [isOrderSummaryExpanded, setIsOrderSummaryExpanded] = useState(false);
 
@@ -333,23 +344,69 @@ const Checkout: React.FC = () => {
   }, [user]);
 
   // Обработка изменений в полях
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = async (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
 
+    const stringValue = value as string;
+
     // Логика для города
     if (field === 'city') {
-      const cityValue = value as string;
-      if (cityValue.length > 1) {
+      if (stringValue.length > 1) {
+        // Локальные подсказки
         const filtered = ukrainianCities.filter(city =>
-          city.toLowerCase().includes(cityValue.toLowerCase())
+          city.toLowerCase().includes(stringValue.toLowerCase())
         );
         setCitySuggestions(filtered);
         setShowCitySuggestions(true);
+
+        // API Новой Почты
+        try {
+          const cities = await novaPoshtaApi.searchCities(stringValue);
+          if (cities.length > 0) {
+            setSelectedCityRef(cities[0].Ref);
+          }
+        } catch (error) {
+          console.error('Ошибка поиска городов Новой Почты:', error);
+        }
       } else {
         setShowCitySuggestions(false);
+        setSelectedCityRef('');
+      }
+    }
+
+    // Логика для отделений Новой Почты
+    if (field === 'deliveryDetails' && formData.deliveryMethod === 'post_office' && selectedCityRef) {
+      if (stringValue.length > 2) {
+        try {
+          const warehouses = await novaPoshtaApi.searchWarehouses(stringValue, selectedCityRef);
+          setWarehouseSuggestions(warehouses);
+          setShowWarehouseSuggestions(true);
+        } catch (error) {
+          console.error('Ошибка поиска отделений Новой Почты:', error);
+        }
+      } else {
+        setShowWarehouseSuggestions(false);
+      }
+    }
+
+    // Логика для адресов (геокодирование)
+    if (field === 'deliveryDetails' && 
+        (formData.deliveryMethod === 'address' || 
+         formData.deliveryMethod === 'schedule' || 
+         formData.deliveryMethod === 'taxi')) {
+      if (stringValue.length > 3) {
+        try {
+          const suggestions = await geocodingApi.getAddressSuggestions(stringValue);
+          setAddressSuggestions(suggestions);
+          setShowAddressSuggestions(true);
+        } catch (error) {
+          console.error('Ошибка получения автозаполнения адресов:', error);
+        }
+      } else {
+        setShowAddressSuggestions(false);
       }
     }
   };
@@ -572,40 +629,161 @@ const Checkout: React.FC = () => {
             </FormField>
 
             {formData.deliveryMethod === 'post_office' && (
-              <FormField>
-                <Label>Відділення Нової Пошти *</Label>
-                <Input
-                  type="text"
-                  value={formData.deliveryDetails}
-                  onChange={(e) => handleInputChange('deliveryDetails', e.target.value)}
-                  placeholder="Номер відділення або адреса"
-                  required
-                />
-              </FormField>
+              <AutocompleteContainer>
+                <FormField>
+                  <Label>Відділення Нової Пошти *</Label>
+                  <Input
+                    type="text"
+                    value={formData.deliveryDetails}
+                    onChange={(e) => handleInputChange('deliveryDetails', e.target.value)}
+                    placeholder="Номер відділення або адреса"
+                    required
+                  />
+                  {showWarehouseSuggestions && warehouseSuggestions.length > 0 && (
+                    <SuggestionsList>
+                      {warehouseSuggestions.map((warehouse, index) => (
+                        <SuggestionItem
+                          key={index}
+                          onClick={() => {
+                            handleInputChange('deliveryDetails', `${warehouse.Description} (${warehouse.ShortAddress})`);
+                            setShowWarehouseSuggestions(false);
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: '600' }}>{warehouse.Description}</div>
+                            <div style={{ fontSize: '0.8rem', color: '#6c757d' }}>
+                              {warehouse.ShortAddress}
+                            </div>
+                            {warehouse.Phone && (
+                              <div style={{ fontSize: '0.8rem', color: '#6c757d' }}>
+                                📞 {warehouse.Phone}
+                              </div>
+                            )}
+                          </div>
+                        </SuggestionItem>
+                      ))}
+                    </SuggestionsList>
+                  )}
+                </FormField>
+              </AutocompleteContainer>
             )}
 
             {formData.deliveryMethod === 'address' && (
-              <FormField>
-                <Label>Адреса доставки *</Label>
-                <TextArea
-                  value={formData.deliveryDetails}
-                  onChange={(e) => handleInputChange('deliveryDetails', e.target.value)}
-                  placeholder="Повна адреса доставки"
-                  required
-                />
-              </FormField>
+              <AutocompleteContainer>
+                <FormField>
+                  <Label>Адреса доставки *</Label>
+                  <TextArea
+                    value={formData.deliveryDetails}
+                    onChange={(e) => handleInputChange('deliveryDetails', e.target.value)}
+                    placeholder="Повна адреса доставки"
+                    required
+                  />
+                  {showAddressSuggestions && addressSuggestions.length > 0 && (
+                    <SuggestionsList>
+                      {addressSuggestions.map((suggestion, index) => (
+                        <SuggestionItem
+                          key={index}
+                          onClick={() => {
+                            handleInputChange('deliveryDetails', suggestion.description);
+                            setShowAddressSuggestions(false);
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontWeight: '600' }}>
+                              {suggestion.structured_formatting.main_text}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#6c757d' }}>
+                              {suggestion.structured_formatting.secondary_text}
+                            </div>
+                          </div>
+                        </SuggestionItem>
+                      ))}
+                    </SuggestionsList>
+                  )}
+                </FormField>
+              </AutocompleteContainer>
             )}
 
             {formData.deliveryMethod === 'schedule' && (
-              <Note>
-                Доставка здійснюється 1 раз на тиждень по середах.
-              </Note>
+              <>
+                <AutocompleteContainer>
+                  <FormField>
+                    <Label>Адреса доставки *</Label>
+                    <TextArea
+                      value={formData.deliveryDetails}
+                      onChange={(e) => handleInputChange('deliveryDetails', e.target.value)}
+                      placeholder="Повна адреса доставки"
+                      required
+                    />
+                    {showAddressSuggestions && addressSuggestions.length > 0 && (
+                      <SuggestionsList>
+                        {addressSuggestions.map((suggestion, index) => (
+                          <SuggestionItem
+                            key={index}
+                            onClick={() => {
+                              handleInputChange('deliveryDetails', suggestion.description);
+                              setShowAddressSuggestions(false);
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontWeight: '600' }}>
+                                {suggestion.structured_formatting.main_text}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: '#6c757d' }}>
+                                {suggestion.structured_formatting.secondary_text}
+                              </div>
+                            </div>
+                          </SuggestionItem>
+                        ))}
+                      </SuggestionsList>
+                    )}
+                  </FormField>
+                </AutocompleteContainer>
+                <Note>
+                  Доставка здійснюється 1 раз на тиждень по середах.
+                </Note>
+              </>
             )}
 
             {formData.deliveryMethod === 'taxi' && (
-              <Note>
-                Тариф таксі за термінову доставку оплачується клієнтом.
-              </Note>
+              <>
+                <AutocompleteContainer>
+                  <FormField>
+                    <Label>Адреса доставки *</Label>
+                    <TextArea
+                      value={formData.deliveryDetails}
+                      onChange={(e) => handleInputChange('deliveryDetails', e.target.value)}
+                      placeholder="Повна адреса доставки"
+                      required
+                    />
+                    {showAddressSuggestions && addressSuggestions.length > 0 && (
+                      <SuggestionsList>
+                        {addressSuggestions.map((suggestion, index) => (
+                          <SuggestionItem
+                            key={index}
+                            onClick={() => {
+                              handleInputChange('deliveryDetails', suggestion.description);
+                              setShowAddressSuggestions(false);
+                            }}
+                          >
+                            <div>
+                              <div style={{ fontWeight: '600' }}>
+                                {suggestion.structured_formatting.main_text}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: '#6c757d' }}>
+                                {suggestion.structured_formatting.secondary_text}
+                              </div>
+                            </div>
+                          </SuggestionItem>
+                        ))}
+                      </SuggestionsList>
+                    )}
+                  </FormField>
+                </AutocompleteContainer>
+                <Note>
+                  Тариф таксі за термінову доставку оплачується клієнтом.
+                </Note>
+              </>
             )}
           </FormSection>
 

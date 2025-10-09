@@ -112,7 +112,7 @@ export interface NovaPoshtaCity {
 }
 
 class NovaPoshtaApiService {
-  private readonly API_KEY = process.env.REACT_APP_NOVA_POSHTA_API_KEY || 'your-api-key';
+  private readonly API_KEY = process.env.REACT_APP_NOVA_POSHTA_API_KEY || '01b6aa62c09ccb6f0218cf21e3f5de33';
   private readonly API_URL = 'https://api.novaposhta.ua/v2.0/json/';
 
   // Поиск городов по названию

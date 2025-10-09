@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiUser, FiLogOut, FiEdit3, FiSave, FiX, FiMapPin, FiPhone } from 'react-icons/fi';
+import { FiUser, FiLogOut, FiEdit3, FiSave, FiX, FiMapPin } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
-import { useWishlist } from '../contexts/WishlistContext';
 import { novaPoshtaApi } from '../services/novaPoshtaApi';
 import { geocodingApi } from '../services/geocodingApi';
 import toast from 'react-hot-toast';

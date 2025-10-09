@@ -5,7 +5,6 @@ import { FiHeart, FiArrowLeft, FiShoppingCart, FiTrash2 } from 'react-icons/fi';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import ProductCard from '../components/ProductCard';
 import toast from 'react-hot-toast';
 
 const WishlistContainer = styled.div`

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { FiArrowLeft, FiPackage, FiCalendar, FiMapPin, FiCreditCard } from 'react-icons/fi';
+import { FiArrowLeft, FiPackage, FiMapPin, FiCreditCard } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
 import { Order } from '../types';
 import { orderService } from '../firebase/services';

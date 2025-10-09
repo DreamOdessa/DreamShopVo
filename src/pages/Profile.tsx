@@ -223,59 +223,6 @@ const EmptyState = styled.div`
   }
 `;
 
-const FavoritesGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.5rem;
-`;
-
-const FavoriteItem = styled.div`
-  background: #f8f9fa;
-  border-radius: 15px;
-  padding: 1rem;
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-`;
-
-const FavoriteImage = styled.img`
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 10px;
-`;
-
-const FavoriteInfo = styled.div`
-  flex: 1;
-`;
-
-const FavoriteName = styled.h4`
-  font-size: 1rem;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 0.3rem;
-`;
-
-const FavoritePrice = styled.p`
-  font-size: 0.9rem;
-  color: #27ae60;
-  font-weight: 600;
-`;
-
-const RemoveButton = styled.button`
-  background: #e74c3c;
-  color: white;
-  border: none;
-  padding: 0.5rem;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #c0392b;
-    transform: scale(1.1);
-  }
-`;
 
 const Profile: React.FC = () => {
   const { user, logout } = useAuth();

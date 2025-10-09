@@ -43,7 +43,7 @@ const CheckoutContent = styled.div`
   padding: 2rem 20px;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+    gap: 2rem;
 `;
 
 const FormSection = styled.div`
@@ -198,7 +198,7 @@ const OrderItem = styled.div`
 
 const TotalAmount = styled.div`
   font-size: 1.5rem;
-  font-weight: 700;
+    font-weight: 700;
   color: #00acc1;
   margin-top: 1rem;
   padding-top: 1rem;
@@ -223,17 +223,17 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   ${props => props.variant === 'primary' ? `
     background: #00acc1;
     color: white;
-    
-    &:hover {
+
+  &:hover {
       background: #0097a7;
-      transform: translateY(-2px);
-    }
-    
-    &:disabled {
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
       background: #b0bec5;
-      cursor: not-allowed;
-      transform: none;
-    }
+    cursor: not-allowed;
+    transform: none;
+  }
   ` : `
     background: #6c757d;
     color: white;
@@ -437,7 +437,7 @@ const Checkout: React.FC = () => {
   // Получение способов доставки в зависимости от города
   const getDeliveryMethods = () => {
     const baseMethods = [
-      { value: 'post_office', label: 'Доставка на відділення' },
+      { value: 'post_office', label: 'Доставка на відділення Нової Пошти' },
       { value: 'address', label: 'Доставка за адресою' }
     ];
 
@@ -536,11 +536,11 @@ const Checkout: React.FC = () => {
       <CheckoutContent>
         <form onSubmit={handleSubmit}>
           {/* 1. Контактна інформація */}
-          <FormSection>
-            <SectionTitle>
-              <FiUser />
+        <FormSection>
+          <SectionTitle>
+            <FiUser />
               Контактна інформація
-            </SectionTitle>
+          </SectionTitle>
             <FormGrid>
               <FormField>
                 <Label>Ім'я *</Label>
@@ -553,43 +553,43 @@ const Checkout: React.FC = () => {
               </FormField>
               <FormField>
                 <Label>Прізвище *</Label>
-                <Input
-                  type="text"
+            <Input
+              type="text"
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  required
-                />
+              required
+            />
               </FormField>
             </FormGrid>
             <FormField>
               <Label>Номер телефону *</Label>
-              <Input
-                type="tel"
-                value={formData.phone}
+            <Input
+              type="tel"
+              value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 placeholder="+380 (XX) XXX XX XX"
-                required
-              />
+              required
+            />
             </FormField>
           </FormSection>
 
           {/* 2. Місто доставки */}
           <FormSection>
-            <SectionTitle>
-              <FiMapPin />
+          <SectionTitle>
+            <FiMapPin />
               Місто доставки
-            </SectionTitle>
+          </SectionTitle>
             <AutocompleteContainer>
               <FormField>
                 <Label>Місто *</Label>
-                <Input
-                  type="text"
-                  value={formData.city}
+            <Input
+              type="text"
+              value={formData.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
                   disabled={formData.city === 'Одеса'}
                   placeholder="Введіть назву міста"
-                  required
-                />
+              required
+            />
                 {showCitySuggestions && citySuggestions.length > 0 && (
                   <SuggestionsList>
                     {citySuggestions.map((city, index) => (
@@ -645,8 +645,8 @@ const Checkout: React.FC = () => {
               <AutocompleteContainer>
                 <FormField>
                   <Label>Відділення Нової Пошти *</Label>
-                  <Input
-                    type="text"
+            <Input
+              type="text"
                     value={formData.deliveryDetails}
                     onChange={(e) => handleInputChange('deliveryDetails', e.target.value)}
                     onFocus={() => {
@@ -772,8 +772,8 @@ const Checkout: React.FC = () => {
                       value={formData.deliveryDetails}
                       onChange={(e) => handleInputChange('deliveryDetails', e.target.value)}
                       placeholder="Повна адреса доставки"
-                      required
-                    />
+              required
+            />
                     {showAddressSuggestions && addressSuggestions.length > 0 && (
                       <SuggestionsList>
                         {addressSuggestions.map((suggestion, index) => (
@@ -813,8 +813,8 @@ const Checkout: React.FC = () => {
             </SectionTitle>
             <FormField>
               <Label>Назва закладу</Label>
-              <Input
-                type="text"
+            <Input
+              type="text"
                 value={formData.establishmentName}
                 onChange={(e) => handleInputChange('establishmentName', e.target.value)}
                 disabled={formData.isPrivatePerson}
@@ -832,12 +832,12 @@ const Checkout: React.FC = () => {
                 Для приватної особи
               </CheckboxLabel>
             </CheckboxContainer>
-          </FormSection>
+        </FormSection>
 
           {/* 5. Спосіб оплати */}
           <FormSection>
-            <SectionTitle>
-              <FiCreditCard />
+          <SectionTitle>
+            <FiCreditCard />
               Спосіб оплати
             </SectionTitle>
             <FormField>
@@ -862,8 +862,8 @@ const Checkout: React.FC = () => {
             <SectionTitle>
               <FiCheck />
               Перевірка замовлення та розрахунок
-            </SectionTitle>
-            
+          </SectionTitle>
+
             <OrderSummaryHeader
               onClick={() => setIsOrderSummaryExpanded(!isOrderSummaryExpanded)}
             >
@@ -875,7 +875,7 @@ const Checkout: React.FC = () => {
 
             <OrderSummaryContent isExpanded={isOrderSummaryExpanded}>
               {items.map((item) => (
-                <OrderItem key={item.product.id}>
+            <OrderItem key={item.product.id}>
                   <div>
                     <div>{item.product.name}</div>
                     <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>
@@ -885,8 +885,8 @@ const Checkout: React.FC = () => {
                   <div style={{ fontWeight: '600' }}>
                     {(item.product.price * item.quantity).toFixed(2)} грн
                   </div>
-                </OrderItem>
-              ))}
+            </OrderItem>
+          ))}
             </OrderSummaryContent>
 
             <TotalAmount>

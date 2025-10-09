@@ -284,7 +284,7 @@ const Cart: React.FC = () => {
   const handleQuantityChange = (productId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       removeFromCart(productId);
-      toast.success('Товар удален из корзины');
+      toast.success('Товар видалено з кошика');
     } else {
       updateQuantity(productId, newQuantity);
     }
@@ -292,12 +292,12 @@ const Cart: React.FC = () => {
 
   const handleRemoveItem = (productId: string) => {
     removeFromCart(productId);
-    toast.success('Товар удален из корзины');
+    toast.success('Товар видалено з кошика');
   };
 
   const handleCheckout = () => {
     if (!user) {
-      toast.error('Войдите в систему для оформления заказа');
+      toast.error('Увійдіть в систему для оформлення замовлення');
       return;
     }
     navigate('/checkout');
@@ -344,7 +344,7 @@ const Cart: React.FC = () => {
       <CartContent>
         <CartItems>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-            <h2 style={{ margin: 0, color: '#2c3e50' }}>Товары в корзине ({getTotalItems()})</h2>
+            <h2 style={{ margin: 0, color: '#2c3e50' }}>Товари в кошику ({getTotalItems()})</h2>
             <button
               onClick={handleClearCart}
               style={{
@@ -357,7 +357,7 @@ const Cart: React.FC = () => {
                 fontSize: '0.9rem'
               }}
             >
-              Очистить корзину
+              Очистити кошик
             </button>
           </div>
 

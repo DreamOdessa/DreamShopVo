@@ -23,6 +23,7 @@ const Header = styled.div`
   background-position: center;
   background-blend-mode: overlay;
   position: relative;
+  margin-top: -2rem;
 
   &::before {
     content: '';
@@ -31,7 +32,7 @@ const Header = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(77, 208, 225, 0.8) 0%, rgba(38, 198, 218, 0.8) 50%, rgba(0, 172, 193, 0.8) 100%);
+    background: linear-gradient(135deg, rgba(77, 208, 225, 0.14) 0%, rgba(38, 197, 218, 0.44) 50%, rgba(0, 171, 193, 0.57) 100%);
     z-index: 1;
   }
 `;

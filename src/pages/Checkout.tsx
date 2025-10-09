@@ -16,10 +16,11 @@ const CheckoutContainer = styled.div`
 `;
 
 const Header = styled.div`
-  background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
+  background: linear-gradient(135deg,rgba(77, 208, 225, 0.31) 0%, #26c6da 50%, #00acc1 100%);
   color: white;
   padding: 3rem 0;
   text-align: center;
+  margin-top: -2rem;
 `;
 
 const Title = styled.h1`

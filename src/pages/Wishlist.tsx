@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 const WishlistContainer = styled.div`
   padding: 2rem 0;
   min-height: 80vh;
-  background: #f8f9fa;
+  background:rgb(255, 255, 255);
 `;
 
 const Header = styled.div`
@@ -18,6 +18,7 @@ const Header = styled.div`
   color: white;
   padding: 3rem 0;
   text-align: center;
+  margin-top: -2rem;
 `;
 
 const Title = styled.h1`

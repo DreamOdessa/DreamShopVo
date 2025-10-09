@@ -21,6 +21,22 @@ const HeroSection = styled.section`
   min-height: 100vh;
   display: flex;
   align-items: center;
+  margin-top: -2.5rem;
+
+  @media (max-width: 768px) {
+    padding: 4rem 0;
+    min-height: 80vh;
+  }
+
+  @media (max-width: 480px) {
+    padding: 3rem 0;
+    min-height: 70vh;
+  }
+
+  @media (max-width: 360px) {
+    padding: 2rem 0;
+    min-height: 60vh;
+  }
 
   &::before {
     content: '';
@@ -40,6 +56,14 @@ const HeroContent = styled.div`
   max-width: 800px;
   margin: 0 auto;
   padding: 0 20px;
+
+  @media (max-width: 480px) {
+    padding: 0 15px;
+  }
+
+  @media (max-width: 360px) {
+    padding: 0 10px;
+  }
 `;
 
 const HeroTitle = styled(motion.h1)`
@@ -49,7 +73,15 @@ const HeroTitle = styled(motion.h1)`
   line-height: 1.2;
 
   @media (max-width: 768px) {
-    font-size: 2.5rem;
+    font-size: 2rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.6rem;
+  }
+
+  @media (max-width: 360px) {
+    font-size: 1.4rem;
   }
 `;
 
@@ -60,7 +92,15 @@ const HeroSubtitle = styled(motion.p)`
   line-height: 1.6;
 
   @media (max-width: 768px) {
-    font-size: 1.1rem;
+    font-size: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 360px) {
+    font-size: 0.8rem;
   }
 `;
 
@@ -81,6 +121,21 @@ const CTAButton = styled(motion(Link))`
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 15px 40px rgba(0, 150, 136, 0.4);
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 360px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
   }
 `;
 

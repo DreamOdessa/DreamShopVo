@@ -10,13 +10,21 @@ import CategorySidebar from './CategorySidebar';
 import { useCategorySidebar } from '../contexts/CategorySidebarContext';
 
 const HeaderContainer = styled.header`
-  background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
+  background: linear-gradient(to bottom,rgb(65, 198, 216) 0%,rgba(89, 206, 226, 0.9) 50%,rgba(84, 226, 245, 0.47) 100%);
   color: white;
   padding: 1rem 0;
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: 0 2px 20px rgba(0, 150, 136, 0.2);
+
+  @media (max-width: 768px) {
+    padding: 0.8rem 0;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.6rem 0;
+  }
 `;
 
 const Nav = styled.nav`
@@ -26,6 +34,20 @@ const Nav = styled.nav`
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  position: relative;
+
+  @media (max-width: 768px) {
+    padding: 0 15px;
+    justify-content: center;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 10px;
+  }
+
+  @media (max-width: 360px) {
+    padding: 0 5px;
+  }
 `;
 
 const Logo = styled(Link)`
@@ -36,6 +58,31 @@ const Logo = styled(Link)`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
+    gap: 0.3rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.2rem;
+    gap: 0.2rem;
+  }
+
+  @media (max-width: 360px) {
+    font-size: 0.9rem;
+    gap: 0.1rem;
+  }
+
+  @media (max-width: 320px) {
+    font-size: 0.8rem;
+    gap: 0.05rem;
+  }
+
+  @media (max-width: 280px) {
+    font-size: 0.7rem;
+    gap: 0.02rem;
+  }
 `;
 
 const LogoIcon = styled.div`
@@ -49,6 +96,37 @@ const LogoIcon = styled.div`
     width: 100%;
     height: 100%;
     object-fit: contain;
+  }
+
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+  }
+
+  @media (max-width: 480px) {
+    width: 35px;
+    height: 35px;
+  }
+
+  @media (max-width: 360px) {
+    width: 28px;
+    height: 28px;
+  }
+
+  @media (max-width: 320px) {
+    width: 25px;
+    height: 25px;
+  }
+
+  @media (max-width: 280px) {
+    width: 22px;
+    height: 22px;
+  }
+`;
+
+const LogoText = styled.span`
+  @media (max-width: 280px) {
+    display: none;
   }
 `;
 
@@ -91,6 +169,18 @@ const UserActions = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+
+  @media (max-width: 768px) {
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 480px) {
+    gap: 0.3rem;
+  }
+
+  @media (max-width: 360px) {
+    gap: 0.2rem;
+  }
 `;
 
 const CategoryButton = styled.button`
@@ -107,6 +197,45 @@ const CategoryButton = styled.button`
   &:hover {
     background: rgba(255, 255, 255, 0.1);
     transform: scale(1.1);
+  }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const MobileCategoryButton = styled.button`
+  display: none;
+  position: absolute;
+  right: 20px;
+  color: white;
+  font-size: 1.3rem;
+  padding: 0.4rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+  }
+
+  @media (max-width: 768px) {
+    display: block;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.2rem;
+    padding: 0.3rem;
+    right: 15px;
+  }
+
+  @media (max-width: 360px) {
+    font-size: 1.1rem;
+    padding: 0.2rem;
+    right: 10px;
   }
 `;
 
@@ -131,6 +260,18 @@ const ProfileButton = styled.button`
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    padding: 0.4rem;
+    gap: 0.3rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.8rem;
+    padding: 0.3rem;
+    gap: 0.2rem;
   }
 `;
 
@@ -179,6 +320,16 @@ const CartButton = styled(Link)`
   &:hover {
     background: rgba(255, 255, 255, 0.1);
   }
+
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+    padding: 0.4rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.2rem;
+    padding: 0.3rem;
+  }
 `;
 
 const CartBadge = styled.span`
@@ -204,9 +355,21 @@ const MobileMenuButton = styled.button`
   background: none;
   border: none;
   cursor: pointer;
+  position: absolute;
+  left: 20px;
 
   @media (max-width: 768px) {
     display: block;
+  }
+
+  @media (max-width: 480px) {
+    left: 15px;
+    font-size: 1.3rem;
+  }
+
+  @media (max-width: 360px) {
+    left: 10px;
+    font-size: 1.2rem;
   }
 `;
 
@@ -256,12 +419,12 @@ const Header: React.FC = () => {
     <>
       <HeaderContainer>
       <Nav>
-        <Logo to="/">
-          <LogoIcon>
-            <img src="https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/small-icon.png" alt="DreamShop Logo" /> 
-            DreamShop
-          </LogoIcon>
-        </Logo>
+          <Logo to="/">
+            <LogoIcon>
+              <img src="https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/small-icon.png" alt="DreamShop Logo" /> 
+              <LogoText>DreamShop</LogoText>
+            </LogoIcon>
+          </Logo>
 
         <NavLinks isOpen={isMenuOpen}>
           <CloseButton onClick={toggleMenu}>
@@ -386,6 +549,13 @@ const Header: React.FC = () => {
             )}
           </UserActions>
         </NavLinks>
+
+        <MobileCategoryButton 
+          onClick={openSidebar}
+          title="Категорії товарів"
+        >
+          <FiGrid />
+        </MobileCategoryButton>
 
         <MobileMenuButton onClick={toggleMenu}>
           <FiMenu />

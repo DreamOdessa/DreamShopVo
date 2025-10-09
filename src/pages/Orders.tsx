@@ -18,6 +18,7 @@ const Header = styled.div`
   color: white;
   padding: 3rem 0;
   text-align: center;
+  margin-top: -2rem;
 `;
 
 const Title = styled.h1`

@@ -34,6 +34,29 @@ export interface Order {
   total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: string;
+  // Контактная информация
+  customerInfo: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+  };
+  // Информация о доставке
+  deliveryInfo: {
+    city: string;
+    deliveryMethod: 'post_office' | 'address' | 'schedule' | 'taxi';
+    deliveryDetails: string; // адрес или отделение
+  };
+  // Информация о получателе
+  recipientInfo: {
+    establishmentName?: string;
+    isPrivatePerson: boolean;
+  };
+  // Информация об оплате
+  paymentInfo: {
+    paymentMethod: 'cash_on_delivery' | 'card_online' | 'card_on_delivery' | 'bank_transfer';
+    contactForClarification: boolean;
+  };
+  // Старая структура для совместимости
   shippingAddress: {
     name: string;
     address: string;

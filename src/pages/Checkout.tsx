@@ -508,6 +508,26 @@ const Checkout: React.FC = () => {
         items: items,
         total: getFinalPrice(),
         status: 'pending' as const,
+        // Новая детальная структура
+        customerInfo: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone
+        },
+        deliveryInfo: {
+          city: formData.city,
+          deliveryMethod: formData.deliveryMethod as 'post_office' | 'address' | 'schedule' | 'taxi',
+          deliveryDetails: formData.deliveryDetails
+        },
+        recipientInfo: {
+          establishmentName: formData.establishmentName || undefined,
+          isPrivatePerson: formData.isPrivatePerson
+        },
+        paymentInfo: {
+          paymentMethod: formData.paymentMethod as 'cash_on_delivery' | 'card_online' | 'card_on_delivery' | 'bank_transfer',
+          contactForClarification: formData.contactForClarification
+        },
+        // Старая структура для совместимости
         shippingAddress: {
           name: `${formData.firstName} ${formData.lastName}`,
           address: formData.deliveryDetails,

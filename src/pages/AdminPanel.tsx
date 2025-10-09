@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye } from 'react-icons/fi';
 import CategoryManager from '../components/CategoryManager';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { Product, Order } from '../types';
+import OrderDetails from '../components/OrderDetails';
 import toast from 'react-hot-toast';
 
 const AdminContainer = styled.div`
@@ -361,6 +362,7 @@ const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState('products');
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   // const [editingUser, setEditingUser] = useState<User | null>(null); // Отключено для избежания неиспользуемой переменной
   const [productForm, setProductForm] = useState({
     name: '',
@@ -703,8 +705,8 @@ const AdminPanel: React.FC = () => {
                           {new Date(order.createdAt).toLocaleDateString('ru-RU')}
                         </TableCell>
                         <TableCell>
-                          <ActionButton variant="edit">
-                            <FiEdit />
+                          <ActionButton variant="edit" onClick={() => setSelectedOrder(order)}>
+                            <FiEye />
                           </ActionButton>
                         </TableCell>
                       </TableRow>
@@ -834,6 +836,78 @@ const AdminPanel: React.FC = () => {
             </ModalButtons>
           </ModalContent>
         </Modal>
+      )}
+
+      {/* Детальный просмотр заказа */}
+      {selectedOrder && (
+        <OrderDetails
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          onPrint={() => {
+            // Функция печати накладной
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+              printWindow.document.write(`
+                <html>
+                  <head>
+                    <title>Накладна #${selectedOrder.id}</title>
+                    <style>
+                      body { font-family: Arial, sans-serif; margin: 20px; }
+                      .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                      .section { margin: 20px 0; }
+                      .info { display: flex; justify-content: space-between; margin: 10px 0; }
+                      .items { border: 1px solid #333; border-collapse: collapse; width: 100%; }
+                      .items th, .items td { border: 1px solid #333; padding: 8px; text-align: left; }
+                      .total { text-align: right; font-weight: bold; margin-top: 20px; }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="header">
+                      <h1>DreamShop</h1>
+                      <h2>Накладна #${selectedOrder.id}</h2>
+                      <p>Дата: ${new Date(selectedOrder.createdAt).toLocaleString('uk-UA')}</p>
+                    </div>
+                    
+                    <div class="section">
+                      <h3>Клієнт:</h3>
+                      <div class="info">
+                        <span>Ім'я: ${selectedOrder.customerInfo?.firstName || selectedOrder.shippingAddress.name.split(' ')[0]}</span>
+                        <span>Телефон: ${selectedOrder.customerInfo?.phone || selectedOrder.shippingAddress.phone}</span>
+                      </div>
+                      <div class="info">
+                        <span>Місто: ${selectedOrder.deliveryInfo?.city || selectedOrder.shippingAddress.city}</span>
+                        <span>Адреса: ${selectedOrder.deliveryInfo?.deliveryDetails || selectedOrder.shippingAddress.address}</span>
+                      </div>
+                    </div>
+                    
+                    <div class="section">
+                      <h3>Товари:</h3>
+                      <table class="items">
+                        <tr>
+                          <th>Товар</th>
+                          <th>Кількість</th>
+                          <th>Ціна</th>
+                          <th>Сума</th>
+                        </tr>
+                        ${selectedOrder.items.map(item => `
+                          <tr>
+                            <td>${item.product.name}</td>
+                            <td>${item.quantity}</td>
+                            <td>${item.product.price} ₴</td>
+                            <td>${item.product.price * item.quantity} ₴</td>
+                          </tr>
+                        `).join('')}
+                      </table>
+                      <div class="total">Загальна сума: ${selectedOrder.total} ₴</div>
+                    </div>
+                  </body>
+                </html>
+              `);
+              printWindow.document.close();
+              printWindow.print();
+            }
+          }}
+        />
       )}
     </AdminContainer>
   );

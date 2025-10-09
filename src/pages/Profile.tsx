@@ -346,8 +346,7 @@ const Profile: React.FC = () => {
 
           <MenuItems>
             <MenuItem
-              isActive={activeTab === 'profile'}
-              onClick={() => setActiveTab('profile')}
+              isActive={true}
             >
               <FiUser />
               Профиль
@@ -356,12 +355,11 @@ const Profile: React.FC = () => {
         </ProfileSidebar>
 
         <MainContent>
-          {activeTab === 'profile' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
               <SectionTitle>
                 <FiUser />
                 Личная информация
@@ -412,9 +410,7 @@ const Profile: React.FC = () => {
                   Выйти
                 </Button>
               </ButtonGroup>
-            </motion.div>
-          )}
-
+          </motion.div>
         </MainContent>
       </ProfileContent>
     </ProfileContainer>

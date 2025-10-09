@@ -6,6 +6,7 @@ import { FiShoppingCart, FiHeart, FiZap } from 'react-icons/fi';
 import { Product } from '../types';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useWishlist } from '../contexts/WishlistContext';
 import toast from 'react-hot-toast';
 
 const Card = styled(motion.div)`
@@ -188,6 +189,7 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -196,14 +198,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     toast.success('Товар додано до кошика!');
   };
 
-  const handleAddToFavorites = (e: React.MouseEvent) => {
+  const handleToggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!user) {
       toast.error('Увійдіть в систему, щоб зберігати обране');
       return;
     }
-    toast.success('Товар додано до обраного!');
+    
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
   };
 
   const hasDiscount = user?.discount && user.discount > 0;
@@ -226,7 +233,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </OrganicBadge>
           )}
           <ActionButtons>
-            <ActionButton onClick={handleAddToFavorites} title="Додати до обраного">
+            <ActionButton 
+              onClick={handleToggleWishlist} 
+              title={isInWishlist(product.id) ? "Видалити з обраного" : "Додати до обраного"}
+              style={{ color: isInWishlist(product.id) ? '#e74c3c' : undefined }}
+            >
               <FiHeart />
             </ActionButton>
           </ActionButtons>

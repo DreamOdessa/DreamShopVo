@@ -5,6 +5,7 @@ import { FiShoppingCart, FiHeart, FiArrowLeft, FiZap, FiMinus, FiPlus } from 're
 import { useAdmin } from '../contexts/AdminContext';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useWishlist } from '../contexts/WishlistContext';
 import toast from 'react-hot-toast';
 
 const ProductDetailContainer = styled.div`
@@ -290,6 +291,7 @@ const ProductDetail: React.FC = () => {
   const { products } = useAdmin();
   const { addToCart } = useCart();
   const { user } = useAuth();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [quantity, setQuantity] = useState(1);
 
   const product = products.find(p => p.id === id);
@@ -313,12 +315,17 @@ const ProductDetail: React.FC = () => {
     toast.success(`Добавлено ${quantity} шт. в корзину!`);
   };
 
-  const handleAddToWishlist = () => {
+  const handleToggleWishlist = () => {
     if (!user) {
       toast.error('Войдите в систему, чтобы сохранять избранное');
       return;
     }
-    toast.success('Товар добавлен в избранное!');
+    
+    if (isInWishlist(product.id)) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
   };
 
   const hasDiscount = user?.discount && user.discount > 0;
@@ -429,9 +436,12 @@ const ProductDetail: React.FC = () => {
                 <FiShoppingCart />
                 Добавить в корзину
               </AddToCartButton>
-              <WishlistButton onClick={handleAddToWishlist}>
+              <WishlistButton 
+                onClick={handleToggleWishlist}
+                style={{ color: isInWishlist(product.id) ? '#e74c3c' : undefined }}
+              >
                 <FiHeart />
-                В избранное
+                {isInWishlist(product.id) ? 'Из избранного' : 'В избранное'}
               </WishlistButton>
             </ActionButtons>
           </InfoSection>

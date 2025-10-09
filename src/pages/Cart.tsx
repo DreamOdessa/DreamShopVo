@@ -305,7 +305,7 @@ const Cart: React.FC = () => {
 
   const handleClearCart = () => {
     clearCart();
-    toast.success('Корзина очищена');
+    toast.success('Кошик очищено');
   };
 
   if (items.length === 0) {
@@ -313,18 +313,18 @@ const Cart: React.FC = () => {
       <CartContainer>
         <Header>
           <div className="container">
-            <Title>Корзина</Title>
-            <Subtitle>Ваши выбранные товары</Subtitle>
+            <Title>Кошик</Title>
+            <Subtitle>Ваші обрані товари</Subtitle>
           </div>
         </Header>
 
         <div className="container">
           <EmptyCart>
-            <h3>Корзина пуста</h3>
-            <p>Добавьте товары из каталога, чтобы они появились здесь</p>
+            <h3>Кошик порожній</h3>
+            <p>Додайте товари з каталогу, щоб вони з'явилися тут</p>
             <BackToShopButton to="/products">
               <FiShoppingCart />
-              Перейти к покупкам
+              Перейти до покупок
             </BackToShopButton>
           </EmptyCart>
         </div>
@@ -336,8 +336,8 @@ const Cart: React.FC = () => {
     <CartContainer>
       <Header>
         <div className="container">
-          <Title>Корзина</Title>
-          <Subtitle>Проверьте выбранные товары и оформите заказ</Subtitle>
+          <Title>Кошик</Title>
+          <Subtitle>Перевірте обрані товари та оформіть замовлення</Subtitle>
         </div>
       </Header>
 
@@ -401,28 +401,28 @@ const Cart: React.FC = () => {
         </CartItems>
 
         <OrderSummary>
-          <SummaryTitle>Итого</SummaryTitle>
+          <SummaryTitle>Разом</SummaryTitle>
           <SummaryRow>
-            <span>Товары ({getTotalItems()} шт.)</span>
+            <span>Товари ({getTotalItems()} шт.)</span>
             <span>{getTotalPrice()} ₴</span>
           </SummaryRow>
           <SummaryRow>
             <span>Доставка</span>
-            <span>Бесплатно</span>
+            <span>Безкоштовно</span>
           </SummaryRow>
           <SummaryRow>
-            <span>Итого к оплате</span>
+            <span>Разом до оплати</span>
             <span>{getTotalPrice()} ₴</span>
           </SummaryRow>
 
           <CheckoutButton onClick={handleCheckout} disabled={!user}>
             <FiCreditCard />
-            Оформить заказ
+            Оформити замовлення
           </CheckoutButton>
 
           {!user && (
             <p style={{ textAlign: 'center', marginTop: '1rem', color: '#e74c3c', fontSize: '0.9rem' }}>
-              Войдите в систему для оформления заказа
+              Увійдіть в систему для оформлення замовлення
             </p>
           )}
         </OrderSummary>

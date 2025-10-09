@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiFilter, FiSearch, FiX } from 'react-icons/fi';
+import { FiFilter, FiSearch, FiX, FiChevronDown } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard';
 import CategorySidebar from '../components/CategorySidebar';
 import { useAdmin } from '../contexts/AdminContext';
@@ -134,31 +134,77 @@ const FilterButton = styled.button<{ isActive: boolean }>`
   }
 `;
 
-const CategoryFilters = styled.div`
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
+const CategoryDropdown = styled.div`
+  position: relative;
   margin-bottom: 2rem;
-
-  @media (max-width: 768px) {
-    justify-content: center;
-  }
+  max-width: 300px;
 `;
 
-const CategoryButton = styled.button<{ isActive: boolean }>`
-  padding: 0.8rem 1.5rem;
-  border: 2px solid ${props => props.isActive ? '#667eea' : '#e9ecef'};
+const DropdownButton = styled.button<{ isOpen: boolean }>`
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: 2px solid ${props => props.isOpen ? '#667eea' : '#e9ecef'};
   border-radius: 25px;
-  background: ${props => props.isActive ? '#667eea' : 'white'};
-  color: ${props => props.isActive ? 'white' : '#6c757d'};
+  background: white;
+  color: #495057;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
   &:hover {
     border-color: #667eea;
     color: #667eea;
-    background: white;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+`;
+
+const DropdownList = styled.div<{ isOpen: boolean }>`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  overflow: hidden;
+  display: ${props => props.isOpen ? 'block' : 'none'};
+  margin-top: 0.5rem;
+`;
+
+const DropdownItem = styled.button<{ isActive: boolean }>`
+  width: 100%;
+  padding: 1rem 1.5rem;
+  border: none;
+  background: ${props => props.isActive ? '#667eea' : 'white'};
+  color: ${props => props.isActive ? 'white' : '#495057'};
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+
+  &:hover {
+    background: ${props => props.isActive ? '#667eea' : '#f8f9fa'};
+    color: ${props => props.isActive ? 'white' : '#667eea'};
+  }
+
+  &:first-child {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+
+  &:last-child {
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
   }
 `;
 
@@ -205,12 +251,12 @@ const ClearFilters = styled.button`
 `;
 
 const categories = [
-  { id: 'all', name: 'Все товары' },
-  { id: 'chips', name: 'Фруктовые чипсы' },
-  { id: 'decorations', name: 'Украшения' },
-  { id: 'syrups', name: 'Сиропы' },
+  { id: 'all', name: 'Всі товари' },
+  { id: 'chips', name: 'Фруктові чіпси' },
+  { id: 'decorations', name: 'Прикраси' },
+  { id: 'syrups', name: 'Сиропи' },
   { id: 'purees', name: 'Пюре' },
-  { id: 'dried_flowers', name: 'Сухоцветы' }
+  { id: 'dried_flowers', name: 'Сухоцвіти' }
 ];
 
 const Products: React.FC = () => {
@@ -219,6 +265,7 @@ const Products: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showOrganicOnly, setShowOrganicOnly] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
@@ -235,16 +282,32 @@ const Products: React.FC = () => {
     setSearchTerm('');
     setSelectedCategory('all');
     setShowOrganicOnly(false);
+    setIsDropdownOpen(false);
   };
+
+  // Закрытие выпадающего списка при клике вне его
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('[data-dropdown]')) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isDropdownOpen]);
 
   return (
     <>
       <ProductsContainer>
       <Header>
         <div className="container">
-          <Title>Наши товары</Title>
+          <Title>Наші товари</Title>
           <Subtitle>
-            Откройте для себя мир органических фруктовых чипсов и украшений для коктейлей
+            Відкрийте для себе світ органічних фруктових чіпсів та прикрас для коктейлів
           </Subtitle>
         </div>
       </Header>
@@ -255,7 +318,7 @@ const Products: React.FC = () => {
             <SearchIcon />
             <SearchField
               type="text"
-              placeholder="Поиск товаров..."
+              placeholder="Пошук товарів..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -266,33 +329,49 @@ const Products: React.FC = () => {
             onClick={() => setShowOrganicOnly(!showOrganicOnly)}
           >
             <FiFilter />
-            Только органические
+            Тільки органічні
           </FilterButton>
 
           {(searchTerm || selectedCategory !== 'all' || showOrganicOnly) && (
             <ClearFilters onClick={clearFilters}>
               <FiX />
-              Очистить фильтры
+              Очистити фільтри
             </ClearFilters>
           )}
         </SearchAndFilters>
 
-        <CategoryFilters>
-          {categories.map(category => (
-            <CategoryButton
-              key={category.id}
-              isActive={selectedCategory === category.id}
-              onClick={() => setSelectedCategory(category.id)}
-            >
-              {category.name}
-            </CategoryButton>
-          ))}
-        </CategoryFilters>
+        <CategoryDropdown data-dropdown>
+          <DropdownButton 
+            isOpen={isDropdownOpen}
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          >
+            {categories.find(cat => cat.id === selectedCategory)?.name || 'Всі товари'}
+            <FiChevronDown style={{ 
+              transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.3s ease'
+            }} />
+          </DropdownButton>
+          
+          <DropdownList isOpen={isDropdownOpen}>
+            {categories.map(category => (
+              <DropdownItem
+                key={category.id}
+                isActive={selectedCategory === category.id}
+                onClick={() => {
+                  setSelectedCategory(category.id);
+                  setIsDropdownOpen(false);
+                }}
+              >
+                {category.name}
+              </DropdownItem>
+            ))}
+          </DropdownList>
+        </CategoryDropdown>
 
         {filteredProducts.length === 0 ? (
           <NoProducts>
-            <h3>Товары не найдены</h3>
-            <p>Попробуйте изменить параметры поиска или фильтры</p>
+            <h3>Товари не знайдено</h3>
+            <p>Спробуйте змінити параметри пошуку або фільтри</p>
           </NoProducts>
         ) : (
           <ProductsGrid>

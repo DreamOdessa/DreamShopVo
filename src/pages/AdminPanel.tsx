@@ -489,8 +489,8 @@ const AdminPanel: React.FC = () => {
     <AdminContainer>
       <Header>
         <div className="container">
-          <Title>Админ панель</Title>
-          <Subtitle>Управление товарами, пользователями и заказами</Subtitle>
+          <Title>Адмін панель</Title>
+          <Subtitle>Управління товарами, користувачами та замовленнями</Subtitle>
         </div>
       </Header>
 
@@ -672,13 +672,13 @@ const AdminPanel: React.FC = () => {
                 <Table>
                   <thead>
                     <tr>
-                      <TableHeader>ID заказа</TableHeader>
-                      <TableHeader>Клиент</TableHeader>
-                      <TableHeader>Товары</TableHeader>
-                      <TableHeader>Сумма</TableHeader>
+                      <TableHeader>ID замовлення</TableHeader>
+                      <TableHeader>Клієнт</TableHeader>
+                      <TableHeader>Товари</TableHeader>
+                      <TableHeader>Сума</TableHeader>
                       <TableHeader>Статус</TableHeader>
                       <TableHeader>Дата</TableHeader>
-                      <TableHeader>Действия</TableHeader>
+                      <TableHeader>Дії</TableHeader>
                     </tr>
                   </thead>
                   <tbody>

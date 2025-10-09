@@ -472,9 +472,7 @@ const Checkout: React.FC = () => {
 
   // Расчет итоговой суммы с учетом скидки пользователя
   const getFinalPrice = () => {
-    const total = getTotalPrice();
-    const discount = user?.discount || 0;
-    return total - (total * discount / 100);
+    return getTotalPrice(user?.discount);
   };
 
   // Проверка обязательных полей

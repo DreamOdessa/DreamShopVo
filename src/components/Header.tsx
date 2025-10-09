@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
-import { FiShoppingCart, FiUser, FiMenu, FiX, FiHeart, FiGrid } from 'react-icons/fi';
+import { FiShoppingCart, FiUser, FiMenu, FiX, FiHeart, FiGrid, FiLogOut, FiChevronDown } from 'react-icons/fi';
 import GoogleLogin from './GoogleLogin';
 import CategorySidebar from './CategorySidebar';
 import { useCategorySidebar } from '../contexts/CategorySidebarContext';
@@ -110,6 +110,64 @@ const CategoryButton = styled.button`
   }
 `;
 
+const ProfileDropdown = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const ProfileButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  background: none;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  font-weight: 600;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+`;
+
+const ProfileDropdownList = styled.div<{ isOpen: boolean }>`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 200px;
+  display: ${props => props.isOpen ? 'block' : 'none'};
+  margin-top: 0.5rem;
+`;
+
+const ProfileDropdownItem = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: #495057;
+  text-decoration: none;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid #f8f9fa;
+
+  &:hover {
+    background: #f8f9fa;
+    color: #667eea;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+`;
+
 const CartButton = styled(Link)`
   position: relative;
   color: white;
@@ -170,13 +228,29 @@ const CloseButton = styled.button`
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const { openSidebar, closeSidebar, isOpen: isCategorySidebarOpen } = useCategorySidebar();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { getTotalItems } = useCart();
   const { getTotalItems: getWishlistItems } = useWishlist();
   const location = useLocation();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  // Закрытие выпадающих списков при клике вне их
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('[data-profile-dropdown]')) {
+        setIsProfileDropdownOpen(false);
+      }
+    };
+
+    if (isProfileDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isProfileDropdownOpen]);
 
   return (
     <>
@@ -259,24 +333,54 @@ const Header: React.FC = () => {
             </CartButton>
 
             {user ? (
-              <Link 
-                to="/profile" 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '0.5rem',
-                  color: 'white',
-                  textDecoration: 'none',
-                  padding: '0.5rem',
-                  borderRadius: '8px',
-                  transition: 'background 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-              >
-                <FiUser />
-                <span>{user.name}</span>
-              </Link>
+              <ProfileDropdown data-profile-dropdown>
+                <ProfileButton 
+                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                >
+                  <FiUser />
+                  <span>{user.name} {user.lastName && user.lastName}</span>
+                  <FiChevronDown style={{ 
+                    fontSize: '0.8rem',
+                    transform: isProfileDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.3s ease'
+                  }} />
+                </ProfileButton>
+                
+                <ProfileDropdownList isOpen={isProfileDropdownOpen}>
+                  <ProfileDropdownItem 
+                    to="/profile" 
+                    onClick={() => {
+                      setIsProfileDropdownOpen(false);
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    <FiUser />
+                    Мій профіль
+                  </ProfileDropdownItem>
+                  <ProfileDropdownItem 
+                    to="/orders" 
+                    onClick={() => {
+                      setIsProfileDropdownOpen(false);
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    <FiShoppingCart />
+                    Мої замовлення
+                  </ProfileDropdownItem>
+                  <ProfileDropdownItem 
+                    to="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      logout();
+                      setIsProfileDropdownOpen(false);
+                      setIsMenuOpen(false);
+                    }}
+                  >
+                    <FiLogOut />
+                    Вихід
+                  </ProfileDropdownItem>
+                </ProfileDropdownList>
+              </ProfileDropdown>
             ) : (
               <GoogleLogin />
             )}

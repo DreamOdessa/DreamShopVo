@@ -5,6 +5,7 @@ import { WishlistProvider } from './contexts/WishlistContext';
 import { CategorySidebarProvider } from './contexts/CategorySidebarContext';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import ScrollToTop from './components/ScrollToTop';
 import Home from './pages/Home';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
@@ -27,6 +28,7 @@ const App: React.FC = () => {
   return (
     <WishlistProvider>
       <CategorySidebarProvider>
+        <ScrollToTop />
         <Header />
         <main>
           <Routes>

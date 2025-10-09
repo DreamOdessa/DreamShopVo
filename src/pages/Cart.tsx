@@ -404,15 +404,21 @@ const Cart: React.FC = () => {
           <SummaryTitle>Разом</SummaryTitle>
           <SummaryRow>
             <span>Товари ({getTotalItems()} шт.)</span>
-            <span>{getTotalPrice()} ₴</span>
+            <span>{getTotalPrice(user?.discount)} ₴</span>
           </SummaryRow>
+          {user?.discount && user.discount > 0 && (
+            <SummaryRow style={{ color: '#27ae60' }}>
+              <span>Ваша знижка ({user.discount}%)</span>
+              <span>-{getTotalPrice() - getTotalPrice(user.discount)} ₴</span>
+            </SummaryRow>
+          )}
           <SummaryRow>
             <span>Доставка</span>
             <span>Безкоштовно</span>
           </SummaryRow>
           <SummaryRow>
             <span>Разом до оплати</span>
-            <span>{getTotalPrice()} ₴</span>
+            <span>{getTotalPrice(user?.discount)} ₴</span>
           </SummaryRow>
 
           <CheckoutButton onClick={handleCheckout} disabled={!user}>

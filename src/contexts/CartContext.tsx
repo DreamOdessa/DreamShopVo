@@ -9,7 +9,7 @@ interface CartContextType {
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
-  getTotalPrice: () => number;
+  getTotalPrice: (userDiscount?: number) => number;
   getTotalItems: () => number;
   createOrder: (orderData: Omit<Order, 'id' | 'createdAt'>) => Promise<string>;
 }
@@ -78,11 +78,17 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     setItems([]);
   };
 
-  const getTotalPrice = () => {
-    return items.reduce((total, item) => {
+  const getTotalPrice = (userDiscount?: number) => {
+    const total = items.reduce((total, item) => {
       const price = item.product.originalPrice || item.product.price;
       return total + (price * item.quantity);
     }, 0);
+    
+    if (userDiscount && userDiscount > 0) {
+      return total * (1 - userDiscount / 100);
+    }
+    
+    return total;
   };
 
   const getTotalItems = () => {

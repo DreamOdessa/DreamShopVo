@@ -1,16 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiCreditCard, FiUser, FiMapPin, FiCheckCircle, FiArrowLeft } from 'react-icons/fi';
+import { FiUser, FiMapPin, FiTruck, FiCreditCard, FiCheck, FiChevronDown, FiChevronUp, FiArrowLeft } from 'react-icons/fi';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-// import { useAdmin } from '../contexts/AdminContext'; // Отключено для избежания неиспользуемого импорта
 import toast from 'react-hot-toast';
 
+// Стили компонентов
 const CheckoutContainer = styled.div`
   padding: 2rem 0;
   min-height: 80vh;
+  background: #f8f9fa;
 `;
 
 const Header = styled.div`
@@ -36,440 +37,696 @@ const Subtitle = styled.p`
 `;
 
 const CheckoutContent = styled.div`
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 2rem 20px;
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 3rem;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 `;
 
 const FormSection = styled.div`
   background: white;
-  border-radius: 20px;
+  border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 `;
 
 const SectionTitle = styled.h2`
   font-size: 1.5rem;
-  font-weight: 700;
-  color: #2c3e50;
+  font-weight: 600;
   margin-bottom: 1.5rem;
+  color: #2c3e50;
   display: flex;
   align-items: center;
   gap: 0.5rem;
 `;
 
-const FormGroup = styled.div`
-  margin-bottom: 1.5rem;
+const FormGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const FormField = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 `;
 
 const Label = styled.label`
-  display: block;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #34495e;
+  font-size: 0.9rem;
 `;
 
 const Input = styled.input`
-  width: 100%;
-  padding: 1rem;
-  border: 2px solid #e9ecef;
-  border-radius: 10px;
+  padding: 0.75rem;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
   font-size: 1rem;
-  transition: all 0.3s ease;
+  transition: border-color 0.3s ease;
 
   &:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #00acc1;
+  }
+
+  &:disabled {
+    background-color: #f8f9fa;
+    color: #6c757d;
+  }
+`;
+
+const Select = styled.select`
+  padding: 0.75rem;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: white;
+  transition: border-color 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: #00acc1;
   }
 `;
 
 const TextArea = styled.textarea`
-  width: 100%;
-  padding: 1rem;
-  border: 2px solid #e9ecef;
-  border-radius: 10px;
+  padding: 0.75rem;
+  border: 2px solid #e1e8ed;
+  border-radius: 8px;
   font-size: 1rem;
   min-height: 100px;
   resize: vertical;
-  transition: all 0.3s ease;
+  transition: border-color 0.3s ease;
 
   &:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #00acc1;
   }
 `;
 
-const OrderSummary = styled.div`
+const CheckboxContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+`;
+
+const Checkbox = styled.input`
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+`;
+
+const CheckboxLabel = styled.label`
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #34495e;
+`;
+
+const Note = styled.p`
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.5rem;
+  font-style: italic;
+`;
+
+// Блок проверки заказа
+const OrderSummarySection = styled.div`
   background: white;
-  border-radius: 20px;
+  border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  height: fit-content;
-  position: sticky;
-  top: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const OrderSummaryHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e1e8ed;
+`;
+
+const OrderSummaryTitle = styled.h3`
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+`;
+
+const OrderSummaryContent = styled.div<{ isExpanded: boolean }>`
+  max-height: ${props => props.isExpanded ? '500px' : '0'};
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding-top: ${props => props.isExpanded ? '1rem' : '0'};
 `;
 
 const OrderItem = styled.div`
   display: flex;
-  gap: 1rem;
-  padding: 1rem 0;
-  border-bottom: 1px solid #e9ecef;
-
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const OrderItemImage = styled.img`
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 10px;
-`;
-
-const OrderItemInfo = styled.div`
-  flex: 1;
-`;
-
-const OrderItemName = styled.h4`
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #2c3e50;
-  margin-bottom: 0.3rem;
-`;
-
-const OrderItemQuantity = styled.p`
-  font-size: 0.8rem;
-  color: #6c757d;
-  margin-bottom: 0.3rem;
-`;
-
-const OrderItemPrice = styled.p`
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #27ae60;
-`;
-
-const SummaryRow = styled.div`
-  display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.8rem 0;
-  border-bottom: 1px solid #e9ecef;
-
-  &:last-child {
-    border-bottom: none;
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: #2c3e50;
-  }
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f8f9fa;
 `;
 
-const PlaceOrderButton = styled.button`
-  width: 100%;
-  background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
-  color: white;
-  border: none;
+const TotalAmount = styled.div`
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #00acc1;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 2px solid #e1e8ed;
+  text-align: right;
+`;
+
+// Кнопки
+const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
   padding: 1rem 2rem;
-  border-radius: 25px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
   font-weight: 600;
-  font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  margin-top: 1.5rem;
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0, 150, 136, 0.3);
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const BackButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: white;
-  color: #00acc1;
-  border: 2px solid #00acc1;
-  padding: 0.8rem 1.5rem;
-  border-radius: 25px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-bottom: 2rem;
-
-  &:hover {
+  ${props => props.variant === 'primary' ? `
     background: #00acc1;
     color: white;
+    
+    &:hover {
+      background: #0097a7;
+      transform: translateY(-2px);
+    }
+    
+    &:disabled {
+      background: #b0bec5;
+      cursor: not-allowed;
+      transform: none;
+    }
+  ` : `
+    background: #6c757d;
+    color: white;
+    
+    &:hover {
+      background: #5a6268;
+    }
+  `}
+`;
+
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
   }
 `;
 
-const SuccessMessage = styled.div`
-  text-align: center;
-  padding: 4rem 2rem;
-  color: #27ae60;
+// Автоподсказки
+const SuggestionsList = styled.ul`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e1e8ed;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`;
 
-  h2 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
+const SuggestionItem = styled.li`
+  padding: 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f8f9fa;
+
+  &:hover {
+    background: #f8f9fa;
   }
 
-  p {
-    font-size: 1.1rem;
-    margin-bottom: 2rem;
-    color: #6c757d;
+  &:last-child {
+    border-bottom: none;
   }
 `;
+
+const AutocompleteContainer = styled.div`
+  position: relative;
+`;
+
+// Украинские города для автоподсказок
+const ukrainianCities = [
+  'Київ', 'Харків', 'Одеса', 'Дніпро', 'Донецьк', 'Запоріжжя', 'Львів', 'Кривий Ріг',
+  'Миколаїв', 'Маріуполь', 'Луганськ', 'Вінниця', 'Херсон', 'Полтава', 'Чернігів',
+  'Черкаси', 'Суми', 'Житомир', 'Хмельницький', 'Чернівці', 'Рівне', 'Івано-Франківськ',
+  'Кропивницький', 'Тернопіль', 'Луцьк', 'Ужгород', 'Біла Церква', 'Кременчук'
+];
 
 const Checkout: React.FC = () => {
   const { items, getTotalPrice, getTotalItems, createOrder } = useCart();
   const { user } = useAuth();
-  // const { orders, updateOrderStatus } = useAdmin(); // Отключено для избежания неиспользуемых переменных
   const navigate = useNavigate();
-  const [isOrderPlaced, setIsOrderPlaced] = useState(false);
+  
+  // Состояние формы
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    firstName: user?.name?.split(' ')[0] || '',
+    lastName: user?.name?.split(' ')[1] || '',
     phone: '',
-    address: '',
     city: '',
-    postalCode: '',
-    comments: ''
+    deliveryMethod: '',
+    deliveryDetails: '',
+    establishmentName: '',
+    isPrivatePerson: false,
+    paymentMethod: '',
+    contactForClarification: false
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+  // Состояние для автоподсказок
+  const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  
+  // Состояние для блока заказа
+  const [isOrderSummaryExpanded, setIsOrderSummaryExpanded] = useState(false);
+
+  // Автозаполнение данных из профиля
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: user.name?.split(' ')[0] || '',
+        lastName: user.name?.split(' ')[1] || '',
+        phone: prev.phone || ''
+      }));
+    }
+  }, [user]);
+
+  // Обработка изменений в полях
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [field]: value
     }));
+
+    // Логика для города
+    if (field === 'city') {
+      const cityValue = value as string;
+      if (cityValue.length > 1) {
+        const filtered = ukrainianCities.filter(city =>
+          city.toLowerCase().includes(cityValue.toLowerCase())
+        );
+        setCitySuggestions(filtered);
+        setShowCitySuggestions(true);
+      } else {
+        setShowCitySuggestions(false);
+      }
+    }
   };
 
-  const handlePlaceOrder = async () => {
-    if (!formData.name || !formData.phone || !formData.address || !formData.city) {
-      toast.error('Заповніть всі обов\'язкові поля');
-      return;
+  // Быстрый выбор Одессы
+  const handleOdessaQuickSelect = (checked: boolean) => {
+    if (checked) {
+      setFormData(prev => ({
+        ...prev,
+        city: 'Одеса'
+      }));
+    }
+  };
+
+  // Получение способов доставки в зависимости от города
+  const getDeliveryMethods = () => {
+    const baseMethods = [
+      { value: 'post_office', label: 'Доставка на відділення' },
+      { value: 'address', label: 'Доставка за адресою' }
+    ];
+
+    if (formData.city === 'Одеса') {
+      return [
+        ...baseMethods,
+        { value: 'schedule', label: 'Доставка за графіком' },
+        { value: 'taxi', label: 'Екстрена доставка (Таксі)' }
+      ];
     }
 
-    if (!user) {
-      toast.error('Необхідно увійти в систему');
+    return baseMethods;
+  };
+
+  // Получение способов оплаты в зависимости от города
+  const getPaymentMethods = () => {
+    const baseMethods = [
+      { value: 'cash_on_delivery', label: 'Накладений платіж' },
+      { value: 'bank_transfer', label: 'Оплата за реквізитами' },
+      { value: 'fop', label: 'Оплата ФОП' }
+    ];
+
+    if (formData.city === 'Одеса') {
+      return [
+        ...baseMethods,
+        { value: 'cash', label: 'Оплата готівкою' }
+      ];
+    }
+
+    return baseMethods;
+  };
+
+  // Расчет итоговой суммы с учетом скидки пользователя
+  const getFinalPrice = () => {
+    const total = getTotalPrice();
+    const discount = user?.discount || 0;
+    return total - (total * discount / 100);
+  };
+
+  // Проверка обязательных полей
+  const isFormValid = () => {
+    return formData.firstName &&
+           formData.lastName &&
+           formData.phone &&
+           formData.city &&
+           formData.deliveryMethod &&
+           formData.paymentMethod &&
+           (!formData.isPrivatePerson ? formData.establishmentName : true);
+  };
+
+  // Обработка отправки заказа
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!isFormValid()) {
+      toast.error('Будь ласка, заповніть всі обов\'язкові поля');
       return;
     }
 
     try {
-      // Создаем новый заказ
       const orderData = {
-        userId: user.id,
+        ...formData,
         items: items,
-        total: getTotalPrice(),
-        status: 'pending' as const,
-        shippingAddress: {
-          name: formData.name,
-          address: formData.address,
-          city: formData.city,
-          postalCode: formData.postalCode,
-          phone: formData.phone
-        }
+        totalAmount: getFinalPrice(),
+        userDiscount: user?.discount || 0,
+        orderDate: new Date().toISOString()
       };
 
       await createOrder(orderData);
-      setIsOrderPlaced(true);
+      toast.success('Замовлення успішно оформлено!');
+      navigate('/');
     } catch (error) {
-      console.error('Помилка створення замовлення:', error);
+      toast.error('Помилка при оформленні замовлення');
+      console.error('Order error:', error);
     }
   };
-
-  if (isOrderPlaced) {
-    return (
-      <CheckoutContainer>
-        <div className="container">
-          <SuccessMessage>
-            <FiCheckCircle size={80} style={{ margin: '0 auto 2rem', display: 'block' }} />
-            <h2>Заказ оформлен!</h2>
-            <p>Спасибо за покупку! Мы свяжемся с вами в ближайшее время для подтверждения заказа.</p>
-            <motion.button
-              onClick={() => navigate('/')}
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                border: 'none',
-                padding: '1rem 2rem',
-                borderRadius: '25px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                fontSize: '1.1rem'
-              }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Вернуться на главную
-            </motion.button>
-          </SuccessMessage>
-        </div>
-      </CheckoutContainer>
-    );
-  }
-
-  if (items.length === 0) {
-    navigate('/cart');
-    return null;
-  }
 
   return (
     <CheckoutContainer>
       <Header>
-        <div className="container">
-          <Title>Оформление заказа</Title>
-          <Subtitle>Заполните данные для доставки</Subtitle>
-        </div>
+        <Title>Оформлення замовлення</Title>
+        <Subtitle>Заповніть форму для завершення замовлення</Subtitle>
       </Header>
 
       <CheckoutContent>
-        <FormSection>
-          <BackButton onClick={() => navigate('/cart')}>
-            <FiArrowLeft />
-            Вернуться в корзину
-          </BackButton>
+        <form onSubmit={handleSubmit}>
+          {/* 1. Контактна інформація */}
+          <FormSection>
+            <SectionTitle>
+              <FiUser />
+              Контактна інформація
+            </SectionTitle>
+            <FormGrid>
+              <FormField>
+                <Label>Ім'я *</Label>
+                <Input
+                  type="text"
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange('firstName', e.target.value)}
+                  required
+                />
+              </FormField>
+              <FormField>
+                <Label>Прізвище *</Label>
+                <Input
+                  type="text"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange('lastName', e.target.value)}
+                  required
+                />
+              </FormField>
+            </FormGrid>
+            <FormField>
+              <Label>Номер телефону *</Label>
+              <Input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder="+380 (XX) XXX XX XX"
+                required
+              />
+            </FormField>
+          </FormSection>
 
-          <SectionTitle>
-            <FiUser />
-            Контактная информация
-          </SectionTitle>
+          {/* 2. Місто доставки */}
+          <FormSection>
+            <SectionTitle>
+              <FiMapPin />
+              Місто доставки
+            </SectionTitle>
+            <AutocompleteContainer>
+              <FormField>
+                <Label>Місто *</Label>
+                <Input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  disabled={formData.city === 'Одеса'}
+                  placeholder="Введіть назву міста"
+                  required
+                />
+                {showCitySuggestions && citySuggestions.length > 0 && (
+                  <SuggestionsList>
+                    {citySuggestions.map((city, index) => (
+                      <SuggestionItem
+                        key={index}
+                        onClick={() => {
+                          handleInputChange('city', city);
+                          setShowCitySuggestions(false);
+                        }}
+                      >
+                        {city}
+                      </SuggestionItem>
+                    ))}
+                  </SuggestionsList>
+                )}
+              </FormField>
+            </AutocompleteContainer>
+            <CheckboxContainer>
+              <Checkbox
+                type="checkbox"
+                id="odessa-quick"
+                onChange={(e) => handleOdessaQuickSelect(e.target.checked)}
+              />
+              <CheckboxLabel htmlFor="odessa-quick">
+                Місто Одеса
+              </CheckboxLabel>
+            </CheckboxContainer>
+          </FormSection>
 
-          <FormGroup>
-            <Label htmlFor="name">Имя и фамилия *</Label>
-            <Input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-            />
-          </FormGroup>
+          {/* 3. Спосіб доставки */}
+          <FormSection>
+            <SectionTitle>
+              <FiTruck />
+              Спосіб доставки
+            </SectionTitle>
+            <FormField>
+              <Label>Спосіб доставки *</Label>
+              <Select
+                value={formData.deliveryMethod}
+                onChange={(e) => handleInputChange('deliveryMethod', e.target.value)}
+                required
+              >
+                <option value="">Оберіть спосіб доставки</option>
+                {getDeliveryMethods().map((method) => (
+                  <option key={method.value} value={method.value}>
+                    {method.label}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
 
-          <FormGroup>
-            <Label htmlFor="phone">Телефон *</Label>
-            <Input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              placeholder="+7 (999) 123-45-67"
-              required
-            />
-          </FormGroup>
+            {formData.deliveryMethod === 'post_office' && (
+              <FormField>
+                <Label>Відділення Нової Пошти *</Label>
+                <Input
+                  type="text"
+                  value={formData.deliveryDetails}
+                  onChange={(e) => handleInputChange('deliveryDetails', e.target.value)}
+                  placeholder="Номер відділення або адреса"
+                  required
+                />
+              </FormField>
+            )}
 
-          <SectionTitle>
-            <FiMapPin />
-            Адрес доставки
-          </SectionTitle>
+            {formData.deliveryMethod === 'address' && (
+              <FormField>
+                <Label>Адреса доставки *</Label>
+                <TextArea
+                  value={formData.deliveryDetails}
+                  onChange={(e) => handleInputChange('deliveryDetails', e.target.value)}
+                  placeholder="Повна адреса доставки"
+                  required
+                />
+              </FormField>
+            )}
 
-          <FormGroup>
-            <Label htmlFor="city">Город *</Label>
-            <Input
-              type="text"
-              id="city"
-              name="city"
-              value={formData.city}
-              onChange={handleInputChange}
-              placeholder="Москва"
-              required
-            />
-          </FormGroup>
+            {formData.deliveryMethod === 'schedule' && (
+              <Note>
+                Доставка здійснюється 1 раз на тиждень по середах.
+              </Note>
+            )}
 
-          <FormGroup>
-            <Label htmlFor="address">Адрес *</Label>
-            <Input
-              type="text"
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleInputChange}
-              placeholder="ул. Примерная, д. 123, кв. 45"
-              required
-            />
-          </FormGroup>
+            {formData.deliveryMethod === 'taxi' && (
+              <Note>
+                Тариф таксі за термінову доставку оплачується клієнтом.
+              </Note>
+            )}
+          </FormSection>
 
-          <FormGroup>
-            <Label htmlFor="postalCode">Почтовый индекс</Label>
-            <Input
-              type="text"
-              id="postalCode"
-              name="postalCode"
-              value={formData.postalCode}
-              onChange={handleInputChange}
-              placeholder="123456"
-            />
-          </FormGroup>
+          {/* 4. Інформація про отримувача */}
+          <FormSection>
+            <SectionTitle>
+              <FiUser />
+              Інформація про отримувача
+            </SectionTitle>
+            <FormField>
+              <Label>Назва закладу</Label>
+              <Input
+                type="text"
+                value={formData.establishmentName}
+                onChange={(e) => handleInputChange('establishmentName', e.target.value)}
+                disabled={formData.isPrivatePerson}
+                placeholder="Назва закладу"
+              />
+            </FormField>
+            <CheckboxContainer>
+              <Checkbox
+                type="checkbox"
+                id="private-person"
+                checked={formData.isPrivatePerson}
+                onChange={(e) => handleInputChange('isPrivatePerson', e.target.checked)}
+              />
+              <CheckboxLabel htmlFor="private-person">
+                Для приватної особи
+              </CheckboxLabel>
+            </CheckboxContainer>
+          </FormSection>
 
-          <FormGroup>
-            <Label htmlFor="comments">Комментарии к заказу</Label>
-            <TextArea
-              id="comments"
-              name="comments"
-              value={formData.comments}
-              onChange={handleInputChange}
-              placeholder="Дополнительные пожелания по доставке..."
-            />
-          </FormGroup>
-        </FormSection>
+          {/* 5. Спосіб оплати */}
+          <FormSection>
+            <SectionTitle>
+              <FiCreditCard />
+              Спосіб оплати
+            </SectionTitle>
+            <FormField>
+              <Label>Спосіб оплати *</Label>
+              <Select
+                value={formData.paymentMethod}
+                onChange={(e) => handleInputChange('paymentMethod', e.target.value)}
+                required
+              >
+                <option value="">Оберіть спосіб оплати</option>
+                {getPaymentMethods().map((method) => (
+                  <option key={method.value} value={method.value}>
+                    {method.label}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+          </FormSection>
 
-        <OrderSummary>
-          <SectionTitle>
-            <FiCreditCard />
-            Ваш заказ
-          </SectionTitle>
+          {/* 6. Перевірка замовлення */}
+          <OrderSummarySection>
+            <SectionTitle>
+              <FiCheck />
+              Перевірка замовлення та розрахунок
+            </SectionTitle>
+            
+            <OrderSummaryHeader
+              onClick={() => setIsOrderSummaryExpanded(!isOrderSummaryExpanded)}
+            >
+              <OrderSummaryTitle>
+                Товари в замовленні ({getTotalItems()} позицій)
+              </OrderSummaryTitle>
+              {isOrderSummaryExpanded ? <FiChevronUp /> : <FiChevronDown />}
+            </OrderSummaryHeader>
 
-          {items.map(item => (
-            <OrderItem key={item.product.id}>
-              <OrderItemImage src={item.product.image} alt={item.product.name} />
-              <OrderItemInfo>
-                <OrderItemName>{item.product.name}</OrderItemName>
-                <OrderItemQuantity>Количество: {item.quantity} шт.</OrderItemQuantity>
-                <OrderItemPrice>{item.product.price * item.quantity} ₴</OrderItemPrice>
-              </OrderItemInfo>
-            </OrderItem>
-          ))}
+            <OrderSummaryContent isExpanded={isOrderSummaryExpanded}>
+              {items.map((item) => (
+                <OrderItem key={item.id}>
+                  <div>
+                    <div>{item.name}</div>
+                    <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>
+                      {item.quantity} шт. × {item.price} грн
+                    </div>
+                  </div>
+                  <div style={{ fontWeight: '600' }}>
+                    {(item.price * item.quantity).toFixed(2)} грн
+                  </div>
+                </OrderItem>
+              ))}
+            </OrderSummaryContent>
 
-          <SummaryRow>
-            <span>Товары ({getTotalItems()} шт.)</span>
-            <span>{getTotalPrice()} ₴</span>
-          </SummaryRow>
-          <SummaryRow>
-            <span>Доставка</span>
-            <span>Бесплатно</span>
-          </SummaryRow>
-          <SummaryRow>
-            <span>Итого к оплате</span>
-            <span>{getTotalPrice()} ₴</span>
-          </SummaryRow>
+            <TotalAmount>
+              До сплати: {getFinalPrice().toFixed(2)} грн
+              {user?.discount && user.discount > 0 && (
+                <div style={{ fontSize: '0.9rem', fontWeight: '400', color: '#6c757d' }}>
+                  (з урахуванням знижки {user.discount}%)
+                </div>
+              )}
+            </TotalAmount>
+          </OrderSummarySection>
 
-          <PlaceOrderButton onClick={handlePlaceOrder}>
-            <FiCheckCircle />
-            Оформить заказ
-          </PlaceOrderButton>
-        </OrderSummary>
+          {/* 7. Завершення оформлення */}
+          <FormSection>
+            <CheckboxContainer>
+              <Checkbox
+                type="checkbox"
+                id="contact-clarification"
+                checked={formData.contactForClarification}
+                onChange={(e) => handleInputChange('contactForClarification', e.target.checked)}
+              />
+              <CheckboxLabel htmlFor="contact-clarification">
+                Зв'язатися для уточнення інформації
+              </CheckboxLabel>
+            </CheckboxContainer>
+
+            <ButtonContainer>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => navigate('/cart')}
+              >
+                <FiArrowLeft />
+                Повернутися до кошика
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={!isFormValid()}
+              >
+                <FiCheck />
+                Оформити замовлення
+              </Button>
+            </ButtonContainer>
+          </FormSection>
+        </form>
       </CheckoutContent>
     </CheckoutContainer>
   );

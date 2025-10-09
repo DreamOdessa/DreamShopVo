@@ -16,7 +16,7 @@ const Header = styled.div`
   color: white;
   padding: 3rem 0;
   text-align: center;
-  background-image: url('https://dream-shop-vo.vercel.app/background-second.jpg');
+  background-image: url('https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/background-second.jpg');
   background-size: cover;
   background-position: center;
   background-blend-mode: overlay;

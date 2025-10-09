@@ -76,44 +76,39 @@ class GeocodingApiService {
     }
   }
 
-  // Автозаполнение адресов (Place Autocomplete)
+  // Автозаполнение адресов (Place Autocomplete) - ОТКЛЮЧЕНО из-за CORS
   async getAddressSuggestions(input: string, country: string = 'ua'): Promise<GeocodingSuggestion[]> {
     try {
-      // Проверяем наличие API ключа
-      if (!this.GOOGLE_MAPS_API_KEY || this.GOOGLE_MAPS_API_KEY === 'your-google-maps-api-key') {
-        console.warn('⚠️ Google Maps API Key не настроен');
-        return [];
-      }
-
-      console.log('🔍 Получение автозаполнения адресов для:', input);
+      console.log('⚠️ Google Maps API отключен из-за CORS ограничений');
+      console.log('💡 Для работы автозаполнения адресов нужно настроить серверный прокси');
       
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&components=country:${country}&key=${this.GOOGLE_MAPS_API_KEY}`
-      );
-
-      const data = await response.json();
-      console.log('📡 Ответ Google Places API:', data);
-
-      if (data.status === 'OK' && data.predictions) {
-        console.log('✅ Найдено адресов:', data.predictions.length);
-        return data.predictions.map((prediction: any) => ({
-          description: prediction.description,
-          place_id: prediction.place_id,
-          structured_formatting: {
-            main_text: prediction.structured_formatting.main_text,
-            secondary_text: prediction.structured_formatting.secondary_text,
-          },
-        }));
+      // Возвращаем простые подсказки для Украины
+      if (country === 'ua' && input.length > 2) {
+        const ukrainianAddresses = [
+          'вул. Дерибасівська, 1, Одеса',
+          'вул. Приморський бульвар, 1, Одеса',
+          'вул. Рішельєвська, 1, Одеса',
+          'пр. Шевченка, 1, Одеса',
+          'вул. Ланжеронівська, 1, Одеса'
+        ];
+        
+        const filtered = ukrainianAddresses.filter(addr => 
+          addr.toLowerCase().includes(input.toLowerCase())
+        );
+        
+        if (filtered.length > 0) {
+          console.log('✅ Найдено локальных адресов:', filtered.length);
+          return filtered.map((address, index) => ({
+            description: address,
+            place_id: `local_${index}`,
+            structured_formatting: {
+              main_text: address.split(',')[0],
+              secondary_text: address.split(',').slice(1).join(',').trim(),
+            },
+          }));
+        }
       }
-
-      if (data.status === 'REQUEST_DENIED') {
-        console.error('❌ Google Maps API: Запрос отклонен. Проверьте API ключ и права доступа');
-      } else if (data.status === 'OVER_QUERY_LIMIT') {
-        console.error('❌ Google Maps API: Превышен лимит запросов');
-      } else {
-        console.error('❌ Google Maps API ошибка:', data.status, data.error_message);
-      }
-
+      
       return [];
     } catch (error) {
       console.error('❌ Ошибка получения автозаполнения адресов:', error);

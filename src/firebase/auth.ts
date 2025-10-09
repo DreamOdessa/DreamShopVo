@@ -28,7 +28,24 @@ export const signInWithGoogle = async (): Promise<User> => {
     const result = await signInWithPopup(auth, googleProvider);
     console.log('✅ Google auth успешно:', result.user.email);
     
-    const user = mapFirebaseUser(result.user);
+    // Проверяем, есть ли пользователь в базе данных
+    const existingUser = await userService.getById(result.user.uid);
+    let user;
+    
+    if (existingUser) {
+      // Если пользователь существует, обновляем только основные данные, сохраняя права администратора
+      console.log('👤 Обновляем существующего пользователя');
+      user = {
+        ...existingUser,
+        name: result.user.displayName || existingUser.name,
+        email: result.user.email || existingUser.email,
+        avatar: result.user.photoURL || existingUser.avatar
+      };
+    } else {
+      // Если пользователя нет, создаем нового
+      console.log('➕ Создаем нового пользователя');
+      user = mapFirebaseUser(result.user);
+    }
     
     // Сохраняем пользователя в базе данных
     await userService.createOrUpdate(user);
@@ -62,7 +79,15 @@ export const onAuthStateChange = (callback: (user: User | null) => void) => {
       const userData = await userService.getById(firebaseUser.uid);
       if (userData) {
         console.log('✅ Пользователь найден в базе:', userData.email);
-        callback(userData);
+        // Обновляем только основные данные, сохраняя права администратора
+        const updatedUser = {
+          ...userData,
+          name: firebaseUser.displayName || userData.name,
+          email: firebaseUser.email || userData.email,
+          avatar: firebaseUser.photoURL || userData.avatar
+        };
+        await userService.createOrUpdate(updatedUser);
+        callback(updatedUser);
       } else {
         // Если пользователя нет в базе, создаем его
         console.log('➕ Создаем нового пользователя в базе');

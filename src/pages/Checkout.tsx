@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { FiUser, FiMapPin, FiTruck, FiCreditCard, FiCheck, FiChevronDown, FiChevronUp, FiArrowLeft } from 'react-icons/fi';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { CartItem } from '../types';
 import toast from 'react-hot-toast';
 
 // Стили компонентов
@@ -428,13 +429,24 @@ const Checkout: React.FC = () => {
       return;
     }
 
+    if (!user) {
+      toast.error('Будь ласка, увійдіть в систему');
+      return;
+    }
+
     try {
       const orderData = {
-        ...formData,
+        userId: user.id,
         items: items,
-        totalAmount: getFinalPrice(),
-        userDiscount: user?.discount || 0,
-        orderDate: new Date().toISOString()
+        total: getFinalPrice(),
+        status: 'pending' as const,
+        shippingAddress: {
+          name: `${formData.firstName} ${formData.lastName}`,
+          address: formData.deliveryDetails,
+          city: formData.city,
+          postalCode: '', // Можно добавить поле почтового индекса
+          phone: formData.phone
+        }
       };
 
       await createOrder(orderData);

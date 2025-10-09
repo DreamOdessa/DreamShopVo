@@ -238,7 +238,8 @@ const Products: React.FC = () => {
   };
 
   return (
-    <ProductsContainer>
+    <>
+      <ProductsContainer>
       <Header>
         <div className="container">
           <Title>Наши товары</Title>
@@ -308,19 +309,20 @@ const Products: React.FC = () => {
           </ProductsGrid>
         )}
       </FiltersSection>
-    </ProductsContainer>
+      </ProductsContainer>
 
-    {/* Боковая панель категорий */}
-    <CategorySidebar
-      isOpen={isCategorySidebarOpen}
-      onClose={closeSidebar}
-      categories={categories}
-      selectedCategory={selectedCategory}
-      onCategorySelect={(categoryId) => {
-        setSelectedCategory(categoryId);
-        closeSidebar();
-      }}
-    />
+      {/* Боковая панель категорий */}
+      <CategorySidebar
+        isOpen={isCategorySidebarOpen}
+        onClose={closeSidebar}
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategorySelect={(categoryId) => {
+          setSelectedCategory(categoryId);
+          closeSidebar();
+        }}
+      />
+    </>
   );
 };
 

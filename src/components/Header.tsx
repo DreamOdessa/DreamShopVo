@@ -179,7 +179,8 @@ const Header: React.FC = () => {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
-    <HeaderContainer>
+    <>
+      <HeaderContainer>
       <Nav>
         <Logo to="/">
           <LogoIcon>
@@ -286,28 +287,29 @@ const Header: React.FC = () => {
           <FiMenu />
         </MobileMenuButton>
       </Nav>
-    </HeaderContainer>
+      </HeaderContainer>
 
-    {/* Боковая панель категорий */}
-    <CategorySidebar
-      isOpen={isCategorySidebarOpen}
-      onClose={closeSidebar}
-      categories={[
-        { id: 'all', name: 'Всі товари', icon: '🏠' },
-        { id: 'chips', name: 'Фруктові чіпси', icon: '🍎' },
-        { id: 'decorations', name: 'Прикраси', icon: '✨' },
-        { id: 'syrups', name: 'Сиропи', icon: '🍯' },
-        { id: 'purees', name: 'Пюре', icon: '🥄' },
-        { id: 'dried_flowers', name: 'Сухоцвіти', icon: '🌸' }
-      ]}
-      selectedCategory="all"
-      onCategorySelect={(categoryId) => {
-        // Пока что просто закрываем панель
-        // В будущем можно добавить навигацию к товарам с фильтром
-        closeSidebar();
-        console.log('Selected category:', categoryId);
-      }}
-    />
+      {/* Боковая панель категорий */}
+      <CategorySidebar
+        isOpen={isCategorySidebarOpen}
+        onClose={closeSidebar}
+        categories={[
+          { id: 'all', name: 'Всі товари', icon: '🏠' },
+          { id: 'chips', name: 'Фруктові чіпси', icon: '🍎' },
+          { id: 'decorations', name: 'Прикраси', icon: '✨' },
+          { id: 'syrups', name: 'Сиропи', icon: '🍯' },
+          { id: 'purees', name: 'Пюре', icon: '🥄' },
+          { id: 'dried_flowers', name: 'Сухоцвіти', icon: '🌸' }
+        ]}
+        selectedCategory="all"
+        onCategorySelect={(categoryId) => {
+          // Пока что просто закрываем панель
+          // В будущем можно добавить навигацию к товарам с фильтром
+          closeSidebar();
+          console.log('Selected category:', categoryId);
+        }}
+      />
+    </>
   );
 };
 

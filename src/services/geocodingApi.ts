@@ -76,22 +76,26 @@ class GeocodingApiService {
     }
   }
 
-  // Автозаполнение адресов (Place Autocomplete) - ОТКЛЮЧЕНО из-за CORS
+  // Автозаполнение адресов (Place Autocomplete)
   async getAddressSuggestions(input: string, country: string = 'ua'): Promise<GeocodingSuggestion[]> {
     try {
-      // Временно отключаем Google Maps API из-за CORS проблем
-      console.log('⚠️ Google Maps API временно отключен из-за CORS проблем');
-      return [];
+      // Проверяем наличие API ключа
+      if (!this.GOOGLE_MAPS_API_KEY || this.GOOGLE_MAPS_API_KEY === 'your-google-maps-api-key') {
+        console.warn('⚠️ Google Maps API Key не настроен');
+        return [];
+      }
+
+      console.log('🔍 Получение автозаполнения адресов для:', input);
       
-      // Код ниже закомментирован до решения CORS проблемы
-      /*
       const response = await fetch(
         `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&components=country:${country}&key=${this.GOOGLE_MAPS_API_KEY}`
       );
 
       const data = await response.json();
+      console.log('📡 Ответ Google Places API:', data);
 
       if (data.status === 'OK' && data.predictions) {
+        console.log('✅ Найдено адресов:', data.predictions.length);
         return data.predictions.map((prediction: any) => ({
           description: prediction.description,
           place_id: prediction.place_id,
@@ -102,10 +106,17 @@ class GeocodingApiService {
         }));
       }
 
+      if (data.status === 'REQUEST_DENIED') {
+        console.error('❌ Google Maps API: Запрос отклонен. Проверьте API ключ и права доступа');
+      } else if (data.status === 'OVER_QUERY_LIMIT') {
+        console.error('❌ Google Maps API: Превышен лимит запросов');
+      } else {
+        console.error('❌ Google Maps API ошибка:', data.status, data.error_message);
+      }
+
       return [];
-      */
     } catch (error) {
-      console.error('Ошибка получения автозаполнения адресов:', error);
+      console.error('❌ Ошибка получения автозаполнения адресов:', error);
       return [];
     }
   }

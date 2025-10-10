@@ -969,99 +969,31 @@ const AdminPanel: React.FC = () => {
                   <p>Заказы будут отображаться здесь</p>
                 </EmptyState>
               ) : (
-                <Table>
-                  <thead>
-                    <tr>
-                      <TableHeader>ID замовлення</TableHeader>
-                      <TableHeader>Клієнт</TableHeader>
-                      <TableHeader>Товари</TableHeader>
-                      <TableHeader>Сума</TableHeader>
-                      <TableHeader>Статус</TableHeader>
-                      <TableHeader>Дата</TableHeader>
-                      <TableHeader>Дії</TableHeader>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map(order => (
-                      <TableRow key={order.id}>
-                        <TableCell>#{order.id}</TableCell>
-                        <TableCell>{order.shippingAddress.name}</TableCell>
-                        <TableCell>{order.items.length} товаров</TableCell>
-                        <TableCell>{order.total} ₴</TableCell>
-                        <TableCell>
-                          <Select
-                            value={order.status}
-                            onChange={(e) => handleOrderStatusChange(order.id, e.target.value as Order['status'])}
-                            style={{ background: getStatusColor(order.status), color: 'white', border: 'none' }}
-                          >
-                            <option value="pending">Ожидает</option>
-                            <option value="processing">Обрабатывается</option>
-                            <option value="shipped">Отправлен</option>
-                            <option value="delivered">Доставлен</option>
-                            <option value="cancelled">Отменен</option>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(order.createdAt).toLocaleDateString('ru-RU')}
-                        </TableCell>
-                        <TableCell>
-                          <ActionButton variant="edit" onClick={() => setSelectedOrder(order)}>
-                            <FiEye />
-                          </ActionButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </tbody>
-                </Table>
-
-                {/* Мобильная версия таблицы заказов */}
-                <MobileTable>
-                  {orders.map(order => (
-                    <MobileCard key={order.id}>
-                      <MobileCardHeader>
-                        <MobileCardTitle>Заказ #{order.id}</MobileCardTitle>
-                        <span style={{
-                          padding: '0.2rem 0.6rem',
-                          borderRadius: '12px',
-                          fontSize: '0.7rem',
-                          fontWeight: '600',
-                          background: getStatusColor(order.status),
-                          color: 'white'
-                        }}>
-                          {order.status}
-                        </span>
-                      </MobileCardHeader>
-                      <MobileCardContent>
-                        <MobileCardRow>
-                          <MobileCardLabel>Клиент:</MobileCardLabel>
-                          <MobileCardValue>{order.shippingAddress.name}</MobileCardValue>
-                        </MobileCardRow>
-                        <MobileCardRow>
-                          <MobileCardLabel>Товары:</MobileCardLabel>
-                          <MobileCardValue>{order.items.length} товаров</MobileCardValue>
-                        </MobileCardRow>
-                        <MobileCardRow>
-                          <MobileCardLabel>Сумма:</MobileCardLabel>
-                          <MobileCardValue>{order.total} ₴</MobileCardValue>
-                        </MobileCardRow>
-                        <MobileCardRow>
-                          <MobileCardLabel>Дата:</MobileCardLabel>
-                          <MobileCardValue>{new Date(order.createdAt).toLocaleDateString('ru-RU')}</MobileCardValue>
-                        </MobileCardRow>
-                        <MobileCardRow>
-                          <MobileCardLabel>Статус:</MobileCardLabel>
-                          <MobileCardValue>
+                <>
+                  <Table>
+                    <thead>
+                      <tr>
+                        <TableHeader>ID замовлення</TableHeader>
+                        <TableHeader>Клієнт</TableHeader>
+                        <TableHeader>Товари</TableHeader>
+                        <TableHeader>Сума</TableHeader>
+                        <TableHeader>Статус</TableHeader>
+                        <TableHeader>Дата</TableHeader>
+                        <TableHeader>Дії</TableHeader>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.map(order => (
+                        <TableRow key={order.id}>
+                          <TableCell>#{order.id}</TableCell>
+                          <TableCell>{order.shippingAddress.name}</TableCell>
+                          <TableCell>{order.items.length} товаров</TableCell>
+                          <TableCell>{order.total} ₴</TableCell>
+                          <TableCell>
                             <Select
                               value={order.status}
                               onChange={(e) => handleOrderStatusChange(order.id, e.target.value as Order['status'])}
-                              style={{ 
-                                background: getStatusColor(order.status), 
-                                color: 'white', 
-                                border: 'none',
-                                padding: '0.3rem',
-                                borderRadius: '8px',
-                                fontSize: '0.8rem'
-                              }}
+                              style={{ background: getStatusColor(order.status), color: 'white', border: 'none' }}
                             >
                               <option value="pending">Ожидает</option>
                               <option value="processing">Обрабатывается</option>
@@ -1069,17 +1001,87 @@ const AdminPanel: React.FC = () => {
                               <option value="delivered">Доставлен</option>
                               <option value="cancelled">Отменен</option>
                             </Select>
-                          </MobileCardValue>
-                        </MobileCardRow>
-                      </MobileCardContent>
-                      <MobileActions>
-                        <ActionButton variant="edit" onClick={() => setSelectedOrder(order)}>
-                          <FiEye />
-                        </ActionButton>
-                      </MobileActions>
-                    </MobileCard>
-                  ))}
-                </MobileTable>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(order.createdAt).toLocaleDateString('ru-RU')}
+                          </TableCell>
+                          <TableCell>
+                            <ActionButton variant="edit" onClick={() => setSelectedOrder(order)}>
+                              <FiEye />
+                            </ActionButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </tbody>
+                  </Table>
+
+                  {/* Мобильная версия таблицы заказов */}
+                  <MobileTable>
+                    {orders.map(order => (
+                      <MobileCard key={order.id}>
+                        <MobileCardHeader>
+                          <MobileCardTitle>Заказ #{order.id}</MobileCardTitle>
+                          <span style={{
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '12px',
+                            fontSize: '0.7rem',
+                            fontWeight: '600',
+                            background: getStatusColor(order.status),
+                            color: 'white'
+                          }}>
+                            {order.status}
+                          </span>
+                        </MobileCardHeader>
+                        <MobileCardContent>
+                          <MobileCardRow>
+                            <MobileCardLabel>Клиент:</MobileCardLabel>
+                            <MobileCardValue>{order.shippingAddress.name}</MobileCardValue>
+                          </MobileCardRow>
+                          <MobileCardRow>
+                            <MobileCardLabel>Товары:</MobileCardLabel>
+                            <MobileCardValue>{order.items.length} товаров</MobileCardValue>
+                          </MobileCardRow>
+                          <MobileCardRow>
+                            <MobileCardLabel>Сумма:</MobileCardLabel>
+                            <MobileCardValue>{order.total} ₴</MobileCardValue>
+                          </MobileCardRow>
+                          <MobileCardRow>
+                            <MobileCardLabel>Дата:</MobileCardLabel>
+                            <MobileCardValue>{new Date(order.createdAt).toLocaleDateString('ru-RU')}</MobileCardValue>
+                          </MobileCardRow>
+                          <MobileCardRow>
+                            <MobileCardLabel>Статус:</MobileCardLabel>
+                            <MobileCardValue>
+                              <Select
+                                value={order.status}
+                                onChange={(e) => handleOrderStatusChange(order.id, e.target.value as Order['status'])}
+                                style={{ 
+                                  background: getStatusColor(order.status), 
+                                  color: 'white', 
+                                  border: 'none',
+                                  padding: '0.3rem',
+                                  borderRadius: '8px',
+                                  fontSize: '0.8rem'
+                                }}
+                              >
+                                <option value="pending">Ожидает</option>
+                                <option value="processing">Обрабатывается</option>
+                                <option value="shipped">Отправлен</option>
+                                <option value="delivered">Доставлен</option>
+                                <option value="cancelled">Отменен</option>
+                              </Select>
+                            </MobileCardValue>
+                          </MobileCardRow>
+                        </MobileCardContent>
+                        <MobileActions>
+                          <ActionButton variant="edit" onClick={() => setSelectedOrder(order)}>
+                            <FiEye />
+                          </ActionButton>
+                        </MobileActions>
+                      </MobileCard>
+                    ))}
+                  </MobileTable>
+                </>
               )}
             </motion.div>
           )}

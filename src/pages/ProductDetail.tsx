@@ -300,10 +300,10 @@ const ProductDetail: React.FC = () => {
     return (
       <ProductDetailContainer>
         <div className="container">
-          <h1>Товар не найден</h1>
+          <h1>Товар не знайдено</h1>
           <BackButton onClick={() => navigate('/products')}>
             <FiArrowLeft />
-            Вернуться к каталогу
+            Повернутися до каталогу
           </BackButton>
         </div>
       </ProductDetailContainer>
@@ -312,12 +312,12 @@ const ProductDetail: React.FC = () => {
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
-    toast.success(`Добавлено ${quantity} шт. в корзину!`);
+    toast.success(`Додано ${quantity} шт. до кошика!`);
   };
 
   const handleToggleWishlist = () => {
     if (!user) {
-      toast.error('Войдите в систему, чтобы сохранять избранное');
+      toast.error('Увійдіть в систему, щоб зберігати обране');
       return;
     }
     
@@ -335,11 +335,11 @@ const ProductDetail: React.FC = () => {
 
   const getCategoryName = (category: string) => {
     const categories = {
-      chips: 'Фруктовые чипсы',
-      decorations: 'Украшения для коктейлей',
-      syrups: 'Сиропы',
+      chips: 'Фруктові чіпси',
+      decorations: 'Прикраси для коктейлів',
+      syrups: 'Сиропи',
       purees: 'Пюре',
-      dried_flowers: 'Сухоцветы'
+      dried_flowers: 'Сухоцвіти'
     };
     return categories[category as keyof typeof categories] || category;
   };
@@ -349,7 +349,7 @@ const ProductDetail: React.FC = () => {
       <div className="container">
         <BackButton onClick={() => navigate('/products')}>
           <FiArrowLeft />
-          Вернуться к каталогу
+          Повернутися до каталогу
         </BackButton>
 
         <ProductContainer>
@@ -358,7 +358,7 @@ const ProductDetail: React.FC = () => {
             {product.organic && (
               <OrganicBadge>
                 <FiZap />
-                Органический продукт
+                Органічний продукт
               </OrganicBadge>
             )}
           </ImageSection>
@@ -373,7 +373,7 @@ const ProductDetail: React.FC = () => {
                 <>
                   <Price isDiscounted>{product.price} ₴</Price>
                   <OriginalPrice>{discountedPrice} ₴</OriginalPrice>
-                  <DiscountBadge>Скидка {user?.discount}%</DiscountBadge>
+                  <DiscountBadge>Знижка {user?.discount}%</DiscountBadge>
                 </>
               ) : (
                 <Price>{product.price} ₴</Price>
@@ -382,19 +382,19 @@ const ProductDetail: React.FC = () => {
 
             <ProductDetails>
               <DetailRow>
-                <DetailLabel>Вес:</DetailLabel>
-                <DetailValue>{product.weight || 'Не указан'}</DetailValue>
+                <DetailLabel>Вага:</DetailLabel>
+                <DetailValue>{product.weight || 'Не вказано'}</DetailValue>
               </DetailRow>
               <DetailRow>
-                <DetailLabel>Наличие:</DetailLabel>
+                <DetailLabel>Наявність:</DetailLabel>
                 <DetailValue style={{ color: product.inStock ? '#27ae60' : '#e74c3c' }}>
-                  {product.inStock ? 'В наличии' : 'Нет в наличии'}
+                  {product.inStock ? 'В наявності' : 'Немає в наявності'}
                 </DetailValue>
               </DetailRow>
               <DetailRow>
-                <DetailLabel>Качество:</DetailLabel>
+                <DetailLabel>Якість:</DetailLabel>
                 <DetailValue>
-                  {product.organic ? 'Органический продукт' : 'Стандартное качество'}
+                  {product.organic ? 'Органічний продукт' : 'Стандартна якість'}
                 </DetailValue>
               </DetailRow>
             </ProductDetails>
@@ -402,7 +402,7 @@ const ProductDetail: React.FC = () => {
             {product.ingredients && product.ingredients.length > 0 && (
               <div>
                 <DetailLabel style={{ marginBottom: '1rem', display: 'block' }}>
-                  Состав:
+                  Склад:
                 </DetailLabel>
                 <IngredientsList>
                   {product.ingredients.map((ingredient, index) => (
@@ -413,7 +413,7 @@ const ProductDetail: React.FC = () => {
             )}
 
             <QuantitySection>
-              <QuantityLabel>Количество:</QuantityLabel>
+              <QuantityLabel>Кількість:</QuantityLabel>
               <QuantityControls>
                 <QuantityButton
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -434,14 +434,14 @@ const ProductDetail: React.FC = () => {
             <ActionButtons>
               <AddToCartButton onClick={handleAddToCart} disabled={!product.inStock}>
                 <FiShoppingCart />
-                Добавить в корзину
+                Додати до кошика
               </AddToCartButton>
               <WishlistButton 
                 onClick={handleToggleWishlist}
                 style={{ color: isInWishlist(product.id) ? '#e74c3c' : undefined }}
               >
                 <FiHeart />
-                {isInWishlist(product.id) ? 'Из избранного' : 'В избранное'}
+                {isInWishlist(product.id) ? 'З обраного' : 'В обране'}
               </WishlistButton>
             </ActionButtons>
           </InfoSection>

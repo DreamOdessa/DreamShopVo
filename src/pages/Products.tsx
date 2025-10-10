@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FiFilter, FiSearch, FiX, FiChevronDown } from 'react-icons/fi';
@@ -23,7 +24,7 @@ const Header = styled.div`
   background-position: center;
   background-blend-mode: overlay;
   position: relative;
-  margin-top: -2rem;
+  margin-top: -4rem;
 
   &::before {
     content: '';
@@ -263,10 +264,19 @@ const categories = [
 const Products: React.FC = () => {
   const { products } = useAdmin();
   const { closeSidebar, isOpen: isCategorySidebarOpen } = useCategorySidebar();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showOrganicOnly, setShowOrganicOnly] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Читаем параметр category из URL при загрузке страницы
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+  }, [searchParams]);
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
@@ -284,6 +294,8 @@ const Products: React.FC = () => {
     setSelectedCategory('all');
     setShowOrganicOnly(false);
     setIsDropdownOpen(false);
+    // Очищаем URL от параметров фильтрации
+    setSearchParams({});
   };
 
   // Закрытие выпадающего списка при клике вне его
@@ -361,6 +373,8 @@ const Products: React.FC = () => {
                 onClick={() => {
                   setSelectedCategory(category.id);
                   setIsDropdownOpen(false);
+                  // Обновляем URL с выбранной категорией
+                  setSearchParams({ category: category.id });
                 }}
               >
                 {category.name}
@@ -400,6 +414,8 @@ const Products: React.FC = () => {
         onCategorySelect={(categoryId) => {
           setSelectedCategory(categoryId);
           closeSidebar();
+          // Обновляем URL с выбранной категорией
+          setSearchParams({ category: categoryId });
         }}
       />
     </>

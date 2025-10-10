@@ -21,7 +21,7 @@ const HeroSection = styled.section`
   min-height: 100vh;
   display: flex;
   align-items: center;
-  margin-top: -2.5rem;
+  margin-top: -4rem;
 
   @media (max-width: 768px) {
     padding: 4rem 0;

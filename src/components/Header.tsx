@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
@@ -141,27 +141,56 @@ const NavLinks = styled.div<{ isOpen: boolean }>`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     flex-direction: column;
     justify-content: center;
     gap: 2rem;
     transform: ${props => props.isOpen ? 'translateX(0)' : 'translateX(-100%)'};
-    transition: transform 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     z-index: 1000;
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, 
+        rgba(77, 208, 225, 0.1) 0%, 
+        rgba(38, 197, 218, 0.15) 50%, 
+        rgba(0, 171, 193, 0.1) 100%);
+      z-index: -1;
+    }
   }
 `;
 
 const NavLink = styled(Link)<{ isActive: boolean }>`
-  color: white;
+  color: ${props => props.isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.9)'};
   text-decoration: none;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  background: ${props => props.isActive ? 'rgba(255, 255, 255, 0.2)' : 'transparent'};
+  font-weight: 600;
+  font-size: 1.2rem;
+  padding: 1rem 2rem;
+  border-radius: 20px;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: ${props => props.isActive 
+    ? 'rgba(255, 255, 255, 0.2)' 
+    : 'rgba(255, 255, 255, 0.05)'};
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   }
 `;
 
@@ -378,27 +407,68 @@ const CloseButton = styled.button`
   position: absolute;
   top: 20px;
   right: 20px;
-  color: white;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 1.5rem;
-  background: none;
-  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
   cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+  }
 
   @media (max-width: 768px) {
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 `;
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [touchStartX, setTouchStartX] = useState<number>(0);
+  const [touchEndX, setTouchEndX] = useState<number>(0);
   const { openSidebar, closeSidebar, isOpen: isCategorySidebarOpen } = useCategorySidebar();
   const { user, logout } = useAuth();
   const { getTotalItems } = useCart();
   const { getTotalItems: getWishlistItems } = useWishlist();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  // Swipe gesture handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX || !touchEndX) return;
+    
+    const distance = touchStartX - touchEndX;
+    const isLeftSwipe = distance > 50;
+    
+    if (isLeftSwipe && touchStartX < 50) {
+      // Swipe from left edge to open categories
+      openSidebar();
+    }
+    
+    setTouchStartX(0);
+    setTouchEndX(0);
+  };
 
   // Закрытие выпадающих списков при клике вне их
   React.useEffect(() => {
@@ -417,7 +487,11 @@ const Header: React.FC = () => {
 
   return (
     <>
-      <HeaderContainer>
+      <HeaderContainer
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
       <Nav>
           <Logo to="/">
             <LogoIcon>
@@ -577,10 +651,9 @@ const Header: React.FC = () => {
         ]}
         selectedCategory="all"
         onCategorySelect={(categoryId) => {
-          // Пока что просто закрываем панель
-          // В будущем можно добавить навигацию к товарам с фильтром
           closeSidebar();
-          console.log('Selected category:', categoryId);
+          // Переходим на страницу товаров с выбранной категорией
+          navigate(`/products?category=${categoryId}`);
         }}
       />
     </>

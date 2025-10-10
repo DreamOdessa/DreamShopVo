@@ -12,6 +12,10 @@ import toast from 'react-hot-toast';
 const AdminContainer = styled.div`
   padding: 2rem 0;
   min-height: 80vh;
+
+  @media (max-width: 768px) {
+    padding: 1rem 0;
+  }
 `;
 
 const Header = styled.div`
@@ -19,7 +23,17 @@ const Header = styled.div`
   color: white;
   padding: 3rem 0;
   text-align: center;
-  margin-top: -1rem;
+  margin-top: -4rem;
+
+  @media (max-width: 768px) {
+    padding: 2rem 0;
+    margin-top: -2rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1.5rem 0;
+    margin-top: -1.5rem;
+  }
 `;
 
 const Title = styled.h1`
@@ -30,17 +44,38 @@ const Title = styled.h1`
   @media (max-width: 768px) {
     font-size: 2rem;
   }
+
+  @media (max-width: 480px) {
+    font-size: 1.5rem;
+  }
+
+  @media (max-width: 360px) {
+    font-size: 1.3rem;
+  }
 `;
 
 const Subtitle = styled.p`
   font-size: 1.2rem;
   opacity: 0.9;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.9rem;
+    padding: 0 1rem;
+  }
 `;
 
 const AdminContent = styled.div`
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem 20px;
+
+  @media (max-width: 768px) {
+    padding: 1rem 10px;
+  }
 `;
 
 const Tabs = styled.div`
@@ -51,6 +86,13 @@ const Tabs = styled.div`
   border-radius: 15px;
   padding: 0.5rem;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    margin-bottom: 1rem;
+  }
 `;
 
 const Tab = styled.button<{ isActive: boolean }>`
@@ -72,6 +114,17 @@ const Tab = styled.button<{ isActive: boolean }>`
     background: ${props => props.isActive ? 'linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%)' : '#f8f9fa'};
     color: ${props => props.isActive ? 'white' : '#00acc1'};
   }
+
+  @media (max-width: 768px) {
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+    gap: 0.3rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem;
+  }
 `;
 
 const Content = styled.div`
@@ -79,6 +132,16 @@ const Content = styled.div`
   border-radius: 20px;
   padding: 2rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+    border-radius: 15px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.8rem;
+    border-radius: 10px;
+  }
 `;
 
 const SectionHeader = styled.div`
@@ -86,6 +149,13 @@ const SectionHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+    margin-bottom: 1.5rem;
+  }
 `;
 
 const SectionTitle = styled.h2`
@@ -95,6 +165,14 @@ const SectionTitle = styled.h2`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.1rem;
+  }
 `;
 
 const AddButton = styled.button`
@@ -120,6 +198,72 @@ const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
   margin-top: 1rem;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const MobileTable = styled.div`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: block;
+    margin-top: 1rem;
+  }
+`;
+
+const MobileCard = styled.div`
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e9ecef;
+`;
+
+const MobileCardHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+`;
+
+const MobileCardTitle = styled.h4`
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+`;
+
+const MobileCardContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const MobileCardRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+`;
+
+const MobileCardLabel = styled.span`
+  font-weight: 500;
+  color: #6c757d;
+`;
+
+const MobileCardValue = styled.span`
+  color: #2c3e50;
+  text-align: right;
+  flex: 1;
+  margin-left: 1rem;
+`;
+
+const MobileActions = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  justify-content: flex-end;
 `;
 
 const TableHeader = styled.th`
@@ -190,6 +334,16 @@ const ActionButton = styled.button<{ variant?: 'edit' | 'delete' | 'save' | 'can
         `;
     }
   }}
+
+  @media (max-width: 768px) {
+    padding: 0.4rem;
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.3rem;
+    font-size: 0.7rem;
+  }
 `;
 
 const Input = styled.input`
@@ -260,6 +414,19 @@ const ModalContent = styled.div`
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    width: 95%;
+    max-height: 90vh;
+    border-radius: 15px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem;
+    width: 98%;
+    border-radius: 10px;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -273,6 +440,14 @@ const ModalTitle = styled.h3`
   font-size: 1.3rem;
   font-weight: 700;
   color: #2c3e50;
+
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1rem;
+  }
 `;
 
 const CloseButton = styled.button`
@@ -305,6 +480,12 @@ const ModalButtons = styled.div`
   gap: 1rem;
   margin-top: 2rem;
   justify-content: flex-end;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+  }
 `;
 
 const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
@@ -340,6 +521,16 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
         `;
     }
   }}
+
+  @media (max-width: 768px) {
+    padding: 0.7rem 1.2rem;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+  }
 `;
 
 const EmptyState = styled.div`
@@ -354,6 +545,30 @@ const EmptyState = styled.div`
 
   p {
     font-size: 1.1rem;
+  }
+
+  @media (max-width: 768px) {
+    padding: 2rem 1rem;
+
+    h3 {
+      font-size: 1.3rem;
+    }
+
+    p {
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 1.5rem 0.5rem;
+
+    h3 {
+      font-size: 1.1rem;
+    }
+
+    p {
+      font-size: 0.8rem;
+    }
   }
 `;
 
@@ -588,6 +803,59 @@ const AdminPanel: React.FC = () => {
                   ))}
                 </tbody>
               </Table>
+
+              {/* Мобильная версия таблицы товаров */}
+              <MobileTable>
+                {products.map(product => (
+                  <MobileCard key={product.id}>
+                    <MobileCardHeader>
+                      <MobileCardTitle>{product.name}</MobileCardTitle>
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px' }}
+                      />
+                    </MobileCardHeader>
+                    <MobileCardContent>
+                      <MobileCardRow>
+                        <MobileCardLabel>Описание:</MobileCardLabel>
+                        <MobileCardValue>{product.description.substring(0, 50)}...</MobileCardValue>
+                      </MobileCardRow>
+                      <MobileCardRow>
+                        <MobileCardLabel>Категория:</MobileCardLabel>
+                        <MobileCardValue>{product.category}</MobileCardValue>
+                      </MobileCardRow>
+                      <MobileCardRow>
+                        <MobileCardLabel>Цена:</MobileCardLabel>
+                        <MobileCardValue>{product.price} ₴</MobileCardValue>
+                      </MobileCardRow>
+                      <MobileCardRow>
+                        <MobileCardLabel>Статус:</MobileCardLabel>
+                        <MobileCardValue>
+                          <span style={{
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '12px',
+                            fontSize: '0.7rem',
+                            fontWeight: '600',
+                            background: product.inStock ? '#d4edda' : '#f8d7da',
+                            color: product.inStock ? '#155724' : '#721c24'
+                          }}>
+                            {product.inStock ? 'В наличии' : 'Нет в наличии'}
+                          </span>
+                        </MobileCardValue>
+                      </MobileCardRow>
+                    </MobileCardContent>
+                    <MobileActions>
+                      <ActionButton variant="edit" onClick={() => handleEditProduct(product)}>
+                        <FiEdit />
+                      </ActionButton>
+                      <ActionButton variant="delete" onClick={() => handleDeleteProduct(product.id)}>
+                        <FiTrash2 />
+                      </ActionButton>
+                    </MobileActions>
+                  </MobileCard>
+                ))}
+              </MobileTable>
             </motion.div>
           )}
 
@@ -648,6 +916,37 @@ const AdminPanel: React.FC = () => {
                   ))}
                 </tbody>
               </Table>
+
+              {/* Мобильная версия таблицы пользователей */}
+              <MobileTable>
+                {users.map(user => (
+                  <MobileCard key={user.id}>
+                    <MobileCardHeader>
+                      <MobileCardTitle>{user.name}</MobileCardTitle>
+                    </MobileCardHeader>
+                    <MobileCardContent>
+                      <MobileCardRow>
+                        <MobileCardLabel>Email:</MobileCardLabel>
+                        <MobileCardValue>{user.email}</MobileCardValue>
+                      </MobileCardRow>
+                      <MobileCardRow>
+                        <MobileCardLabel>Скидка:</MobileCardLabel>
+                        <MobileCardValue>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={user.discount || 0}
+                            onChange={(e) => handleUserDiscountChange(user.id, parseInt(e.target.value) || 0)}
+                            style={{ width: '60px', padding: '0.3rem', fontSize: '0.8rem' }}
+                          />
+                          <span style={{ marginLeft: '0.3rem', color: '#6c757d', fontSize: '0.8rem' }}>%</span>
+                        </MobileCardValue>
+                      </MobileCardRow>
+                    </MobileCardContent>
+                  </MobileCard>
+                ))}
+              </MobileTable>
             </motion.div>
           )}
 
@@ -714,6 +1013,73 @@ const AdminPanel: React.FC = () => {
                     ))}
                   </tbody>
                 </Table>
+
+                {/* Мобильная версия таблицы заказов */}
+                <MobileTable>
+                  {orders.map(order => (
+                    <MobileCard key={order.id}>
+                      <MobileCardHeader>
+                        <MobileCardTitle>Заказ #{order.id}</MobileCardTitle>
+                        <span style={{
+                          padding: '0.2rem 0.6rem',
+                          borderRadius: '12px',
+                          fontSize: '0.7rem',
+                          fontWeight: '600',
+                          background: getStatusColor(order.status),
+                          color: 'white'
+                        }}>
+                          {order.status}
+                        </span>
+                      </MobileCardHeader>
+                      <MobileCardContent>
+                        <MobileCardRow>
+                          <MobileCardLabel>Клиент:</MobileCardLabel>
+                          <MobileCardValue>{order.shippingAddress.name}</MobileCardValue>
+                        </MobileCardRow>
+                        <MobileCardRow>
+                          <MobileCardLabel>Товары:</MobileCardLabel>
+                          <MobileCardValue>{order.items.length} товаров</MobileCardValue>
+                        </MobileCardRow>
+                        <MobileCardRow>
+                          <MobileCardLabel>Сумма:</MobileCardLabel>
+                          <MobileCardValue>{order.total} ₴</MobileCardValue>
+                        </MobileCardRow>
+                        <MobileCardRow>
+                          <MobileCardLabel>Дата:</MobileCardLabel>
+                          <MobileCardValue>{new Date(order.createdAt).toLocaleDateString('ru-RU')}</MobileCardValue>
+                        </MobileCardRow>
+                        <MobileCardRow>
+                          <MobileCardLabel>Статус:</MobileCardLabel>
+                          <MobileCardValue>
+                            <Select
+                              value={order.status}
+                              onChange={(e) => handleOrderStatusChange(order.id, e.target.value as Order['status'])}
+                              style={{ 
+                                background: getStatusColor(order.status), 
+                                color: 'white', 
+                                border: 'none',
+                                padding: '0.3rem',
+                                borderRadius: '8px',
+                                fontSize: '0.8rem'
+                              }}
+                            >
+                              <option value="pending">Ожидает</option>
+                              <option value="processing">Обрабатывается</option>
+                              <option value="shipped">Отправлен</option>
+                              <option value="delivered">Доставлен</option>
+                              <option value="cancelled">Отменен</option>
+                            </Select>
+                          </MobileCardValue>
+                        </MobileCardRow>
+                      </MobileCardContent>
+                      <MobileActions>
+                        <ActionButton variant="edit" onClick={() => setSelectedOrder(order)}>
+                          <FiEye />
+                        </ActionButton>
+                      </MobileActions>
+                    </MobileCard>
+                  ))}
+                </MobileTable>
               )}
             </motion.div>
           )}

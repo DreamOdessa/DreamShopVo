@@ -25,17 +25,43 @@ const Card = styled(motion.div)`
 
 const ImageContainer = styled.div`
   position: relative;
-  height: 250px;
+  height: 200px;
   overflow: hidden;
 `;
 
-const ProductImage = styled.img`
+const ImageWrapper = styled.div`
+  position: relative;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
+`;
+
+const ProductImage = styled.img`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  background: #f8f9fa;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+`;
+
+const MainImage = styled(ProductImage)`
+  opacity: 1;
+  z-index: 1;
 
   ${Card}:hover & {
+    opacity: 0;
+  }
+`;
+
+const HoverImage = styled(ProductImage)`
+  opacity: 0;
+  z-index: 2;
+
+  ${Card}:hover & {
+    opacity: 1;
     transform: scale(1.05);
   }
 `;
@@ -191,6 +217,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { user } = useAuth();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
+  // Получаем изображения: [главное фото, доп фото при hover, ...галерея]
+  // Обработка старых товаров (без массива images) и новых товаров
+  const mainImage = (product.images && product.images.length > 0) ? product.images[0] : product.image;
+  const hoverImage = (product.images && product.images.length > 1) ? product.images[1] : null;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -225,7 +256,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         whileTap={{ scale: 0.98 }}
       >
         <ImageContainer>
-          <ProductImage src={product.image} alt={product.name} />
+          <ImageWrapper>
+            <MainImage 
+              src={mainImage} 
+              alt={product.name}
+            />
+            {hoverImage && (
+              <HoverImage 
+                src={hoverImage} 
+                alt={product.name}
+              />
+            )}
+          </ImageWrapper>
           {product.organic && (
             <OrganicBadge>
               <FiZap />

@@ -20,7 +20,7 @@ const Header = styled.div`
   color: white;
   padding: 3rem 0;
   text-align: center;
-  margin-top: -2rem;
+  margin-top: -4rem;
 `;
 
 const Title = styled.h1`
@@ -332,14 +332,22 @@ const Checkout: React.FC = () => {
   // Состояние для блока заказа
   const [isOrderSummaryExpanded, setIsOrderSummaryExpanded] = useState(false);
 
-  // Автозаполнение данных из профиля
+  // Автозаполнение данных из профиля (из localStorage)
   useEffect(() => {
     if (user) {
+      // Загружаем сохраненные данные профиля из localStorage
+      const savedProfile = localStorage.getItem('dreamshop_profile');
+      const profileData = savedProfile ? JSON.parse(savedProfile) : {};
+      
       setFormData(prev => ({
         ...prev,
-        firstName: user.name?.split(' ')[0] || '',
-        lastName: user.name?.split(' ')[1] || '',
-        phone: prev.phone || ''
+        firstName: profileData.name || user.name?.split(' ')[0] || '',
+        lastName: profileData.lastName || user.name?.split(' ')[1] || '',
+        phone: profileData.phone || prev.phone || '',
+        city: profileData.city || prev.city || '',
+        deliveryDetails: profileData.novaPoshtaOffice || profileData.address || prev.deliveryDetails || '',
+        establishmentName: profileData.establishmentName || prev.establishmentName || '',
+        isPrivatePerson: profileData.isPrivatePerson !== undefined ? profileData.isPrivatePerson : prev.isPrivatePerson
       }));
     }
   }, [user]);
@@ -502,9 +510,29 @@ const Checkout: React.FC = () => {
     }
 
     try {
+      // Очищаем товары от лишних полей перед созданием заказа
+      const cleanedItems = items.map(item => ({
+        product: {
+          id: item.product.id,
+          name: item.product.name,
+          description: item.product.description,
+          price: item.product.price,
+          originalPrice: item.product.originalPrice,
+          image: item.product.image,
+          images: item.product.images,
+          category: item.product.category,
+          organic: item.product.organic,
+          inStock: item.product.inStock,
+          weight: item.product.weight,
+          ingredients: item.product.ingredients,
+          createdAt: item.product.createdAt
+        },
+        quantity: item.quantity
+      }));
+
       const orderData = {
         userId: user.id,
-        items: items,
+        items: cleanedItems,
         total: getFinalPrice(),
         status: 'pending' as const,
         // Новая детальная структура
@@ -540,8 +568,8 @@ const Checkout: React.FC = () => {
       toast.success('Замовлення успішно оформлено!');
       navigate('/');
     } catch (error) {
+      console.error('Ошибка при оформлении заказа:', error);
       toast.error('Помилка при оформленні замовлення');
-      console.error('Order error:', error);
     }
   };
 

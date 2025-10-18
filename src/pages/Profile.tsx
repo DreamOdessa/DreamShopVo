@@ -17,7 +17,7 @@ const Header = styled.div`
   color: white;
   padding: 3rem 0;
   text-align: center;
-  margin-top: -2rem;
+  margin-top: -4rem;
 `;
 
 const Title = styled.h1`
@@ -328,6 +328,35 @@ const Profile: React.FC = () => {
     isPrivatePerson: user?.isPrivatePerson ?? true
   });
 
+  // Загружаем данные профиля из localStorage при монтировании
+  useEffect(() => {
+    const savedProfile = localStorage.getItem('dreamshop_profile');
+    if (savedProfile) {
+      const profileData = JSON.parse(savedProfile);
+      setEditData(prev => ({
+        ...prev,
+        ...profileData
+      }));
+    }
+  }, []);
+
+  // Сохраняем данные профиля в localStorage при изменении
+  useEffect(() => {
+    if (user) {
+      const profileData = {
+        name: editData.name,
+        lastName: editData.lastName,
+        phone: editData.phone,
+        city: editData.city,
+        novaPoshtaOffice: editData.novaPoshtaOffice,
+        address: editData.address,
+        establishmentName: editData.establishmentName,
+        isPrivatePerson: editData.isPrivatePerson
+      };
+      localStorage.setItem('dreamshop_profile', JSON.stringify(profileData));
+    }
+  }, [editData, user]);
+
   // Состояние для автоподсказок
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
@@ -336,20 +365,24 @@ const Profile: React.FC = () => {
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
 
-  // Обновляем состояние при изменении пользователя
+  // Обновляем состояние при изменении пользователя (только если нет сохраненных данных)
   useEffect(() => {
     if (user) {
-      setEditData({
-        name: user.name || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        city: user.city || '',
-        novaPoshtaOffice: user.novaPoshtaOffice || '',
-        address: user.address || '',
-        establishmentName: user.establishmentName || '',
-        isPrivatePerson: user.isPrivatePerson ?? true
-      });
+      const savedProfile = localStorage.getItem('dreamshop_profile');
+      if (!savedProfile) {
+        // Только если нет сохраненных данных, загружаем из user
+        setEditData({
+          name: user.name || '',
+          lastName: user.lastName || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          city: user.city || '',
+          novaPoshtaOffice: user.novaPoshtaOffice || '',
+          address: user.address || '',
+          establishmentName: user.establishmentName || '',
+          isPrivatePerson: user.isPrivatePerson ?? true
+        });
+      }
     }
   }, [user]);
 
@@ -359,26 +392,63 @@ const Profile: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      // Здесь будет логика сохранения данных пользователя через API
+      if (!user) return;
+      
+      // Обновляем данные пользователя в Firebase
+      const updatedUser = {
+        ...user,
+        name: editData.name,
+        lastName: editData.lastName,
+        phone: editData.phone,
+        city: editData.city,
+        novaPoshtaOffice: editData.novaPoshtaOffice,
+        address: editData.address,
+        establishmentName: editData.establishmentName,
+        isPrivatePerson: editData.isPrivatePerson
+      };
+      
+      // Сохраняем в Firebase через userService
+      const { userService } = await import('../firebase/services');
+      await userService.createOrUpdate(updatedUser);
+      
+      // Сохраняем в localStorage
+      const profileData = {
+        name: editData.name,
+        lastName: editData.lastName,
+        phone: editData.phone,
+        city: editData.city,
+        novaPoshtaOffice: editData.novaPoshtaOffice,
+        address: editData.address,
+        establishmentName: editData.establishmentName,
+        isPrivatePerson: editData.isPrivatePerson
+      };
+      localStorage.setItem('dreamshop_profile', JSON.stringify(profileData));
+      
       setIsEditing(false);
       toast.success('Профіль оновлено!');
     } catch (error) {
+      console.error('Ошибка сохранения профиля:', error);
       toast.error('Помилка при збереженні профілю');
     }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
+    
+    // Загружаем сохраненные данные из localStorage
+    const savedProfile = localStorage.getItem('dreamshop_profile');
+    const profileData = savedProfile ? JSON.parse(savedProfile) : {};
+    
     setEditData({
-      name: user?.name || '',
-      lastName: user?.lastName || '',
+      name: profileData.name || user?.name || '',
+      lastName: profileData.lastName || user?.lastName || '',
       email: user?.email || '',
-      phone: user?.phone || '',
-      city: user?.city || '',
-      novaPoshtaOffice: user?.novaPoshtaOffice || '',
-      address: user?.address || '',
-      establishmentName: user?.establishmentName || '',
-      isPrivatePerson: user?.isPrivatePerson ?? true
+      phone: profileData.phone || user?.phone || '',
+      city: profileData.city || user?.city || '',
+      novaPoshtaOffice: profileData.novaPoshtaOffice || user?.novaPoshtaOffice || '',
+      address: profileData.address || user?.address || '',
+      establishmentName: profileData.establishmentName || user?.establishmentName || '',
+      isPrivatePerson: profileData.isPrivatePerson !== undefined ? profileData.isPrivatePerson : (user?.isPrivatePerson ?? true)
     });
   };
 

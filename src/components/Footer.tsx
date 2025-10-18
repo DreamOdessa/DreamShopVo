@@ -85,7 +85,7 @@ const Footer: React.FC = () => {
         <FooterSection>
           <h3>DreamShop</h3>
           <p>
-            Магазин органічних фруктових чіпсів та прикрас для коктейлів в Одесі. 
+            Магазин органічних фруктових чіпсів та прикрас для коктейлів в Україні. 
             Ми пропонуємо тільки натуральні продукти найвищої якості.
           </p>
           <SocialLinks>
@@ -127,15 +127,15 @@ const Footer: React.FC = () => {
           <h3>Контакти</h3>
           <ContactInfo>
             <FiMapPin />
-            <span>Одеса, вул. Дерибасівська, 123</span>
+            <span>Одеса, район Приморський</span>
           </ContactInfo>
           <ContactInfo>
             <FiPhone />
-            <span>+380 (48) 123-45-67</span>
+            <span>+380 (93) 909-74-84</span>
           </ContactInfo>
           <ContactInfo>
             <FiMail />
-            <span>info@dreamshop.ua</span>
+            <span>dream.shop.odessa.dl@gmail.com</span>
           </ContactInfo>
         </FooterSection>
       </FooterContent>

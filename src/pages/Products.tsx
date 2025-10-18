@@ -212,9 +212,9 @@ const DropdownItem = styled.button<{ isActive: boolean }>`
 
 const ProductsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
-  max-width: 1200px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
 `;
@@ -262,13 +262,19 @@ const categories = [
 ];
 
 const Products: React.FC = () => {
-  const { products } = useAdmin();
+  const { products, categories } = useAdmin();
   const { closeSidebar, isOpen: isCategorySidebarOpen } = useCategorySidebar();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showOrganicOnly, setShowOrganicOnly] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Фильтруем только активные категории
+  const activeCategories = useMemo(() => {
+    if (!categories || categories.length === 0) return [];
+    return categories.filter(cat => cat.isActive !== false);
+  }, [categories]);
 
   // Читаем параметр category из URL при загрузке страницы
   useEffect(() => {
@@ -280,12 +286,13 @@ const Products: React.FC = () => {
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
+      const isActive = product.isActive !== false; // показываем только активные товары
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            product.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
       const matchesOrganic = !showOrganicOnly || product.organic;
 
-      return matchesSearch && matchesCategory && matchesOrganic;
+      return isActive && matchesSearch && matchesCategory && matchesOrganic;
     });
   }, [products, searchTerm, selectedCategory, showOrganicOnly]);
 
@@ -366,7 +373,7 @@ const Products: React.FC = () => {
           </DropdownButton>
           
           <DropdownList isOpen={isDropdownOpen}>
-            {categories.map(category => (
+            {activeCategories.map(category => (
               <DropdownItem
                 key={category.id}
                 isActive={selectedCategory === category.id}
@@ -409,7 +416,7 @@ const Products: React.FC = () => {
       <CategorySidebar
         isOpen={isCategorySidebarOpen}
         onClose={closeSidebar}
-        categories={categories}
+        categories={activeCategories}
         selectedCategory={selectedCategory}
         onCategorySelect={(categoryId) => {
           setSelectedCategory(categoryId);

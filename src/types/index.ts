@@ -21,10 +21,13 @@ export interface Product {
   description: string;
   price: number;
   originalPrice?: number; // для отображения зачеркнутой цены
-  image: string;
+  image: string; // основное изображение (для совместимости)
+  images?: string[]; // массив изображений (до 5): [главное, hover, галерея1, галерея2, галерея3]
   category: 'chips' | 'decorations' | 'syrups' | 'purees' | 'dried_flowers';
   organic: boolean;
   inStock: boolean;
+  isActive?: boolean; // включен/выключен товар (опционально для совместимости)
+  isPopular?: boolean; // отображать в популярных на главной (опционально для совместимости)
   weight?: string;
   ingredients?: string[];
   createdAt: string;

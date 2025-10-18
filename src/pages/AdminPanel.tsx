@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye, FiUpload, FiEyeOff, FiStar } from 'react-icons/fi';
 import CategoryManager from '../components/CategoryManager';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { Product, Order } from '../types';
 import OrderDetails from '../components/OrderDetails';
 import toast from 'react-hot-toast';
+import { storageService, STORAGE_PATHS } from '../firebase/storageService';
 
 const AdminContainer = styled.div`
   padding: 2rem 0;
@@ -572,6 +573,89 @@ const EmptyState = styled.div`
   }
 `;
 
+const ImageGallery = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+`;
+
+const ImagePreview = styled.div`
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid #e9ecef;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #667eea;
+  }
+`;
+
+const ImagePreviewImg = styled.img`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #f8f9fa;
+`;
+
+const RemoveImageButton = styled.button`
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(231, 76, 60, 0.9);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  z-index: 10;
+
+  &:hover {
+    background: #e74c3c;
+    transform: scale(1.1);
+  }
+`;
+
+const UploadButtonWrapper = styled.div<{ $disabled?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-top: 0.5rem;
+  opacity: ${props => props.$disabled ? 0.6 : 1};
+  pointer-events: ${props => props.$disabled ? 'none' : 'auto'};
+
+  &:hover {
+    ${props => !props.$disabled && `
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    `}
+  }
+
+  input {
+    display: none;
+  }
+`;
+
 const AdminPanel: React.FC = () => {
   const { user } = useAuth();
   const { products, users, orders, addProduct, updateProduct, deleteProduct, updateUserDiscount, updateOrderStatus } = useAdmin();
@@ -585,12 +669,21 @@ const AdminPanel: React.FC = () => {
     description: '',
     price: '',
     image: '',
+    hoverImage: '',
+    images: [] as string[],
     category: 'chips',
     organic: false,
     inStock: true,
+    isActive: true,
+    isPopular: false,
     weight: '',
     ingredients: ''
   });
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
+  const [mainImagePreview, setMainImagePreview] = useState<string>('');
+  const [hoverImagePreview, setHoverImagePreview] = useState<string>('');
+  const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
+  const [isUploading, setIsUploading] = useState(false);
 
   if (!user?.isAdmin) {
     return (
@@ -612,41 +705,73 @@ const AdminPanel: React.FC = () => {
       description: '',
       price: '',
       image: '',
+      hoverImage: '',
+      images: [],
       category: 'chips',
       organic: false,
       inStock: true,
+      isActive: true,
+      isPopular: false,
       weight: '',
       ingredients: ''
     });
+    setImagePreviewUrls([]);
+    setMainImagePreview('');
+    setHoverImagePreview('');
     setShowModal(true);
   };
 
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
+    
+    // Получаем главное фото, доп фото и галерею
+    const mainImage = product.image;
+    const hoverImg = product.images && product.images.length > 1 ? product.images[1] : '';
+    const galleryImages = product.images && product.images.length > 2 ? product.images.slice(2) : [];
+    
     setProductForm({
       name: product.name,
       description: product.description,
       price: product.price.toString(),
-      image: product.image,
+      image: mainImage,
+      hoverImage: hoverImg,
+      images: galleryImages,
       category: product.category,
       organic: product.organic,
       inStock: product.inStock,
+      isActive: product.isActive ?? true,
+      isPopular: product.isPopular ?? false,
       weight: product.weight || '',
       ingredients: product.ingredients?.join(', ') || ''
     });
+    setImagePreviewUrls(galleryImages);
+    setMainImagePreview(mainImage);
+    setHoverImagePreview(hoverImg);
     setShowModal(true);
   };
 
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     if (!productForm.name || !productForm.description || !productForm.price || !productForm.image) {
       toast.error('Заполните все обязательные поля');
       return;
     }
 
+    // Собираем все изображения в правильном порядке:
+    // [главное фото, доп фото при hover, ...галерея]
+    const allImages = [
+      productForm.image,
+      ...(productForm.hoverImage ? [productForm.hoverImage] : []),
+      ...productForm.images
+    ].filter(img => img && img.trim() !== ''); // Фильтруем пустые строки
+
     const productData = {
       ...productForm,
+      image: productForm.image, // главное фото
+      images: allImages.length > 0 ? allImages : [productForm.image], // Всегда массив с хотя бы одним изображением
       price: parseFloat(productForm.price),
       category: productForm.category as 'chips' | 'decorations' | 'syrups' | 'purees' | 'dried_flowers',
+      isActive: productForm.isActive,
+      isPopular: productForm.isPopular,
       ingredients: productForm.ingredients ? productForm.ingredients.split(',').map(i => i.trim()) : []
     };
 
@@ -667,6 +792,186 @@ const AdminPanel: React.FC = () => {
       deleteProduct(id);
       toast.success('Товар удален!');
     }
+  };
+
+  const handleToggleActive = (product: Product) => {
+    const newActiveState = !product.isActive;
+    updateProduct(product.id, { isActive: newActiveState });
+    toast.success(newActiveState ? '✅ Товар активирован' : '👁️ Товар скрыт');
+  };
+
+  const handleTogglePopular = (product: Product) => {
+    const newPopularState = !product.isPopular;
+    updateProduct(product.id, { isPopular: newPopularState });
+    toast.success(newPopularState ? '⭐ Товар добавлен в популярные' : '⭐ Товар убран из популярных');
+  };
+
+  const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Размер изображения не должен превышать 5MB');
+      return;
+    }
+
+    setIsUploading(true);
+    const fileId = `main-${Date.now()}`;
+    
+    try {
+      // Создаем превью
+      const previewUrl = URL.createObjectURL(file);
+      setMainImagePreview(previewUrl);
+
+      // Загружаем в Firebase Storage
+      const downloadURL = await storageService.uploadFile(
+        file, 
+        STORAGE_PATHS.PRODUCT_MAIN_IMAGES,
+        (progress) => {
+          setUploadProgress(prev => ({ ...prev, [fileId]: progress }));
+        }
+      );
+
+      // Сохраняем URL из Firebase Storage
+      setProductForm(prev => ({ ...prev, image: downloadURL }));
+      toast.success('✅ Главное изображение загружено!');
+      
+      // Очищаем превью URL
+      URL.revokeObjectURL(previewUrl);
+    } catch (error) {
+      console.error('Ошибка загрузки главного изображения:', error);
+      toast.error('❌ Ошибка загрузки изображения');
+      setMainImagePreview('');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[fileId];
+        return newProgress;
+      });
+    }
+  };
+
+  const handleHoverImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Размер изображения не должен превышать 5MB');
+      return;
+    }
+
+    setIsUploading(true);
+    const fileId = `hover-${Date.now()}`;
+    
+    try {
+      // Создаем превью
+      const previewUrl = URL.createObjectURL(file);
+      setHoverImagePreview(previewUrl);
+
+      // Загружаем в Firebase Storage
+      const downloadURL = await storageService.uploadFile(
+        file, 
+        STORAGE_PATHS.PRODUCT_HOVER_IMAGES,
+        (progress) => {
+          setUploadProgress(prev => ({ ...prev, [fileId]: progress }));
+        }
+      );
+
+      // Сохраняем URL из Firebase Storage
+      setProductForm(prev => ({ ...prev, hoverImage: downloadURL }));
+      toast.success('✅ Дополнительное изображение загружено!');
+      
+      // Очищаем превью URL
+      URL.revokeObjectURL(previewUrl);
+    } catch (error) {
+      console.error('Ошибка загрузки дополнительного изображения:', error);
+      toast.error('❌ Ошибка загрузки изображения');
+      setHoverImagePreview('');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[fileId];
+        return newProgress;
+      });
+    }
+  };
+
+  const handleGalleryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    if (files.length === 0) return;
+    
+    // Проверяем общее количество изображений в галерее (максимум 3)
+    if (imagePreviewUrls.length + files.length > 3) {
+      toast.error('Максимум 3 изображения в галерее');
+      return;
+    }
+
+    // Проверяем размер каждого файла (максимум 5MB)
+    const oversizedFiles = files.filter(file => file.size > 5 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      toast.error('Размер изображения не должен превышать 5MB');
+      return;
+    }
+
+    setIsUploading(true);
+    
+    try {
+      // Создаем превью изображений
+      const newPreviewUrls = files.map(file => URL.createObjectURL(file));
+      setImagePreviewUrls(prev => [...prev, ...newPreviewUrls]);
+
+      // Загружаем все файлы в Firebase Storage
+      const downloadURLs = await storageService.uploadMultipleFiles(
+        files,
+        STORAGE_PATHS.PRODUCT_GALLERY,
+        (fileIndex, progress) => {
+          const fileId = `gallery-${Date.now()}-${fileIndex}`;
+          setUploadProgress(prev => ({ ...prev, [fileId]: progress }));
+        }
+      );
+
+      // Сохраняем URL из Firebase Storage
+      setProductForm(prev => ({
+        ...prev,
+        images: [...prev.images, ...downloadURLs]
+      }));
+      
+      toast.success(`✅ Загружено ${files.length} изображений в галерею!`);
+      
+      // Очищаем превью URL
+      newPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+    } catch (error) {
+      console.error('Ошибка загрузки изображений галереи:', error);
+      toast.error('❌ Ошибка загрузки изображений');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress({});
+    }
+  };
+
+  const handleRemoveImage = async (index: number) => {
+    const imageUrl = productForm.images[index];
+    
+    // Если изображение из Firebase Storage, удаляем его
+    if (imageUrl && storageService.isFirebaseStorageURL(imageUrl)) {
+      try {
+        await storageService.deleteFile(imageUrl);
+        toast.success('Изображение удалено из хранилища');
+      } catch (error) {
+        console.error('Ошибка удаления изображения из Firebase Storage:', error);
+        toast.error('Ошибка удаления изображения');
+      }
+    }
+    
+    // Удаляем из всех массивов
+    setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
+    setProductForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
   };
 
   const handleUserDiscountChange = (userId: string, discount: number) => {
@@ -792,12 +1097,37 @@ const AdminPanel: React.FC = () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <ActionButton variant="edit" onClick={() => handleEditProduct(product)}>
-                          <FiEdit />
-                        </ActionButton>
-                        <ActionButton variant="delete" onClick={() => handleDeleteProduct(product.id)}>
-                          <FiTrash2 />
-                        </ActionButton>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <ActionButton 
+                            variant="edit" 
+                            onClick={() => handleToggleActive(product)}
+                            title={product.isActive ? 'Скрыть товар' : 'Показать товар'}
+                            style={{ 
+                              color: product.isActive ? '#27ae60' : '#95a5a6',
+                              background: product.isActive ? '#d4edda' : '#f8f9fa'
+                            }}
+                          >
+                            {product.isActive ? <FiEye /> : <FiEyeOff />}
+                          </ActionButton>
+                          <ActionButton 
+                            variant="edit" 
+                            onClick={() => handleTogglePopular(product)}
+                            title={product.isPopular ? 'Убрать из популярных' : 'Добавить в популярные'}
+                            style={{ 
+                              color: product.isPopular ? '#f39c12' : '#95a5a6',
+                              background: product.isPopular ? '#fff3cd' : '#f8f9fa',
+                              fill: product.isPopular ? '#f39c12' : 'none'
+                            }}
+                          >
+                            <FiStar style={{ fill: product.isPopular ? '#f39c12' : 'none' }} />
+                          </ActionButton>
+                          <ActionButton variant="edit" onClick={() => handleEditProduct(product)}>
+                            <FiEdit />
+                          </ActionButton>
+                          <ActionButton variant="delete" onClick={() => handleDeleteProduct(product.id)}>
+                            <FiTrash2 />
+                          </ActionButton>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -846,6 +1176,28 @@ const AdminPanel: React.FC = () => {
                       </MobileCardRow>
                     </MobileCardContent>
                     <MobileActions>
+                      <ActionButton 
+                        variant="edit" 
+                        onClick={() => handleToggleActive(product)}
+                        title={product.isActive ? 'Скрыть товар' : 'Показать товар'}
+                        style={{ 
+                          color: product.isActive ? '#27ae60' : '#95a5a6',
+                          background: product.isActive ? '#d4edda' : '#f8f9fa'
+                        }}
+                      >
+                        {product.isActive ? <FiEye /> : <FiEyeOff />}
+                      </ActionButton>
+                      <ActionButton 
+                        variant="edit" 
+                        onClick={() => handleTogglePopular(product)}
+                        title={product.isPopular ? 'Убрать из популярных' : 'Добавить в популярные'}
+                        style={{ 
+                          color: product.isPopular ? '#f39c12' : '#95a5a6',
+                          background: product.isPopular ? '#fff3cd' : '#f8f9fa'
+                        }}
+                      >
+                        <FiStar style={{ fill: product.isPopular ? '#f39c12' : 'none' }} />
+                      </ActionButton>
                       <ActionButton variant="edit" onClick={() => handleEditProduct(product)}>
                         <FiEdit />
                       </ActionButton>
@@ -1129,12 +1481,184 @@ const AdminPanel: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>URL изображения *</Label>
+              <Label>Главное фото *</Label>
+              <p style={{ fontSize: '0.85rem', color: '#6c757d', marginBottom: '0.5rem' }}>
+                Введите URL изображения или загрузите файл в Firebase Storage
+              </p>
               <Input
                 value={productForm.image}
-                onChange={(e) => setProductForm(prev => ({ ...prev, image: e.target.value }))}
+                onChange={(e) => {
+                  setProductForm(prev => ({ ...prev, image: e.target.value }));
+                  setMainImagePreview(e.target.value);
+                }}
                 placeholder="https://example.com/image.jpg"
               />
+              
+              <UploadButtonWrapper $disabled={isUploading} as="label">
+                <FiUpload />
+                {isUploading ? 'Загрузка...' : 'Загрузить главное фото'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleMainImageUpload}
+                  disabled={isUploading}
+                />
+              </UploadButtonWrapper>
+
+              {Object.keys(uploadProgress).some(key => key.startsWith('main-')) && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <div style={{ 
+                    width: '100%', 
+                    height: '8px', 
+                    backgroundColor: '#e0e0e0', 
+                    borderRadius: '4px',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{ 
+                      width: `${Object.values(uploadProgress).find((_, i, arr) => i === 0) || 0}%`, 
+                      height: '100%', 
+                      background: 'linear-gradient(90deg, #4dd0e1, #26c6da)',
+                      transition: 'width 0.3s ease'
+                    }} />
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: '#6c757d', marginTop: '0.25rem' }}>
+                    Загрузка: {Math.round(Object.values(uploadProgress).find((_, i, arr) => i === 0) || 0)}%
+                  </p>
+                </div>
+              )}
+
+              {mainImagePreview && (
+                <div style={{ marginTop: '1rem' }}>
+                  <ImagePreview style={{ maxWidth: '200px' }}>
+                    <ImagePreviewImg src={mainImagePreview} alt="Главное фото" />
+                  </ImagePreview>
+                </div>
+              )}
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Доп фото (при наведении)</Label>
+              <p style={{ fontSize: '0.85rem', color: '#6c757d', marginBottom: '0.5rem' }}>
+                Введите URL изображения или загрузите файл в Firebase Storage
+              </p>
+              <Input
+                value={productForm.hoverImage}
+                onChange={(e) => {
+                  setProductForm(prev => ({ ...prev, hoverImage: e.target.value }));
+                  setHoverImagePreview(e.target.value);
+                }}
+                placeholder="https://example.com/hover-image.jpg"
+              />
+              
+              <UploadButtonWrapper $disabled={isUploading} as="label">
+                <FiUpload />
+                {isUploading ? 'Загрузка...' : 'Загрузить доп фото'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleHoverImageUpload}
+                  disabled={isUploading}
+                />
+              </UploadButtonWrapper>
+
+              {Object.keys(uploadProgress).some(key => key.startsWith('hover-')) && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <div style={{ 
+                    width: '100%', 
+                    height: '8px', 
+                    backgroundColor: '#e0e0e0', 
+                    borderRadius: '4px',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{ 
+                      width: `${Object.values(uploadProgress).find((_, i, arr) => i === 0) || 0}%`, 
+                      height: '100%', 
+                      background: 'linear-gradient(90deg, #4dd0e1, #26c6da)',
+                      transition: 'width 0.3s ease'
+                    }} />
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: '#6c757d', marginTop: '0.25rem' }}>
+                    Загрузка: {Math.round(Object.values(uploadProgress).find((_, i, arr) => i === 0) || 0)}%
+                  </p>
+                </div>
+              )}
+
+              {hoverImagePreview && (
+                <div style={{ marginTop: '1rem' }}>
+                  <ImagePreview style={{ maxWidth: '200px' }}>
+                    <ImagePreviewImg src={hoverImagePreview} alt="Доп фото" />
+                  </ImagePreview>
+                </div>
+              )}
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Галерея (максимум 3 изображения)</Label>
+              <p style={{ fontSize: '0.85rem', color: '#6c757d', marginBottom: '0.5rem' }}>
+                Введите URL изображений через запятую или загрузите файлы в Firebase Storage
+              </p>
+              <Input
+                value={productForm.images.join(', ')}
+                onChange={(e) => {
+                  const urls = e.target.value.split(',').map(url => url.trim()).filter(url => url);
+                  setProductForm(prev => ({ ...prev, images: urls }));
+                  setImagePreviewUrls(urls);
+                }}
+                placeholder="https://example.com/gallery1.jpg, https://example.com/gallery2.jpg"
+              />
+              
+              <UploadButtonWrapper $disabled={isUploading || imagePreviewUrls.length >= 3} style={{ marginTop: '0.5rem' }} as="label">
+                <FiUpload />
+                {isUploading ? 'Загрузка...' : 'Загрузить изображения в галерею'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleGalleryImageUpload}
+                  disabled={isUploading || imagePreviewUrls.length >= 3}
+                />
+              </UploadButtonWrapper>
+
+              {Object.keys(uploadProgress).some(key => key.startsWith('gallery-')) && (
+                <div style={{ marginTop: '0.5rem' }}>
+                  <div style={{ 
+                    width: '100%', 
+                    height: '8px', 
+                    backgroundColor: '#e0e0e0', 
+                    borderRadius: '4px',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{ 
+                      width: `${Object.values(uploadProgress).reduce((acc, val) => acc + val, 0) / Object.keys(uploadProgress).length}%`, 
+                      height: '100%', 
+                      background: 'linear-gradient(90deg, #4dd0e1, #26c6da)',
+                      transition: 'width 0.3s ease'
+                    }} />
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: '#6c757d', marginTop: '0.25rem' }}>
+                    Загрузка: {Math.round(Object.values(uploadProgress).reduce((acc, val) => acc + val, 0) / Object.keys(uploadProgress).length)}%
+                  </p>
+                </div>
+              )}
+
+              {imagePreviewUrls.length > 0 && (
+                <ImageGallery>
+                  {imagePreviewUrls.map((url, index) => (
+                    <ImagePreview key={index}>
+                      <ImagePreviewImg src={url} alt={`Галерея ${index + 1}`} />
+                      <RemoveImageButton onClick={() => handleRemoveImage(index)}>
+                        ×
+                      </RemoveImageButton>
+                    </ImagePreview>
+                  ))}
+                </ImageGallery>
+              )}
+              
+              {imagePreviewUrls.length < 3 && (
+                <p style={{ fontSize: '0.85rem', color: '#6c757d', marginTop: '0.5rem' }}>
+                  Загружено: {imagePreviewUrls.length} / 3 изображений
+                </p>
+              )}
             </FormGroup>
 
             <FormGroup>
@@ -1149,6 +1673,44 @@ const AdminPanel: React.FC = () => {
                 <option value="purees">Пюре</option>
                 <option value="dried_flowers">Сухоцветы</option>
               </Select>
+            </FormGroup>
+
+            <FormGroup>
+              <Label>Статус товара</Label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={productForm.isActive}
+                    onChange={(e) => setProductForm(prev => ({ ...prev, isActive: e.target.checked }))}
+                  />
+                  <span>Товар активен (отображается в каталоге)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={productForm.isPopular}
+                    onChange={(e) => setProductForm(prev => ({ ...prev, isPopular: e.target.checked }))}
+                  />
+                  <span>Популярный товар (отображается на главной)</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={productForm.inStock}
+                    onChange={(e) => setProductForm(prev => ({ ...prev, inStock: e.target.checked }))}
+                  />
+                  <span>В наличии</span>
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={productForm.organic}
+                    onChange={(e) => setProductForm(prev => ({ ...prev, organic: e.target.checked }))}
+                  />
+                  <span>Органический продукт</span>
+                </label>
+              </div>
             </FormGroup>
 
             <FormGroup>

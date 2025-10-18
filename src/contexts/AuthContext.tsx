@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
 import { signInWithGoogle, signOutUser, onAuthStateChange } from '../firebase/auth';
+import { userService } from '../firebase/services';
 
 interface AuthContextType {
   user: User | null;
@@ -28,8 +29,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChange((user) => {
-      setUser(user);
+    const unsubscribe = onAuthStateChange(async (user) => {
+      if (user) {
+        // Загружаем полные данные пользователя из Firestore
+        try {
+          const fullUserData = await userService.getById(user.id);
+          if (fullUserData) {
+            // Обновляем данные в localStorage
+            const profileData = {
+              name: fullUserData.name,
+              lastName: fullUserData.lastName,
+              phone: fullUserData.phone,
+              city: fullUserData.city,
+              novaPoshtaOffice: fullUserData.novaPoshtaOffice,
+              address: fullUserData.address,
+              establishmentName: fullUserData.establishmentName,
+              isPrivatePerson: fullUserData.isPrivatePerson
+            };
+            localStorage.setItem('dreamshop_profile', JSON.stringify(profileData));
+            setUser(fullUserData);
+          } else {
+            setUser(user);
+          }
+        } catch (error) {
+          console.error('Ошибка загрузки данных пользователя:', error);
+          setUser(user);
+        }
+      } else {
+        setUser(null);
+        // Очищаем данные профиля при выходе
+        localStorage.removeItem('dreamshop_profile');
+      }
       setLoading(false);
     });
 
@@ -40,7 +70,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setLoading(true);
       const userData = await signInWithGoogle();
-      setUser(userData);
+      
+      // Загружаем полные данные пользователя из Firestore
+      try {
+        const fullUserData = await userService.getById(userData.id);
+        if (fullUserData) {
+          // Обновляем данные в localStorage
+          const profileData = {
+            name: fullUserData.name,
+            lastName: fullUserData.lastName,
+            phone: fullUserData.phone,
+            city: fullUserData.city,
+            novaPoshtaOffice: fullUserData.novaPoshtaOffice,
+            address: fullUserData.address,
+            establishmentName: fullUserData.establishmentName,
+            isPrivatePerson: fullUserData.isPrivatePerson
+          };
+          localStorage.setItem('dreamshop_profile', JSON.stringify(profileData));
+          setUser(fullUserData);
+        } else {
+          setUser(userData);
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки данных пользователя:', error);
+        setUser(userData);
+      }
     } catch (error) {
       console.error('Помилка входу:', error);
       throw error;
@@ -54,6 +108,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       await signOutUser();
       setUser(null);
+      // Очищаем данные профиля при выходе
+      localStorage.removeItem('dreamshop_profile');
     } catch (error) {
       console.error('Помилка виходу:', error);
       throw error;

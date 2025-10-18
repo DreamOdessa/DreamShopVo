@@ -72,6 +72,8 @@ export const initializeProducts = async () => {
       category: 'chips' as const,
       organic: true,
       inStock: true,
+      isActive: true,
+      isPopular: true,
       weight: '100г',
       ingredients: ['Яблука', 'Кориця', 'Лимонний сік']
     },
@@ -83,6 +85,8 @@ export const initializeProducts = async () => {
       category: 'chips' as const,
       organic: true,
       inStock: true,
+      isActive: true,
+      isPopular: true,
       weight: '100г',
       ingredients: ['Банани', 'Лимонний сік']
     },
@@ -94,6 +98,8 @@ export const initializeProducts = async () => {
       category: 'decorations' as const,
       organic: true,
       inStock: true,
+      isActive: true,
+      isPopular: false,
       weight: '50г',
       ingredients: ['Троянда', 'Лаванда', 'Фіалка', 'Настурція']
     },
@@ -105,6 +111,8 @@ export const initializeProducts = async () => {
       category: 'syrups' as const,
       organic: true,
       inStock: true,
+      isActive: true,
+      isPopular: false,
       weight: '250мл',
       ingredients: ['Полуниця', 'Цукор', 'Вода', 'Лимонна кислота']
     },
@@ -116,6 +124,8 @@ export const initializeProducts = async () => {
       category: 'purees' as const,
       organic: true,
       inStock: true,
+      isActive: true,
+      isPopular: false,
       weight: '200г',
       ingredients: ['Манго', 'Лимонний сік']
     },
@@ -127,6 +137,8 @@ export const initializeProducts = async () => {
       category: 'dried_flowers' as const,
       organic: true,
       inStock: true,
+      isActive: true,
+      isPopular: false,
       weight: '30г',
       ingredients: ['Ромашка', 'М\'ята', 'Лаванда', 'Розмарин']
     }

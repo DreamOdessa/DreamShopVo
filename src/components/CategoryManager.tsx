@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useAdmin } from '../contexts/AdminContext';
 import { Category } from '../types';
-import { FiEdit, FiTrash2, FiPlus, FiX } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiX, FiUpload } from 'react-icons/fi';
+import { storageService, STORAGE_PATHS } from '../firebase/storageService';
+import toast from 'react-hot-toast';
 
 const CategoryManagerContainer = styled.div`
   background: white;
@@ -115,13 +117,21 @@ const CategoryMeta = styled.div`
   color: #999;
 `;
 
-const StatusBadge = styled.span<{ active: boolean }>`
+const StatusBadge = styled.button<{ active: boolean }>`
   background: ${props => props.active ? '#4caf50' : '#f44336'};
   color: white;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
 `;
 
 const Modal = styled.div<{ isOpen: boolean }>`
@@ -257,7 +267,7 @@ const Button = styled.button<{ variant?: 'primary' | 'secondary' }>`
 `;
 
 const CategoryManager: React.FC = () => {
-  const { categories, addCategory, updateCategory, deleteCategory, loading } = useAdmin();
+  const { categories, addCategory, updateCategory, deleteCategory, products, updateProduct, loading } = useAdmin();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({
@@ -269,6 +279,8 @@ const CategoryManager: React.FC = () => {
     isActive: true,
     sortOrder: 0
   });
+  const [isUploading, setIsUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState('');
 
   const handleOpenModal = (category?: Category) => {
     if (category) {
@@ -282,6 +294,7 @@ const CategoryManager: React.FC = () => {
         isActive: category.isActive,
         sortOrder: category.sortOrder
       });
+      setImagePreview(category.image || '');
     } else {
       setEditingCategory(null);
       setFormData({
@@ -293,6 +306,7 @@ const CategoryManager: React.FC = () => {
         isActive: true,
         sortOrder: 0
       });
+      setImagePreview('');
     }
     setIsModalOpen(true);
   };
@@ -312,6 +326,71 @@ const CategoryManager: React.FC = () => {
     }
     
     handleCloseModal();
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Размер изображения не должен превышать 5MB');
+      return;
+    }
+
+    setIsUploading(true);
+    
+    try {
+      // Создаем превью
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+
+      // Загружаем в Firebase Storage
+      const downloadURL = await storageService.uploadFile(
+        file, 
+        STORAGE_PATHS.CATEGORIES
+      );
+
+      // Сохраняем URL из Firebase Storage
+      setFormData(prev => ({ ...prev, image: downloadURL }));
+      toast.success('✅ Изображение категории загружено!');
+      
+      // Очищаем превью URL
+      URL.revokeObjectURL(previewUrl);
+    } catch (error) {
+      console.error('Ошибка загрузки изображения категории:', error);
+      toast.error('❌ Ошибка загрузки изображения');
+      setImagePreview('');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleToggleActive = async (category: Category) => {
+    const newActiveState = !category.isActive;
+    
+    try {
+      // Обновляем категорию
+      await updateCategory(category.id, { isActive: newActiveState });
+      
+      // Обновляем все товары этой категории одним батчем
+      const categoryProducts = products.filter(p => p.category === category.slug);
+      
+      // Создаем массив промисов для параллельного обновления
+      const updatePromises = categoryProducts.map(product => 
+        updateProduct(product.id, { isActive: newActiveState })
+      );
+      
+      // Выполняем все обновления параллельно
+      await Promise.all(updatePromises);
+      
+      toast.success(newActiveState 
+        ? `✅ Категория "${category.name}" и ${categoryProducts.length} товаров активированы` 
+        : `👁️ Категория "${category.name}" и ${categoryProducts.length} товаров скрыты`
+      );
+    } catch (error) {
+      console.error('Ошибка обновления категории:', error);
+      toast.error('❌ Ошибка обновления категории');
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -360,7 +439,11 @@ const CategoryManager: React.FC = () => {
             <CategoryDescription>{category.description}</CategoryDescription>
             <CategoryMeta>
               <span>Порядок: {category.sortOrder}</span>
-              <StatusBadge active={category.isActive}>
+              <StatusBadge 
+                active={category.isActive}
+                onClick={() => handleToggleActive(category)}
+                title={category.isActive ? 'Нажмите чтобы скрыть категорию и все товары' : 'Нажмите чтобы показать категорию и все товары'}
+              >
                 {category.isActive ? 'Активна' : 'Неактивна'}
               </StatusBadge>
             </CategoryMeta>
@@ -423,8 +506,52 @@ const CategoryManager: React.FC = () => {
               <Input
                 type="text"
                 value={formData.image}
-                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, image: e.target.value });
+                  setImagePreview(e.target.value);
+                }}
               />
+              
+              <label style={{ 
+                display: 'inline-flex', 
+                alignItems: 'center', 
+                gap: '0.5rem',
+                padding: '0.75rem 1.5rem',
+                background: 'linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%)',
+                color: 'white',
+                borderRadius: '8px',
+                cursor: isUploading ? 'not-allowed' : 'pointer',
+                opacity: isUploading ? 0.6 : 1,
+                marginTop: '0.5rem',
+                fontWeight: '600',
+                transition: 'all 0.3s ease',
+                border: 'none'
+              }}>
+                <FiUpload />
+                {isUploading ? 'Загрузка...' : 'Загрузить изображение с устройства'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={isUploading}
+                  style={{ display: 'none' }}
+                />
+              </label>
+
+              {imagePreview && (
+                <div style={{ marginTop: '1rem' }}>
+                  <img 
+                    src={imagePreview} 
+                    alt="Preview" 
+                    style={{ 
+                      maxWidth: '200px', 
+                      maxHeight: '200px', 
+                      borderRadius: '8px',
+                      border: '2px solid #e9ecef'
+                    }} 
+                  />
+                </div>
+              )}
             </FormGroup>
 
             <FormGroup>

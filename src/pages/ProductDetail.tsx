@@ -51,12 +51,59 @@ const ImageSection = styled.div`
   position: relative;
 `;
 
+const MainImageContainer = styled.div`
+  position: relative;
+  margin-bottom: 1rem;
+`;
+
 const ProductImage = styled.img`
   width: 100%;
-  height: 500px;
-  object-fit: cover;
+  height: auto;
+  max-height: 600px;
+  object-fit: contain;
   border-radius: 20px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  background: #f8f9fa;
+`;
+
+const ThumbnailContainer = styled.div`
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+  scrollbar-width: thin;
+  scrollbar-color: #667eea #f8f9fa;
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 10px;
+  }
+`;
+
+const Thumbnail = styled.img<{ $isActive: boolean }>`
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 3px solid ${props => props.$isActive ? '#667eea' : 'transparent'};
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    transform: scale(1.05);
+    border-color: #667eea;
+  }
 `;
 
 const OrganicBadge = styled.div`
@@ -293,8 +340,15 @@ const ProductDetail: React.FC = () => {
   const { user } = useAuth();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const product = products.find(p => p.id === id);
+  
+  // Получаем изображения: [главное фото, доп фото при hover, ...галерея]
+  // Для страницы товара показываем ВСЕ изображения (до 5 шт)
+  const productImages = product?.images && product.images.length > 0 
+    ? product.images // показываем все изображения
+    : (product?.image ? [product.image] : []);
 
   if (!product) {
     return (
@@ -354,12 +408,31 @@ const ProductDetail: React.FC = () => {
 
         <ProductContainer>
           <ImageSection>
-            <ProductImage src={product.image} alt={product.name} />
-            {product.organic && (
-              <OrganicBadge>
-                <FiZap />
-                Органічний продукт
-              </OrganicBadge>
+            <MainImageContainer>
+              <ProductImage 
+                src={productImages[selectedImageIndex]} 
+                alt={product.name} 
+              />
+              {product.organic && (
+                <OrganicBadge>
+                  <FiZap />
+                  Органічний продукт
+                </OrganicBadge>
+              )}
+            </MainImageContainer>
+            
+            {productImages.length > 1 && (
+              <ThumbnailContainer>
+                {productImages.map((image, index) => (
+                  <Thumbnail
+                    key={index}
+                    src={image}
+                    alt={`${product.name} - фото ${index + 1}`}
+                    $isActive={selectedImageIndex === index}
+                    onClick={() => setSelectedImageIndex(index)}
+                  />
+                ))}
+              </ThumbnailContainer>
             )}
           </ImageSection>
 

@@ -252,15 +252,6 @@ const ClearFilters = styled.button`
   }
 `;
 
-const categories = [
-  { id: 'all', name: 'Всі товари' },
-  { id: 'chips', name: 'Фруктові чіпси' },
-  { id: 'decorations', name: 'Прикраси' },
-  { id: 'syrups', name: 'Сиропи' },
-  { id: 'purees', name: 'Пюре' },
-  { id: 'dried_flowers', name: 'Сухоцвіти' }
-];
-
 const Products: React.FC = () => {
   const { products, categories } = useAdmin();
   const { closeSidebar, isOpen: isCategorySidebarOpen } = useCategorySidebar();

@@ -149,7 +149,7 @@ const NavLinks = styled.div<{ isOpen: boolean }>`
     flex-direction: column;
     justify-content: center;
     gap: 2rem;
-    transform: ${props => props.isOpen ? 'translateX(0)' : 'translateX(-100%)'};
+    transform: ${props => (props.isOpen ? 'translateX(0)' : 'translateX(-100%)')};
     transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     z-index: 1000;
     box-shadow: 
@@ -173,7 +173,7 @@ const NavLinks = styled.div<{ isOpen: boolean }>`
 `;
 
 const NavLink = styled(Link)<{ isActive: boolean }>`
-  color: ${props => props.isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.9)'};
+  color: ${props => (props.isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.9)')};
   text-decoration: none;
   font-weight: 600;
   font-size: 1.2rem;
@@ -183,9 +183,10 @@ const NavLink = styled(Link)<{ isActive: boolean }>`
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: ${props => props.isActive 
-    ? 'rgba(255, 255, 255, 0.2)' 
-    : 'rgba(255, 255, 255, 0.05)'};
+  background: ${props =>
+    props.isActive
+      ? 'rgba(255, 255, 255, 0.2)'
+      : 'rgba(255, 255, 255, 0.05)'};
 
   &:hover {
     background: rgba(255, 255, 255, 0.15);
@@ -253,7 +254,7 @@ const MobileCategoryButton = styled.button`
 
   @media (max-width: 768px) {
     display: block;
-    margin-left: 
+    margin-left: 1rem;
   }
 
   @media (max-width: 480px) {
@@ -315,7 +316,7 @@ const ProfileDropdownList = styled.div<{ isOpen: boolean }>`
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1000;
   min-width: 200px;
-  display: ${props => props.isOpen ? 'block' : 'none'};
+  display: ${props => (props.isOpen ? 'block' : 'none')};
   margin-top: 0.5rem;
 `;
 
@@ -445,7 +446,7 @@ const MobileActionsContainer = styled.div`
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
-    gap: '5rem';
+    gap: 1rem;
   }
 `;
 

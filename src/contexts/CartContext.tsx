@@ -97,13 +97,34 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
 
   const createOrder = async (orderData: Omit<Order, 'id' | 'createdAt'>): Promise<string> => {
     try {
-      const orderId = await orderService.create(orderData);
+      // Валидация данных заказа
+      if (!orderData.userId) {
+        throw new Error('ID пользователя не указан');
+      }
+      if (!orderData.items || orderData.items.length === 0) {
+        throw new Error('Корзина пуста');
+      }
+      if (!orderData.customerInfo || !orderData.deliveryInfo || !orderData.paymentInfo) {
+        throw new Error('Неполная информация о заказе');
+      }
+
+      // Очищаем данные от undefined значений перед отправкой
+      const cleanOrderData = {
+        ...orderData,
+        recipientInfo: {
+          ...orderData.recipientInfo,
+          establishmentName: orderData.recipientInfo.establishmentName || null
+        }
+      };
+
+      const orderId = await orderService.create(cleanOrderData);
       clearCart();
       toast.success('Замовлення створено успішно!');
       return orderId;
     } catch (error) {
       console.error('Помилка створення замовлення:', error);
-      toast.error('Помилка створення замовлення');
+      const errorMessage = error instanceof Error ? error.message : 'Помилка створення замовлення';
+      toast.error(errorMessage);
       throw error;
     }
   };

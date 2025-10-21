@@ -8,9 +8,10 @@ import { FiShoppingCart, FiUser, FiMenu, FiX, FiHeart, FiGrid, FiLogOut, FiChevr
 import GoogleLogin from './GoogleLogin';
 import CategorySidebar from './CategorySidebar';
 import { useCategorySidebar } from '../contexts/CategorySidebarContext';
+import SideCartDrawer from './SideCartDrawer';
 
 const HeaderContainer = styled.header`
-  background: linear-gradient(to bottom,rgb(65, 198, 216) 0%,rgba(89, 206, 226, 0.9) 50%,rgba(84, 226, 245, 0.47) 100%);
+  background: linear-gradient(to bottom,rgb(37, 159, 175) 0%,rgba(61, 174, 194, 0.9) 50%,rgba(84, 226, 245, 0.47) 100%);
   color: white;
   padding: 1rem 0;
   position: sticky;
@@ -235,7 +236,6 @@ const CategoryButton = styled.button`
 
 const MobileCategoryButton = styled.button`
   display: none;
-  position: absolute;
   right: 20px;
   color: white;
   font-size: 1.3rem;
@@ -253,6 +253,7 @@ const MobileCategoryButton = styled.button`
 
   @media (max-width: 768px) {
     display: block;
+    margin-left: 
   }
 
   @media (max-width: 480px) {
@@ -338,13 +339,15 @@ const ProfileDropdownItem = styled(Link)`
   }
 `;
 
-const CartButton = styled(Link)`
+const CartButton = styled.button`
   position: relative;
   color: white;
   font-size: 1.5rem;
   padding: 0.5rem;
   border-radius: 8px;
   transition: all 0.3s ease;
+  background: none;
+  border: none;
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);
@@ -432,8 +435,23 @@ const CloseButton = styled.button`
   }
 `;
 
+const MobileActionsContainer = styled.div`
+  display: none; // По умолчанию скрыт
+
+  @media (max-width: 768px) {
+    display: flex; // Показываем на экранах меньше 768px
+    align-items: center;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    gap: '5rem';
+  }
+`;
+
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number>(0);
   const [touchEndX, setTouchEndX] = useState<number>(0);
@@ -562,20 +580,14 @@ const Header: React.FC = () => {
               <FiGrid />
             </CategoryButton>
 
-            <CartButton to="/cart" onClick={() => setIsMenuOpen(false)}>
-              <FiShoppingCart />
-              {getTotalItems() > 0 && (
-                <CartBadge>{getTotalItems()}</CartBadge>
-              )}
-            </CartButton>
-
+            
             {user ? (
               <ProfileDropdown data-profile-dropdown>
                 <ProfileButton 
                   onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                 >
                   <FiUser />
-                  <span>{user.name} {user.lastName && user.lastName}</span>
+                  <span className="desktop-only">{user.name} {user.lastName && user.lastName}</span>
                   <FiChevronDown style={{ 
                     fontSize: '0.8rem',
                     transform: isProfileDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -624,16 +636,25 @@ const Header: React.FC = () => {
           </UserActions>
         </NavLinks>
 
-        <MobileCategoryButton 
-          onClick={openSidebar}
-          title="Категорії товарів"
-        >
-          <FiGrid />
-        </MobileCategoryButton>
-
+        {/* Мобільний порядок: ліворуч меню, праворуч — кошик і категорії */}
         <MobileMenuButton onClick={toggleMenu}>
           <FiMenu />
         </MobileMenuButton>
+
+      <MobileActionsContainer>
+           <CartButton onClick={() => setIsCartOpen(true)} aria-label="Кошик (mobile)">
+             <FiShoppingCart />
+             {getTotalItems() > 0 && (
+              <CartBadge>{getTotalItems()}</CartBadge>
+              )}
+    </CartButton>
+    <MobileCategoryButton 
+      onClick={openSidebar}
+      title="Категорії товарів"
+    >
+      <FiGrid />
+    </MobileCategoryButton>
+</MobileActionsContainer>
       </Nav>
       </HeaderContainer>
 
@@ -656,6 +677,9 @@ const Header: React.FC = () => {
           navigate(`/products?category=${categoryId}`);
         }}
       />
+
+      {/* Бокова корзина */}
+      <SideCartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );
 };

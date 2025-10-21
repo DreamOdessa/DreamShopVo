@@ -14,8 +14,8 @@ const HeroSection = styled.section`
   text-align: center;
   position: relative;
   overflow: hidden;
-  background-image: url('https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/background-first.PNG');
-  background-size: cover;
+  background-image: url('/background-first.png');
+  background-size: 115%;
   background-position: center;
   background-attachment: fixed;
   background-blend-mode: overlay;
@@ -27,16 +27,27 @@ const HeroSection = styled.section`
   @media (max-width: 768px) {
     padding: 4rem 0;
     min-height: 80vh;
+    margin-top: -2rem;
+    background-size: 200%;
   }
 
   @media (max-width: 480px) {
     padding: 3rem 0;
     min-height: 70vh;
+    margin-top: -1.5rem;
+    background-size: 200%;
   }
 
   @media (max-width: 360px) {
     padding: 2rem 0;
     min-height: 60vh;
+    margin-top: -1rem;
+    background-size: 200%;
+  }
+
+  /* Отключаем параллакс только для iOS устройств */
+  @supports (-webkit-touch-callout: none) {
+    background-attachment: scroll;
   }
 
   &::before {
@@ -46,8 +57,20 @@ const HeroSection = styled.section`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(77, 208, 225, 0) 0%, rgba(38, 197, 218, 0.21) 50%, rgba(0, 171, 193, 0) 100%);
+    background: linear-gradient(135deg, rgba(25, 174, 194, 0.62) 0%, rgb(138, 13, 13) 50%, rgbrgba(54, 214, 235, 0) 100%);
     z-index: 1;
+
+    @media (max-width: 768px) {
+      background: linear-gradient(135deg, rgba(111, 213, 226, 0.25) 0%, rgba(38, 197, 218, 0.1) 50%, rgba(0, 171, 193, 0.38) 100%);
+    }
+
+    @media (max-width: 480px) {
+      background: linear-gradient(135deg, rgba(125, 223, 236, 0.18) 0%, rgba(74, 214, 233, 0) 50%, rgba(117, 212, 224, 0.27) 100%);
+    }
+
+    @media (max-width: 360px) {
+      background: linear-gradient(135deg, rgba(77, 208, 225, 0.44) 0%, rgba(38, 197, 218, 0.03) 50%, rgba(45, 172, 189, 0.38) 100%);
+    }
   }
 `;
 
@@ -145,10 +168,27 @@ const ProductsSection = styled.section`
   padding: 6rem 0;
   background:rgba(248, 249, 250, 0);
   background-image: url('https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/background-second.jpg');
-  background-size: cover;
+  background-size: 100%;
   background-position: center;
   background-attachment: fixed;
   position: relative;
+
+  @media (max-width: 768px) {
+    padding: 4rem 0;
+  }
+
+  @media (max-width: 480px) {
+    padding: 3rem 0;
+  }
+
+  @media (max-width: 360px) {
+    padding: 2rem 0;
+  }
+
+  /* Отключаем параллакс только для iOS устройств */
+  @supports (-webkit-touch-callout: none) {
+    background-attachment: scroll;
+  }
   
   &::before {
     content: '';
@@ -159,6 +199,18 @@ const ProductsSection = styled.section`
     bottom: 0;
     background: rgba(117, 194, 194, 0.23);
     z-index: 1;
+
+    @media (max-width: 768px) {
+      background: rgba(117, 194, 194, 0.15);
+    }
+
+    @media (max-width: 480px) {
+      background: rgba(117, 194, 194, 0.1);
+    }
+
+    @media (max-width: 360px) {
+      background: rgba(117, 194, 194, 0.05);
+    }
   }
 `;
 
@@ -184,28 +236,25 @@ const ProductsGrid = styled.div`
   padding: 0 20px;
   position: relative;
   z-index: 2;
-`;
 
-const ViewAllButton = styled(Link)`
-  display: block;
-  text-align: center;
-  margin: 3rem auto 0;
-  background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
-  color: white;
-  padding: 1rem 2rem;
-  border-radius: 50px;
-  text-decoration: none;
-  font-weight: 600;
-  width: fit-content;
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 2;
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(0, 150, 136, 0.3);
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.8rem;
+    padding: 0 12px;
+  }
+
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 0 8px;
   }
 `;
+
 
 // Блок с тремя информационными карточками
 const InfoCardsSection = styled.section`
@@ -214,6 +263,8 @@ const InfoCardsSection = styled.section`
   position: relative;
   z-index: 2;
 `;
+
+/* duplicate definitions removed */
 
 const InfoCardsContainer = styled.div`
   max-width: 1200px;
@@ -278,9 +329,6 @@ const Home: React.FC = () => {
   
   // Популярные товары (отмеченные как популярные)
   const popularProducts = activeProducts.filter(p => p.isPopular).slice(0, 6);
-  
-  // Обычные товары для секции
-  const featuredProducts = activeProducts.filter(p => !p.isPopular).slice(0, 6);
 
 
   return (
@@ -389,30 +437,7 @@ const Home: React.FC = () => {
         </ProductsSection>
       )}
 
-      {featuredProducts.length > 0 && (
-        <ProductsSection>
-          <div className="container">
-            <SectionTitle>Рекомендовані товари</SectionTitle>
-            <ProductsGrid>
-              {featuredProducts.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                >
-                  <ProductCard product={product} />
-                </motion.div>
-              ))}
-            </ProductsGrid>
-            <ViewAllButton to="/products">
-              Переглянути всі товари
-              <FiArrowRight style={{ marginLeft: '0.5rem' }} />
-            </ViewAllButton>
-          </div>
-        </ProductsSection>
-      )}
+      {/* Рекомендовані товари приховані за бажанням замовника */}
     </>
   );
 };

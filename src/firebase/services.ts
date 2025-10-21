@@ -182,23 +182,46 @@ export const orderService = {
 
   // Получить заказы пользователя
   async getByUserId(userId: string): Promise<Order[]> {
+    if (!userId) {
+      throw new Error('ID пользователя не указан');
+    }
+    
+    // Используем только фильтр по userId без orderBy, чтобы не требовать композитный индекс.
+    // Сортировку по createdAt выполним на клиенте.
     const q = query(
       collection(db, ORDERS_COLLECTION),
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc')
+      where('userId', '==', userId)
     );
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
-    })) as Order[];
+    const orders = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate().toISOString() || new Date().toISOString(),
+        // Обеспечиваем совместимость со старой структурой
+        items: data.items || [],
+        total: data.total || 0,
+        status: data.status || 'pending',
+        customerInfo: data.customerInfo || {},
+        deliveryInfo: data.deliveryInfo || {},
+        paymentInfo: data.paymentInfo || {},
+        shippingAddress: data.shippingAddress || {}
+      } as Order;
+    });
+    // Сортируем по дате создания по убыванию
+    return orders.sort((a, b) => (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   },
 
   // Создать заказ
   async create(order: Omit<Order, 'id' | 'createdAt'>): Promise<string> {
+    // Очищаем объект от undefined значений
+    const cleanOrder = JSON.parse(JSON.stringify(order, (key, value) => {
+      return value === undefined ? null : value;
+    }));
+    
     const docRef = await addDoc(collection(db, ORDERS_COLLECTION), {
-      ...order,
+      ...cleanOrder,
       createdAt: serverTimestamp()
     });
     return docRef.id;

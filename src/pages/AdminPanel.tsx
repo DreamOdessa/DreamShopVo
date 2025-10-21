@@ -193,6 +193,10 @@ const AddButton = styled.button`
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(0, 150, 136, 0.3);
   }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const Table = styled.table`
@@ -337,13 +341,17 @@ const ActionButton = styled.button<{ variant?: 'edit' | 'delete' | 'save' | 'can
   }}
 
   @media (max-width: 768px) {
-    padding: 0.4rem;
-    font-size: 0.8rem;
+    padding: 0.8rem;
+    font-size: 1rem;
+    min-width: 44px;
+    min-height: 44px;
   }
 
   @media (max-width: 480px) {
-    padding: 0.3rem;
-    font-size: 0.7rem;
+    padding: 0.7rem;
+    font-size: 0.9rem;
+    min-width: 40px;
+    min-height: 40px;
   }
 `;
 

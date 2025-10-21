@@ -37,7 +37,8 @@ export const signInWithGoogle = async (): Promise<User> => {
       console.log('👤 Обновляем существующего пользователя');
       user = {
         ...existingUser,
-        name: result.user.displayName || existingUser.name,
+        // Сохраняем имя из базы, а Google-имя используем только как резервное
+        name: existingUser.name || result.user.displayName || 'Користувач',
         email: result.user.email || existingUser.email,
         avatar: result.user.photoURL || existingUser.avatar
       };
@@ -82,7 +83,8 @@ export const onAuthStateChange = (callback: (user: User | null) => void) => {
         // Обновляем только основные данные, сохраняя права администратора
         const updatedUser = {
           ...userData,
-          name: firebaseUser.displayName || userData.name,
+          // Не затираем имя из базы, используем Google-имя только если в базе пусто
+          name: userData.name || firebaseUser.displayName || 'Користувач',
           email: firebaseUser.email || userData.email,
           avatar: firebaseUser.photoURL || userData.avatar
         };

@@ -27,6 +27,16 @@ const ImageContainer = styled.div`
   position: relative;
   height: 200px;
   overflow: hidden;
+
+  @media (max-width: 992px) {
+    height: 180px;
+  }
+  @media (max-width: 768px) {
+    height: 150px;
+  }
+  @media (max-width: 480px) {
+    height: 110px;
+  }
 `;
 
 const ImageWrapper = styled.div`
@@ -118,6 +128,13 @@ const ActionButton = styled.button`
 
 const CardContent = styled.div`
   padding: 1.5rem;
+
+  @media (max-width: 768px) {
+    padding: 0.8rem;
+  }
+  @media (max-width: 480px) {
+    padding: 0.6rem;
+  }
 `;
 
 const Category = styled.div`
@@ -135,6 +152,13 @@ const ProductName = styled.h3`
   color: #2c3e50;
   margin-bottom: 0.5rem;
   line-height: 1.3;
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+  }
+  @media (max-width: 480px) {
+    font-size: 0.9rem;
+  }
 `;
 
 const ProductDescription = styled.p`
@@ -146,6 +170,13 @@ const ProductDescription = styled.p`
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+  }
+  @media (max-width: 480px) {
+    font-size: 0.8rem;
+  }
 `;
 
 const ProductFooter = styled.div`
@@ -166,12 +197,24 @@ const Price = styled.span<{ isDiscounted?: boolean }>`
   color: #27ae60;
   text-decoration: ${props => props.isDiscounted ? 'line-through' : 'none'};
   opacity: ${props => props.isDiscounted ? 0.6 : 1};
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+  }
+  @media (max-width: 480px) {
+    font-size: 1rem;
+  }
 `;
 
 const OriginalPrice = styled.span`
   font-size: 1.1rem;
   font-weight: 600;
   color: #e74c3c;
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+  @media (max-width: 480px) {
+    font-size: 0.9rem;
+  }
 `;
 
 const AddToCartButton = styled.button`
@@ -186,14 +229,13 @@ const AddToCartButton = styled.button`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0, 150, 136, 0.3);
+  @media (max-width: 768px) {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
   }
-
-  &:active {
-    transform: translateY(0);
+  @media (max-width: 480px) {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.85rem;
   }
 `;
 

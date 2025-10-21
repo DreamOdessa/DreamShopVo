@@ -59,7 +59,7 @@ export interface Order {
   };
   // Информация о получателе
   recipientInfo: {
-    establishmentName?: string;
+    establishmentName?: string | null;
     isPrivatePerson: boolean;
   };
   // Информация об оплате

@@ -217,6 +217,24 @@ const ProductsGrid = styled.div`
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.8rem;
+    padding: 0 12px;
+  }
+
+  /* На очень узких экранах показываем строго 2 карточки в ряд */
+  @media (max-width: 480px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 0 8px;
+  }
 `;
 
 const NoProducts = styled.div`

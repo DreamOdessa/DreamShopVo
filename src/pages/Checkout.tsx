@@ -466,13 +466,13 @@ const Checkout: React.FC = () => {
     const baseMethods = [
       { value: 'cash_on_delivery', label: 'Накладений платіж' },
       { value: 'bank_transfer', label: 'Оплата за реквізитами' },
-      { value: 'fop', label: 'Оплата ФОП' }
+      { value: 'card_online', label: 'Картка онлайн' }
     ];
 
     if (formData.city === 'Одеса') {
       return [
         ...baseMethods,
-        { value: 'cash', label: 'Оплата готівкою' }
+        { value: 'card_on_delivery', label: 'Картка при отриманні' }
       ];
     }
 
@@ -491,6 +491,7 @@ const Checkout: React.FC = () => {
            formData.phone &&
            formData.city &&
            formData.deliveryMethod &&
+           formData.deliveryDetails &&
            formData.paymentMethod &&
            (!formData.isPrivatePerson ? formData.establishmentName : true);
   };
@@ -547,7 +548,7 @@ const Checkout: React.FC = () => {
           deliveryDetails: formData.deliveryDetails
         },
         recipientInfo: {
-          establishmentName: formData.establishmentName || undefined,
+          establishmentName: formData.establishmentName || null,
           isPrivatePerson: formData.isPrivatePerson
         },
         paymentInfo: {

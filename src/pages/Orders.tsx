@@ -255,6 +255,7 @@ const Orders: React.FC = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -265,11 +266,14 @@ const Orders: React.FC = () => {
 
       try {
         setLoading(true);
+        setError(null);
         const userOrders = await orderService.getByUserId(user.id);
         setOrders(userOrders);
       } catch (error) {
         console.error('Ошибка загрузки заказов:', error);
-        toast.error('Ошибка загрузки заказов');
+        const errorMessage = error instanceof Error ? error.message : 'Ошибка загрузки заказов';
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -347,6 +351,27 @@ const Orders: React.FC = () => {
     );
   }
 
+  if (error) {
+    return (
+      <OrdersContainer>
+        <Header>
+          <Title>Замовлення</Title>
+          <Subtitle>Історія ваших замовлень</Subtitle>
+        </Header>
+        <Content>
+          <EmptyState>
+            <EmptyIcon>⚠️</EmptyIcon>
+            <EmptyTitle>Помилка завантаження</EmptyTitle>
+            <EmptyText>{error}</EmptyText>
+            <ShopButton onClick={() => window.location.reload()}>
+              Спробувати знову
+            </ShopButton>
+          </EmptyState>
+        </Content>
+      </OrdersContainer>
+    );
+  }
+
   return (
     <OrdersContainer>
       <Header>
@@ -393,13 +418,13 @@ const Orders: React.FC = () => {
                     <DetailItem>
                       <FiMapPin />
                       <span>
-                        {order.deliveryInfo?.city || order.shippingAddress.city}
+                        {order.deliveryInfo?.city || order.shippingAddress?.city || 'Не вказано'}
                       </span>
                     </DetailItem>
                     <DetailItem>
                       <FiPackage />
                       <span>
-                        {getDeliveryMethodText(order.deliveryInfo?.deliveryMethod || 'address')}
+                        {getDeliveryMethodText(order.deliveryInfo?.deliveryMethod || order.shippingAddress ? 'address' : 'post_office')}
                       </span>
                     </DetailItem>
                     <DetailItem>
@@ -410,21 +435,21 @@ const Orders: React.FC = () => {
                     </DetailItem>
                     <DetailItem>
                       <FiPackage />
-                      <span>{order.items.length} товарів</span>
+                      <span>{order.items?.length || 0} товарів</span>
                     </DetailItem>
                   </OrderDetails>
 
                   <ItemsList>
                     <ItemsTitle>Товари в замовленні:</ItemsTitle>
                     <ItemsGrid>
-                      {order.items.map((item, index) => (
+                      {order.items?.map((item, index) => (
                         <ItemCard key={index}>
-                          <ItemName>{item.product.name}</ItemName>
+                          <ItemName>{item.product?.name || 'Невідомий товар'}</ItemName>
                           <ItemQuantity>
-                            Кількість: {item.quantity} × {item.product.price} ₴
+                            Кількість: {item.quantity || 0} × {item.product?.price || 0} ₴
                           </ItemQuantity>
                         </ItemCard>
-                      ))}
+                      )) || []}
                     </ItemsGrid>
                   </ItemsList>
                 </OrderCard>

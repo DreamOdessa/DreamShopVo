@@ -8,13 +8,13 @@ import ProductCard from '../components/ProductCard';
 import { useAdmin } from '../contexts/AdminContext';
 
 const HeroSection = styled.section`
-  background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
+  background: linear-gradient(135deg,rgba(77, 208, 225, 0.52) 0%,rgba(38, 197, 218, 0.51) 50%,rgba(0, 171, 193, 0.44) 100%);
   color: white;
   padding: 6rem 0;
   text-align: center;
   position: relative;
   overflow: hidden;
-  background-image: url('https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/background-first.png');
+  background-image: url('https://firebasestorage.googleapis.com/v0/b/dreamshop-odessa.firebasestorage.app/o/backgrounds%2Fbackground-first.png?alt=media');
   background-size: 115%;
   background-position: center;
   background-attachment: fixed;
@@ -57,19 +57,19 @@ const HeroSection = styled.section`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(25, 174, 194, 0.62) 0%, rgb(138, 13, 13) 50%, rgbrgba(54, 214, 235, 0) 100%);
+    background: linear-gradient(135deg, rgba(25, 174, 194, 0.3) 0%, rgba(33, 135, 167, 0.17) 50%, rgba(54, 214, 235, 0.1) 100%);
     z-index: 1;
 
     @media (max-width: 768px) {
-      background: linear-gradient(135deg, rgba(111, 213, 226, 0.25) 0%, rgba(38, 197, 218, 0.1) 50%, rgba(0, 171, 193, 0.38) 100%);
+      background: linear-gradient(135deg, rgba(111, 213, 226, 0.15) 0%, rgba(38, 197, 218, 0.05) 50%, rgba(0, 171, 193, 0.2) 100%);
     }
 
     @media (max-width: 480px) {
-      background: linear-gradient(135deg, rgba(125, 223, 236, 0.18) 0%, rgba(74, 214, 233, 0) 50%, rgba(117, 212, 224, 0.27) 100%);
+      background: linear-gradient(135deg, rgba(125, 223, 236, 0.1) 0%, rgba(74, 214, 233, 0) 50%, rgba(117, 212, 224, 0.15) 100%);
     }
 
     @media (max-width: 360px) {
-      background: linear-gradient(135deg, rgba(77, 208, 225, 0.44) 0%, rgba(38, 197, 218, 0.03) 50%, rgba(45, 172, 189, 0.38) 100%);
+      background: linear-gradient(135deg, rgba(77, 208, 225, 0.25) 0%, rgba(38, 197, 218, 0.01) 50%, rgba(45, 172, 189, 0.2) 100%);
     }
   }
 `;

@@ -157,6 +157,7 @@ export const STORAGE_PATHS = {
   PRODUCT_GALLERY: 'products/gallery',
   CATEGORIES: 'categories',
   USERS: 'users',
-  ORDERS: 'orders'
+  ORDERS: 'orders',
+  BACKGROUNDS: 'backgrounds'
 } as const;
 

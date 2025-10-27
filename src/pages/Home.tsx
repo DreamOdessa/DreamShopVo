@@ -14,7 +14,7 @@ const HeroSection = styled.section`
   text-align: center;
   position: relative;
   overflow: hidden;
-  background-image: url('/background-first.png');
+  background-image: url('https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/background-first.png');
   background-size: 115%;
   background-position: center;
   background-attachment: fixed;

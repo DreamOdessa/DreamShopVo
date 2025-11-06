@@ -16,15 +16,15 @@ const ProductsContainer = styled.div`
 
 const Header = styled.div`
   background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
-  color: white;
-  padding: 3rem 0;
+  color: #1f4b5fff;
+  padding: 7rem 0;
   text-align: center;
   background-image: url('https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/background-second.jpg');
   background-size: cover;
   background-position: center;
   background-blend-mode: overlay;
   position: relative;
-  margin-top: -4rem;
+  margin-top: -7rem;
 
   &::before {
     content: '';
@@ -279,10 +279,12 @@ const Products: React.FC = () => {
   const [showOrganicOnly, setShowOrganicOnly] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Фильтруем только активные категории
+  // Фильтруем только активные категории и сортируем их
   const activeCategories = useMemo(() => {
-    if (!categories || categories.length === 0) return [];
-    return categories.filter(cat => cat.isActive !== false);
+    if (!categories || !Array.isArray(categories)) return [];
+    return categories
+      .filter(cat => cat && cat.isActive !== false)
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   }, [categories]);
 
   // Читаем параметр category из URL при загрузке страницы
@@ -294,16 +296,38 @@ const Products: React.FC = () => {
   }, [searchParams]);
 
   const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products)) return [];
+    
     return products.filter(product => {
-      const isActive = product.isActive !== false; // показываем только активные товары
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-      const matchesOrganic = !showOrganicOnly || product.organic;
+      if (!product) return false;
+      
+      // Проверка активности товара
+      const isActive = product.isActive !== false;
+      if (!isActive) return false;
 
-      return isActive && matchesSearch && matchesCategory && matchesOrganic;
+      // Проверка поискового запроса
+      const matchesSearch = !searchTerm || (
+        (product.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (product.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      if (!matchesSearch) return false;
+
+      // Проверка категории
+      if (selectedCategory !== 'all') {
+        const category = categories?.find(cat => cat.id === selectedCategory);
+        if (!category || product.category !== category.slug) {
+          return false;
+        }
+      }
+
+      // Проверка органик-фильтра
+      if (showOrganicOnly && !product.organic) {
+        return false;
+      }
+
+      return true;
     });
-  }, [products, searchTerm, selectedCategory, showOrganicOnly]);
+  }, [products, searchTerm, selectedCategory, showOrganicOnly, categories]);
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -374,7 +398,7 @@ const Products: React.FC = () => {
             isOpen={isDropdownOpen}
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-            {categories.find(cat => cat.id === selectedCategory)?.name || 'Всі товари'}
+            {selectedCategory === 'all' ? 'Всі товари' : categories?.find(cat => cat.id === selectedCategory)?.name || 'Всі товари'}
             <FiChevronDown style={{ 
               transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
               transition: 'transform 0.3s ease'
@@ -382,6 +406,17 @@ const Products: React.FC = () => {
           </DropdownButton>
           
           <DropdownList isOpen={isDropdownOpen}>
+            <DropdownItem
+              key="all"
+              isActive={selectedCategory === 'all'}
+              onClick={() => {
+                setSelectedCategory('all');
+                setIsDropdownOpen(false);
+                setSearchParams({});
+              }}
+            >
+              Всі товари
+            </DropdownItem>
             {activeCategories.map(category => (
               <DropdownItem
                 key={category.id}

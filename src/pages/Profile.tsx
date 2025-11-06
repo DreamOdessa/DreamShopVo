@@ -10,20 +10,58 @@ import toast from 'react-hot-toast';
 const ProfileContainer = styled.div`
   padding: 2rem 0;
   min-height: 80vh;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.9), rgba(224, 242, 254, 0.8));
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+    z-index: -1;
+  }
+
+  @keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
 `;
 
 const Header = styled.div`
   background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
-  color: white;
-  padding: 3rem 0;
+  color: #1f4b5fff;
+  padding: 7rem 0;
   text-align: center;
-  margin-top: -4rem;
+  margin-top: -7rem;
+  background-image: url('https://firebasestorage.googleapis.com/v0/b/dreamshop-odessa.firebasestorage.app/o/products%2Fhover%2FPhotoroom_20251106_130558.png?alt=media&token=7fae918c-5977-479f-aa04-fa1870b2a119');
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: overlay;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(77, 208, 225, 0.14) 0%, rgba(38, 197, 218, 0.44) 50%, rgba(0, 171, 193, 0.57) 100%);
+    z-index: 1;
+  }
 `;
 
 const Title = styled.h1`
   font-size: 3rem;
   font-weight: 700;
   margin-bottom: 1rem;
+  position: relative;
+  z-index: 2;
 
   @media (max-width: 768px) {
     font-size: 2rem;
@@ -33,6 +71,8 @@ const Title = styled.h1`
 const Subtitle = styled.p`
   font-size: 1.2rem;
   opacity: 0.9;
+  position: relative;
+  z-index: 2;
 `;
 
 const ProfileContent = styled.div`
@@ -204,7 +244,7 @@ const FormField = styled.div`
 const Label = styled.label`
   display: block;
   font-weight: 600;
-  color: #2c3e50;
+  color: #1e3a8a;
   margin-bottom: 0.5rem;
 `;
 

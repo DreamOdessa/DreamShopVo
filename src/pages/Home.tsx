@@ -10,11 +10,11 @@ import { useAdmin } from '../contexts/AdminContext';
 const HeroSection = styled.section`
   background: linear-gradient(135deg,rgba(77, 208, 225, 0.52) 0%,rgba(38, 197, 218, 0.51) 50%,rgba(0, 171, 193, 0.44) 100%);
   color: white;
-  padding: 6rem 0;
+  padding: 9rem 0;
   text-align: center;
   position: relative;
   overflow: hidden;
-  background-image: url('https://firebasestorage.googleapis.com/v0/b/dreamshop-odessa.firebasestorage.app/o/backgrounds%2Fbackground-first.png?alt=media');
+  background-image: url('/background-first.png');
   background-size: 115%;
   background-position: center;
   background-attachment: fixed;
@@ -22,26 +22,45 @@ const HeroSection = styled.section`
   min-height: 100vh;
   display: flex;
   align-items: center;
-  margin-top: -4rem;
+  margin-top: -6rem;
+
+  /* overlay для затемнения боков (эффект тумана/вытягивания краёв) */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1; /* ниже контента, но выше фонового изображения */
+    pointer-events: none;
+    /* На больших экранах — сильнее затемнение по краям; на мобильных — чуть мягче */
+    background: linear-gradient(
+      to right,
+      rgba(32, 58, 80, 0.55) 0%,
+      rgba(26, 61, 80, 0.25) 12%,
+      rgba(17, 43, 56, 0) 30%,
+      rgba(30, 65, 82, 0) 70%,
+      rgba(27, 70, 87, 0.25) 88%,
+      rgba(20, 44, 58, 0.55) 100%
+    );
+  }
 
   @media (max-width: 768px) {
-    padding: 4rem 0;
+    padding: 6rem 0;
     min-height: 80vh;
-    margin-top: -2rem;
+    margin-top: -3.5rem;
     background-size: 200%;
   }
 
   @media (max-width: 480px) {
-    padding: 3rem 0;
+    padding: 5rem 0;
     min-height: 70vh;
-    margin-top: -1.5rem;
+    margin-top: -3rem;
     background-size: 200%;
   }
 
   @media (max-width: 360px) {
-    padding: 2rem 0;
+    padding: 4rem 0;
     min-height: 60vh;
-    margin-top: -1rem;
+    margin-top: -2.5rem;
     background-size: 200%;
   }
 
@@ -50,33 +69,12 @@ const HeroSection = styled.section`
     background-attachment: scroll;
   }
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(25, 174, 194, 0.3) 0%, rgba(33, 135, 167, 0.17) 50%, rgba(54, 214, 235, 0.1) 100%);
-    z-index: 1;
-
-    @media (max-width: 768px) {
-      background: linear-gradient(135deg, rgba(111, 213, 226, 0.15) 0%, rgba(38, 197, 218, 0.05) 50%, rgba(0, 171, 193, 0.2) 100%);
-    }
-
-    @media (max-width: 480px) {
-      background: linear-gradient(135deg, rgba(125, 223, 236, 0.1) 0%, rgba(74, 214, 233, 0) 50%, rgba(117, 212, 224, 0.15) 100%);
-    }
-
-    @media (max-width: 360px) {
-      background: linear-gradient(135deg, rgba(77, 208, 225, 0.25) 0%, rgba(38, 197, 218, 0.01) 50%, rgba(45, 172, 189, 0.2) 100%);
-    }
-  }
+  /* Убрали тяжелый оверлей, чтобы фон был виден */
 `;
 
 const HeroContent = styled.div`
   position: relative;
-  z-index: 2;
+  z-index: 2; /* выше оверлея */
   max-width: 800px;
   margin: 0 auto;
   padding: 0 20px;
@@ -95,6 +93,9 @@ const HeroTitle = styled(motion.h1)`
   font-weight: 700;
   margin-bottom: 1rem;
   line-height: 1.2;
+  /* Сделаем цвет текста более тёмным (темно-березовый) и добавим тень для читабельности */
+  color: #1f4b5fff; /* темно-березовый оттенок */
+  text-shadow: 0 6px 20px rgba(0,0,0,0.45);
 
   @media (max-width: 768px) {
     font-size: 2rem;
@@ -114,6 +115,9 @@ const HeroSubtitle = styled(motion.p)`
   margin-bottom: 2rem;
   opacity: 0.9;
   line-height: 1.6;
+  /* Более тёмный цвет для лучшей читаемости на светлом/градиентном фоне */
+  color: rgba(56, 71, 82, 0.95);
+  text-shadow: 0 4px 12px rgba(0,0,0,0.35);
 
   @media (max-width: 768px) {
     font-size: 1rem;

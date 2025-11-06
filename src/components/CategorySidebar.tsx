@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiGrid, FiTag } from 'react-icons/fi';
@@ -6,7 +6,12 @@ import { FiX, FiGrid, FiTag } from 'react-icons/fi';
 interface Category {
   id: string;
   name: string;
-  icon?: string;
+  slug: string;
+  description: string;
+  icon: string;
+  image?: string;
+  isActive: boolean;
+  sortOrder: number;
 }
 
 interface CategorySidebarProps {
@@ -204,22 +209,17 @@ const ClearButton = styled.button`
   }
 `;
 
-const categories = [
-  { id: 'all', name: 'Всі товари', icon: '🏠' },
-  { id: 'chips', name: 'Фруктові чіпси', icon: '🍎' },
-  { id: 'decorations', name: 'Прикраси', icon: '✨' },
-  { id: 'syrups', name: 'Сиропи', icon: '🍯' },
-  { id: 'purees', name: 'Пюре', icon: '🥄' },
-  { id: 'dried_flowers', name: 'Сухоцвіти', icon: '🌸' }
-];
-
 const CategorySidebar: React.FC<CategorySidebarProps> = ({
   isOpen,
   onClose,
-  categories: propCategories = categories,
+  categories: propCategories = [],
   selectedCategory,
   onCategorySelect
 }) => {
+  // Используем категории как есть, они уже должны включать "Все товары"
+  const allCategories = useMemo(() => {
+    return (propCategories || []).sort((a, b) => a.sortOrder - b.sortOrder);
+  }, [propCategories]);
   const [startX, setStartX] = useState<number>(0);
   const [currentX, setCurrentX] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -293,7 +293,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
             </Header>
 
             <CategoriesList>
-              {propCategories.map((category, index) => (
+              {allCategories.map((category: Category, index: number) => (
                 <CategoryItem
                   key={category.id}
                   isActive={selectedCategory === category.id}

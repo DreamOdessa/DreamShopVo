@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
+import { useAdmin } from '../contexts/AdminContext';
 import { FiShoppingCart, FiUser, FiMenu, FiX, FiHeart, FiGrid, FiLogOut, FiChevronDown } from 'react-icons/fi';
 import GoogleLogin from './GoogleLogin';
 import CategorySidebar from './CategorySidebar';
@@ -173,7 +174,7 @@ const NavLinks = styled.div<{ isOpen: boolean }>`
 `;
 
 const NavLink = styled(Link)<{ isActive: boolean }>`
-  color: ${props => (props.isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.9)')};
+  color: ${props => (props.isActive ? '#0f3a53ff' : 'rgba(15, 50, 73, 0.9)')};
   text-decoration: none;
   font-weight: 600;
   font-size: 1.2rem;
@@ -188,11 +189,19 @@ const NavLink = styled(Link)<{ isActive: boolean }>`
       ? 'rgba(255, 255, 255, 0.2)'
       : 'rgba(255, 255, 255, 0.05)'};
 
+  @media (min-width: 769px) {
+    color: ${props => (props.isActive ? 'white' : 'rgba(255, 255, 255, 0.9)')};
+  }
+
   &:hover {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    
+    @media (min-width: 769px) {
+      color: white;
+    }
   }
 `;
 
@@ -381,28 +390,161 @@ const CartBadge = styled.span`
   font-weight: 600;
 `;
 
-const MobileMenuButton = styled.button`
+const WishlistButton = styled.button`
+  position: relative;
+  color: white;
+  font-size: 1.5rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+    padding: 0.4rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.2rem;
+    padding: 0.3rem;
+  }
+`;
+
+const MobileLeftActions = styled.div`
   display: none;
+  align-items: center;
+  gap: 0.5rem;
+  position: absolute;
+  left: 20px;
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
+
+  @media (max-width: 480px) {
+    left: 15px;
+  }
+
+  @media (max-width: 360px) {
+    left: 10px;
+  }
+`;
+
+const MobileMenuButton = styled.button`
   color: white;
   font-size: 1.5rem;
   background: none;
   border: none;
   cursor: pointer;
-  position: absolute;
-  left: 20px;
-
-  @media (max-width: 768px) {
-    display: block;
-  }
 
   @media (max-width: 480px) {
-    left: 15px;
     font-size: 1.3rem;
   }
 
   @media (max-width: 360px) {
-    left: 10px;
     font-size: 1.2rem;
+  }
+`;
+
+const MobileProfileButton = styled.button`
+  color: white;
+  font-size: 1.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.3rem;
+  position: relative;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.3rem;
+  }
+
+  @media (max-width: 360px) {
+    font-size: 1.2rem;
+  }
+`;
+
+const MobileProfileDropdown = styled.div<{ isOpen: boolean }>`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 180px;
+  max-width: 90vw;
+  opacity: ${props => (props.isOpen ? 1 : 0)};
+  transform: ${props => (props.isOpen ? 'translateY(0) scale(1)' : 'translateY(-10px) scale(0.95)')};
+  visibility: ${props => (props.isOpen ? 'visible' : 'hidden')};
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  margin-top: 0.5rem;
+  overflow: hidden;
+  
+  @media (max-width: 768px) {
+    margin-left: calc(-100% + 60px);
+  }
+  
+  @media (max-width: 480px) {
+    margin-left: calc(-100% + 50px);
+    min-width: 160px;
+  }
+  
+  @media (max-width: 360px) {
+    margin-left: calc(-100% + 40px);
+    min-width: 150px;
+  }
+`;
+
+const MobileProfileDropdownItem = styled(Link)`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: #495057;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
+    transform: scaleY(0);
+    transition: transform 0.2s ease;
+  }
+
+  &:hover {
+    background: rgba(77, 208, 225, 0.1);
+    color: #00acc1;
+    transform: translateX(5px);
+    
+    &::before {
+      transform: scaleY(1);
+    }
+  }
+
+  &:last-child {
+    border-bottom: none;
   }
 `;
 
@@ -454,14 +596,40 @@ const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isMobileProfileDropdownOpen, setIsMobileProfileDropdownOpen] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number>(0);
   const [touchEndX, setTouchEndX] = useState<number>(0);
   const { openSidebar, closeSidebar, isOpen: isCategorySidebarOpen } = useCategorySidebar();
   const { user, logout } = useAuth();
   const { getTotalItems } = useCart();
   const { getTotalItems: getWishlistItems } = useWishlist();
+  const { categories } = useAdmin();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Фильтруем активные категории и добавляем категорию "Все товары" только если её нет
+  const activeCategories = React.useMemo(() => {
+    const allCategory = {
+      id: 'all',
+      name: 'Всі товари',
+      icon: '🏠',
+      slug: 'all',
+      description: 'Всі товари магазину',
+      isActive: true,
+      sortOrder: 0
+    };
+
+    if (!categories || !Array.isArray(categories)) return [allCategory];
+
+    const filteredCategories = categories
+      .filter(cat => cat && cat.isActive !== false)
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+    // Проверяем, есть ли уже категория "Все товары"
+    const hasAllCategory = filteredCategories.some(cat => cat.id === 'all');
+    
+    return hasAllCategory ? filteredCategories : [allCategory, ...filteredCategories];
+  }, [categories]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -504,6 +672,20 @@ const Header: React.FC = () => {
     }
   }, [isProfileDropdownOpen]);
 
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('[data-mobile-profile]')) {
+        setIsMobileProfileDropdownOpen(false);
+      }
+    };
+
+    if (isMobileProfileDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isMobileProfileDropdownOpen]);
+
   return (
     <>
       <HeaderContainer
@@ -540,29 +722,6 @@ const Header: React.FC = () => {
             Товари
           </NavLink>
 
-          {user && (
-            <NavLink 
-              to="/wishlist"
-              isActive={location.pathname === '/wishlist'}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <FiHeart style={{ marginRight: '0.5rem' }} />
-              Обране
-              {getWishlistItems() > 0 && (
-                <span style={{ 
-                  background: '#e74c3c', 
-                  color: 'white', 
-                  borderRadius: '50%', 
-                  padding: '2px 6px', 
-                  fontSize: '0.7rem',
-                  marginLeft: '0.5rem'
-                }}>
-                  {getWishlistItems()}
-                </span>
-              )}
-            </NavLink>
-          )}
-
           {user?.isAdmin && (
             <NavLink 
               to="/admin" 
@@ -574,6 +733,22 @@ const Header: React.FC = () => {
           )}
 
           <UserActions>
+            {user && (
+              <WishlistButton onClick={() => navigate('/wishlist')} aria-label="Обране">
+                <FiHeart />
+                {getWishlistItems() > 0 && (
+                  <CartBadge>{getWishlistItems()}</CartBadge>
+                )}
+              </WishlistButton>
+            )}
+
+            <CartButton onClick={() => setIsCartOpen(true)} aria-label="Кошик">
+              <FiShoppingCart />
+              {getTotalItems() > 0 && (
+                <CartBadge>{getTotalItems()}</CartBadge>
+              )}
+            </CartButton>
+
             <CategoryButton 
               onClick={openSidebar}
               title="Категорії товарів"
@@ -637,24 +812,93 @@ const Header: React.FC = () => {
           </UserActions>
         </NavLinks>
 
-        {/* Мобільний порядок: ліворуч меню, праворуч — кошик і категорії */}
-        <MobileMenuButton onClick={toggleMenu}>
-          <FiMenu />
-        </MobileMenuButton>
+        {/* Мобільний порядок: ліворуч меню та профіль, праворуч — кошик і категорії */}
+        <MobileLeftActions>
+          <MobileMenuButton onClick={toggleMenu}>
+            <FiMenu />
+          </MobileMenuButton>
+
+          {user && (
+            <MobileProfileButton 
+              onClick={() => setIsMobileProfileDropdownOpen(!isMobileProfileDropdownOpen)} 
+              aria-label="Профіль"
+              data-mobile-profile
+            >
+              <FiUser />
+              <MobileProfileDropdown isOpen={isMobileProfileDropdownOpen}>
+                <MobileProfileDropdownItem 
+                  to="/profile" 
+                  onClick={() => {
+                    setIsMobileProfileDropdownOpen(false);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <FiUser />
+                  Мій профіль
+                </MobileProfileDropdownItem>
+                <MobileProfileDropdownItem 
+                  to="/wishlist" 
+                  onClick={() => {
+                    setIsMobileProfileDropdownOpen(false);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <FiHeart />
+                  Обране
+                  {getWishlistItems() > 0 && (
+                    <span style={{ 
+                      background: '#e74c3c', 
+                      color: 'white', 
+                      borderRadius: '50%', 
+                      padding: '2px 6px', 
+                      fontSize: '0.7rem',
+                      marginLeft: 'auto'
+                    }}>
+                      {getWishlistItems()}
+                    </span>
+                  )}
+                </MobileProfileDropdownItem>
+                <MobileProfileDropdownItem 
+                  to="/orders" 
+                  onClick={() => {
+                    setIsMobileProfileDropdownOpen(false);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <FiShoppingCart />
+                  Мої замовлення
+                </MobileProfileDropdownItem>
+                <MobileProfileDropdownItem 
+                  to="#" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    logout();
+                    setIsMobileProfileDropdownOpen(false);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  <FiLogOut />
+                  Вихід
+                </MobileProfileDropdownItem>
+              </MobileProfileDropdown>
+            </MobileProfileButton>
+          )}
+        </MobileLeftActions>
 
       <MobileActionsContainer>
-           <CartButton onClick={() => setIsCartOpen(true)} aria-label="Кошик (mobile)">
-             <FiShoppingCart />
-             {getTotalItems() > 0 && (
+          <CartButton onClick={() => setIsCartOpen(true)} aria-label="Кошик (mobile)">
+            <FiShoppingCart />
+            {getTotalItems() > 0 && (
               <CartBadge>{getTotalItems()}</CartBadge>
-              )}
-    </CartButton>
-    <MobileCategoryButton 
-      onClick={openSidebar}
-      title="Категорії товарів"
-    >
-      <FiGrid />
-    </MobileCategoryButton>
+            )}
+          </CartButton>
+
+          <MobileCategoryButton 
+            onClick={openSidebar}
+            title="Категорії товарів"
+          >
+            <FiGrid />
+          </MobileCategoryButton>
 </MobileActionsContainer>
       </Nav>
       </HeaderContainer>
@@ -663,19 +907,17 @@ const Header: React.FC = () => {
       <CategorySidebar
         isOpen={isCategorySidebarOpen}
         onClose={closeSidebar}
-        categories={[
-          { id: 'all', name: 'Всі товари', icon: '🏠' },
-          { id: 'chips', name: 'Фруктові чіпси', icon: '🍎' },
-          { id: 'decorations', name: 'Прикраси', icon: '✨' },
-          { id: 'syrups', name: 'Сиропи', icon: '🍯' },
-          { id: 'purees', name: 'Пюре', icon: '🥄' },
-          { id: 'dried_flowers', name: 'Сухоцвіти', icon: '🌸' }
-        ]}
+        categories={activeCategories}
         selectedCategory="all"
         onCategorySelect={(categoryId) => {
           closeSidebar();
-          // Переходим на страницу товаров с выбранной категорией
-          navigate(`/products?category=${categoryId}`);
+          if (location.pathname === '/products') {
+            // Если мы уже на странице товаров, просто обновляем параметры URL
+            navigate(`/products?category=${categoryId}`, { replace: true });
+          } else {
+            // Если мы на другой странице, переходим на страницу товаров
+            navigate(`/products?category=${categoryId}`);
+          }
         }}
       />
 

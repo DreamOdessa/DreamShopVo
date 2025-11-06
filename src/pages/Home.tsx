@@ -14,8 +14,8 @@ const HeroSection = styled.section`
   text-align: center;
   position: relative;
   overflow: hidden;
-  background-image: url('/background-first.png');
-  background-size: 115%;
+  background-image: url('https://firebasestorage.googleapis.com/v0/b/dreamshop-odessa.firebasestorage.app/o/products%2Fhover%2Fbackground-first.png?alt=media&token=88566e3b-ec96-429e-9266-ab6909e82fa9');
+  background-size: 100%;
   background-position: center;
   background-attachment: fixed;
   background-blend-mode: overlay;

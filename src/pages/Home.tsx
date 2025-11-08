@@ -1,9 +1,7 @@
 import React from 'react';
 // import { createPortal } from 'react-dom'; // УБРАЛИ createPortal
 import styled, { keyframes } from 'styled-components';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiArrowRight } from 'react-icons/fi';
 import CategoryShowcase from '../components/CategoryShowcase';
 import ProductCard from '../components/ProductCard';
 // import CategoryCarousel from '../components/CategoryCarousel';
@@ -131,41 +129,6 @@ const HeroSubtitle = styled(motion.p)`
   }
 
   @media (max-width: 360px) {
-    font-size: 0.8rem;
-  }
-`;
-
-const CTAButton = styled(motion(Link))`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: white;
-  color: #00acc1;
-  padding: 1rem 2rem;
-  border-radius: 50px;
-  font-weight: 600;
-  font-size: 1.1rem;
-  text-decoration: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 30px rgba(0, 150, 136, 0.3);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 40px rgba(0, 150, 136, 0.4);
-  }
-
-  @media (max-width: 768px) {
-    padding: 0.8rem 1.5rem;
-    font-size: 1rem;
-  }
-
-  @media (max-width: 480px) {
-    padding: 0.6rem 1.2rem;
-    font-size: 0.9rem;
-  }
-
-  @media (max-width: 360px) {
-    padding: 0.5rem 1rem;
     font-size: 0.8rem;
   }
 `;
@@ -319,70 +282,7 @@ const ProductsGrid = styled.div`
 `;
 
 
-// Блок с тремя информационными карточками
-const InfoCardsSection = styled.section`
-  padding: 4rem 0;
-  background: white;
-  position: relative;
-  z-index: 2;
-`;
-
-/* duplicate definitions removed */
-
-const InfoCardsContainer = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-`;
-
-const InfoCard = styled(motion.div)`
-  background: #f8f9fa;
-  border-radius: 20px;
-  padding: 2rem;
-  text-align: center;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    border-color: #4dd0e1;
-  }
-`;
-
-const InfoCardIcon = styled.div`
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1.5rem;
-  font-size: 2rem;
-  color: white;
-`;
-
-const InfoCardTitle = styled.h3`
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #2c3e50;
-  margin-bottom: 1rem;
-`;
-
-const InfoCardDescription = styled.p`
-  font-size: 1rem;
-  color: #6c757d;
-  line-height: 1.6;
-`;
+// Удалены неиспользуемые компоненты CTAButton и блоки информационных карточек
 
 const Home: React.FC = () => {
   const { products } = useAdmin();

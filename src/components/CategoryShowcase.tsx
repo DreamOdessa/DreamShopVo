@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import styled, { keyframes } from 'styled-components'; // Библиотека для стилей
+import styled from 'styled-components'; // Библиотека для стилей
 import { motion, AnimatePresence } from 'framer-motion'; // Библиотека для анимаций
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi'; // Иконки стрелок
 import { Link } from 'react-router-dom'; // Для навигации
@@ -88,38 +88,6 @@ const CarouselContentWrapper = styled.div<{ layout: 'left' | 'right' }>`
   /* Прижимаем контент к стороне альбома */
   margin: ${props => props.layout === 'right' ? '0 0 0 auto' : '0 auto 0 0'};
   position: relative; /* для линии растягивающейся влево */
-`;
-
-// НОВЫЙ КОМПОНЕНТ: Линия, как на эскизе
-const CategoryLine = styled.hr<{ layout?: 'left' | 'right' }>`
-  position: relative;
-  border: none;
-  height: 2px;
-  background: #3f3f3f;
-  width: 100%;
-  margin: 0 0 1.25rem;
-  
-  /* Псевдо-элемент тянет линию в ЛЕВУЮ сторону до края вьюпорта */
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 100%; /* начинается от левого края основной линии */
-    width: 100vw; /* растягиваем на всю ширину экрана */
-    height: 2px;
-    background: #3f3f3f;
-  }
-  
-  /* Псевдо-элемент тянет линию в ПРАВУЮ сторону до края вьюпорта */
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 100%; /* начинается от правого края основной линии */
-    width: 100vw; /* растягиваем на всю ширину экрана */
-    height: 2px;
-    background: #3f3f3f;
-  }
 `;
 
 // Полноширинная линия - выходит за пределы всех контейнеров

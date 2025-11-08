@@ -319,29 +319,39 @@ const ProfileDropdownList = styled.div<{ isOpen: boolean }>`
   position: absolute;
   top: 100%;
   right: 0;
-  background: white;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1000;
-  min-width: 200px;
-  display: ${props => (props.isOpen ? 'block' : 'none')};
+  min-width: 220px;
   margin-top: 0.5rem;
+
+  /* Frosted glass */
+  background-color: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+
+  /* Анимация появления */
+  opacity: ${props => (props.isOpen ? 1 : 0)};
+  transform: ${props => (props.isOpen ? 'translateY(0) scale(1)' : 'translateY(-8px) scale(0.98)')};
+  visibility: ${props => (props.isOpen ? 'visible' : 'hidden')};
+  transition: all 0.26s cubic-bezier(0.25, 0.8, 0.25, 1);
+  overflow: hidden;
 `;
 
-const ProfileDropdownItem = styled(Link)`
+const ProfileDropdownItem = styled(Link)<{ isActive?: boolean }>`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  color: #495057;
+  padding: 12px 14px;
+  color: ${props => (props.isActive ? '#16a374ff' : '#08414bff')};
   text-decoration: none;
-  transition: background 0.2s ease;
-  border-bottom: 1px solid #f8f9fa;
+  transition: background 0.18s ease, color 0.18s ease;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
 
   &:hover {
-    background: #f8f9fa;
-    color: #667eea;
+    background: rgba(255,255,255,0.06);
+    color: #ffffff;
   }
 
   &:last-child {
@@ -479,46 +489,55 @@ const MobileProfileDropdown = styled.div<{ isOpen: boolean }>`
   position: absolute;
   top: 100%;
   left: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   z-index: 1000;
-  min-width: 180px;
-  max-width: 90vw;
-  opacity: ${props => (props.isOpen ? 1 : 0)};
-  transform: ${props => (props.isOpen ? 'translateY(0) scale(1)' : 'translateY(-10px) scale(0.95)')};
-  visibility: ${props => (props.isOpen ? 'visible' : 'hidden')};
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* Widened so labels fit on one line */
+  min-width: 220px;
+  max-width: 95vw;
   margin-top: 0.5rem;
+
+  /* Frosted glass for mobile as well */
+  background-color: rgba(255,255,255,0.12);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+
+  opacity: ${props => (props.isOpen ? 1 : 0)};
+  transform: ${props => (props.isOpen ? 'translateY(0) scale(1)' : 'translateY(-8px) scale(0.98)')};
+  visibility: ${props => (props.isOpen ? 'visible' : 'hidden')};
+  transition: all 0.26s cubic-bezier(0.25, 0.8, 0.25, 1);
   overflow: hidden;
-  
+
+  /* Adjust the horizontal offset so the menu doesn't sit too far left; keeps it visually aligned with the profile icon */
   @media (max-width: 768px) {
-    margin-left: calc(-100% + 60px);
+    margin-left: calc(-100% + 70px);
+    min-width: 200px;
   }
-  
+
   @media (max-width: 480px) {
-    margin-left: calc(-100% + 50px);
-    min-width: 160px;
+    margin-left: calc(-100% + 56px);
+    min-width: 180px;
+    max-width: 92vw;
   }
-  
+
   @media (max-width: 360px) {
-    margin-left: calc(-100% + 40px);
-    min-width: 150px;
+    margin-left: calc(-100% + 48px);
+    min-width: 170px;
   }
 `;
 
-const MobileProfileDropdownItem = styled(Link)`
+const MobileProfileDropdownItem = styled(Link)<{ isActive?: boolean }>`
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  color: #495057;
+  padding: 12px 14px;
+  /* Prevent wrapping so labels stay on one line */
+  white-space: nowrap;
+  color: ${props => (props.isActive ? '#00acc1' : '#093a41ff')};
   text-decoration: none;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.18s ease;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
   position: relative;
 
   &::before {
@@ -529,15 +548,16 @@ const MobileProfileDropdownItem = styled(Link)`
     bottom: 0;
     width: 3px;
     background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
-    transform: scaleY(0);
-    transition: transform 0.2s ease;
+    /* show left marker for active items, otherwise hidden */
+    transform: ${props => (props.isActive ? 'scaleY(1)' : 'scaleY(0)')};
+    transition: transform 0.18s ease;
   }
 
   &:hover {
-    background: rgba(77, 208, 225, 0.1);
-    color: #00acc1;
-    transform: translateX(5px);
-    
+    background: rgba(255,255,255,0.06);
+    color: #ffffff;
+    transform: translateX(4px);
+
     &::before {
       transform: scaleY(1);
     }
@@ -774,6 +794,7 @@ const Header: React.FC = () => {
                 <ProfileDropdownList isOpen={isProfileDropdownOpen}>
                   <ProfileDropdownItem 
                     to="/profile" 
+                    isActive={location.pathname === '/profile'}
                     onClick={() => {
                       setIsProfileDropdownOpen(false);
                       setIsMenuOpen(false);
@@ -784,6 +805,7 @@ const Header: React.FC = () => {
                   </ProfileDropdownItem>
                   <ProfileDropdownItem 
                     to="/orders" 
+                    isActive={location.pathname === '/orders'}
                     onClick={() => {
                       setIsProfileDropdownOpen(false);
                       setIsMenuOpen(false);
@@ -828,6 +850,7 @@ const Header: React.FC = () => {
               <MobileProfileDropdown isOpen={isMobileProfileDropdownOpen}>
                 <MobileProfileDropdownItem 
                   to="/profile" 
+                  isActive={location.pathname === '/profile'}
                   onClick={() => {
                     setIsMobileProfileDropdownOpen(false);
                     setIsMenuOpen(false);
@@ -838,6 +861,7 @@ const Header: React.FC = () => {
                 </MobileProfileDropdownItem>
                 <MobileProfileDropdownItem 
                   to="/wishlist" 
+                  isActive={location.pathname === '/wishlist'}
                   onClick={() => {
                     setIsMobileProfileDropdownOpen(false);
                     setIsMenuOpen(false);
@@ -860,6 +884,7 @@ const Header: React.FC = () => {
                 </MobileProfileDropdownItem>
                 <MobileProfileDropdownItem 
                   to="/orders" 
+                  isActive={location.pathname === '/orders'}
                   onClick={() => {
                     setIsMobileProfileDropdownOpen(false);
                     setIsMenuOpen(false);

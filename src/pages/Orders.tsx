@@ -172,6 +172,11 @@ const OrderHeader = styled.div`
   margin-bottom: 1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid #f1f2f6;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 1rem;
+  }
 `;
 
 const OrderInfo = styled.div`
@@ -196,6 +201,23 @@ const OrderTotal = styled.div`
   font-weight: 700;
   color: #27ae60;
   text-align: right;
+
+  @media (max-width: 480px) {
+    text-align: left;
+    width: 100%;
+  }
+`;
+
+const OrderStatusPrice = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+
+  @media (max-width: 480px) {
+    align-items: flex-start;
+    width: 100%;
+  }
 `;
 
 const StatusBadge = styled.span<{ status: string }>`
@@ -445,12 +467,12 @@ const Orders: React.FC = () => {
                         {new Date(order.createdAt).toLocaleString('uk-UA')}
                       </OrderDate>
                     </OrderInfo>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+                    <OrderStatusPrice>
                       <StatusBadge status={order.status}>
                         {getStatusText(order.status)}
                       </StatusBadge>
                       <OrderTotal>{order.total} ₴</OrderTotal>
-                    </div>
+                    </OrderStatusPrice>
                   </OrderHeader>
 
                   <OrderDetails>

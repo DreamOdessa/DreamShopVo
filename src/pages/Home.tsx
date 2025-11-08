@@ -1,8 +1,10 @@
 import React from 'react';
-import styled from 'styled-components';
+// import { createPortal } from 'react-dom'; // УБРАЛИ createPortal
+import styled, { keyframes } from 'styled-components';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiArrowRight, FiZap, FiStar, FiHeart } from 'react-icons/fi';
+import { FiArrowRight } from 'react-icons/fi';
+import CategoryShowcase from '../components/CategoryShowcase';
 import ProductCard from '../components/ProductCard';
 // import CategoryCarousel from '../components/CategoryCarousel';
 import { useAdmin } from '../contexts/AdminContext';
@@ -17,6 +19,7 @@ const HeroSection = styled.section`
   background-image: url('https://firebasestorage.googleapis.com/v0/b/dreamshop-odessa.firebasestorage.app/o/products%2Fhover%2Fbackground-first.png?alt=media&token=88566e3b-ec96-429e-9266-ab6909e82fa9');
   background-size: 100%;
   background-position: center;
+  /* background-attachment: fixed; */ /* ОСТАВЛЯЕМ ВАШ КОД КАК БЫЛ - с параллаксом */
   background-attachment: fixed;
   background-blend-mode: overlay;
   min-height: 100vh;
@@ -167,6 +170,62 @@ const CTAButton = styled(motion(Link))`
   }
 `;
 
+// Анимация для стрелки
+const fadeInOutMove = keyframes`
+  0% { opacity: 0; transform: translateY(-10px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(10px); }
+`;
+
+
+/* Стрелка прокрутки (ОБЫЧНЫЙ КОМПОНЕНТ, НЕ ФИКСИРОВАННЫЙ) */
+const ScrollArrowContainer = styled.div`
+  /* НЕТ position: fixed */
+  position: relative; 
+  cursor: pointer;
+  z-index: 2;
+  display: inline-flex; /* Чтобы была в потоке */
+  align-items: center;
+  justify-content: center;
+  margin-top: 1.5rem; /* Отступ от субтитра */
+  padding: 6px; 
+
+  @media (min-width: 1024px) {
+    /* bottom: 90px; */ /* Больше не нужно */
+  }
+
+  @media (max-width: 480px) {
+    /* bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); */ /* Больше не нужно */
+    padding: 8px;
+  }
+`;
+
+const ScrollArrowSVG = styled.svg`
+  width: 80px; /* чуть больше */
+  height: 80px;
+  overflow: visible;
+
+  .chevron {
+    fill: none;
+    stroke: #19708b; /* бирюзовый как в примере */
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0;
+    animation: ${fadeInOutMove} 2.5s infinite ease-out;
+  }
+
+  .chevron.bottom {
+    animation-delay: 0.4s;
+  }
+
+  @media (max-width: 480px) {
+    width: 72px;
+    height: 72px;
+  }
+`;
+
 
 const ProductsSection = styled.section`
   padding: 6rem 0;
@@ -174,7 +233,7 @@ const ProductsSection = styled.section`
   background-image: url('https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/background-second.jpg');
   background-size: 100%;
   background-position: center;
-  background-attachment: fixed;
+  background-attachment: fixed; /* Оставили как было */
   position: relative;
 
   @media (max-width: 768px) {
@@ -334,6 +393,8 @@ const Home: React.FC = () => {
   // Популярные товары (отмеченные как популярные)
   const popularProducts = activeProducts.filter(p => p.isPopular).slice(0, 6);
 
+  // Arrow is fixed via CSS; no need to compute coordinates in JS.
+
 
   return (
     <>
@@ -355,73 +416,34 @@ const Home: React.FC = () => {
             Органічні фруктові чіпси та прикраси для коктейлів. 
             Натуральні продукти для здорового харчування та гарної подачі страв.
           </HeroSubtitle>
-          <CTAButton
-            to="/products"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          
+          {/* ВОТ СТРЕЛКА - ВНУТРИ HeroContent, ОНА БУДЕТ УЕЗЖАТЬ ВВЕРХ */}
+          <ScrollArrowContainer
+            role="button"
+            aria-label="Перейти до витрини категорій"
+            onClick={() => {
+              const el = document.getElementById('category-showcase');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
           >
-            Переглянути каталог
-            <FiArrowRight />
-          </CTAButton>
+            <ScrollArrowSVG viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+              <path className="chevron top" d="M 15 20 L 30 35 L 45 20" />
+              <path className="chevron bottom" d="M 15 35 L 30 50 L 45 35" />
+            </ScrollArrowSVG>
+          </ScrollArrowContainer>
+
         </HeroContent>
       </HeroSection>
 
-      <InfoCardsSection>
-        <InfoCardsContainer>
-          <InfoCard
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <InfoCardIcon>
-              <FiZap />
-            </InfoCardIcon>
-            <InfoCardTitle>100% Органічні продукти</InfoCardTitle>
-            <InfoCardDescription>
-              Всі наші продукти виготовляються з натуральних інгредієнтів без використання хімічних добавок.
-            </InfoCardDescription>
-          </InfoCard>
+      {/* УБРАЛИ createPortal - ОН БОЛЬШЕ НЕ НУЖЕН */}
+      
 
-          <InfoCard
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            viewport={{ once: true }}
-          >
-            <InfoCardIcon>
-              <FiStar />
-            </InfoCardIcon>
-            <InfoCardTitle>Висока якість</InfoCardTitle>
-            <InfoCardDescription>
-              Ми ретельно відбираємо постачальників та контролюємо якість на кожному етапі виробництва наших продуктів.
-            </InfoCardDescription>
-          </InfoCard>
-
-          <InfoCard
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            viewport={{ once: true }}
-          >
-            <InfoCardIcon>
-              <FiHeart />
-            </InfoCardIcon>
-            <InfoCardTitle>Для всієї родини</InfoCardTitle>
-            <InfoCardDescription>
-              Наші продукти підходять для всіх віків та стануть відмінним доповненням до здорового харчування вашої родини.
-            </InfoCardDescription>
-          </InfoCard>
-        </InfoCardsContainer>
-      </InfoCardsSection>
+      <CategoryShowcase />
 
       {/* <CategoryCarousel /> */}
 
       {popularProducts.length > 0 && (
-        <ProductsSection>
+        <ProductsSection id="products-section">
           <div className="container">
             <SectionTitle>⭐ Популярні товари</SectionTitle>
             <ProductsGrid>

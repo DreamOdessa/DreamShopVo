@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye, FiUpload, FiEyeOff, FiStar } from 'react-icons/fi';
 import CategoryManager from '../components/CategoryManager';
+import CategoryShowcaseManager from '../components/CategoryShowcaseManager';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { Product, Order } from '../types';
@@ -848,7 +849,8 @@ const AdminPanel: React.FC = () => {
       URL.revokeObjectURL(previewUrl);
     } catch (error) {
       console.error('Ошибка загрузки главного изображения:', error);
-      toast.error('❌ Ошибка загрузки изображения');
+      const msg = (error as any)?.message || String(error);
+      toast.error(`❌ Ошибка загрузки изображения: ${msg}`);
       setMainImagePreview('');
     } finally {
       setIsUploading(false);
@@ -893,8 +895,9 @@ const AdminPanel: React.FC = () => {
       // Очищаем превью URL
       URL.revokeObjectURL(previewUrl);
     } catch (error) {
-      console.error('Ошибка загрузки дополнительного изображения:', error);
-      toast.error('❌ Ошибка загрузки изображения');
+        console.error('Ошибка загрузки дополнительного изображения:', error);
+        const msg = (error as any)?.message || String(error);
+        toast.error(`❌ Ошибка загрузки изображения: ${msg}`);
       setHoverImagePreview('');
     } finally {
       setIsUploading(false);
@@ -952,8 +955,9 @@ const AdminPanel: React.FC = () => {
       // Очищаем превью URL
       newPreviewUrls.forEach(url => URL.revokeObjectURL(url));
     } catch (error) {
-      console.error('Ошибка загрузки изображений галереи:', error);
-      toast.error('❌ Ошибка загрузки изображений');
+        console.error('Ошибка загрузки изображений галереи:', error);
+        const msg = (error as any)?.message || String(error);
+        toast.error(`❌ Ошибка загрузки изображений: ${msg}`);
     } finally {
       setIsUploading(false);
       setUploadProgress({});
@@ -970,7 +974,8 @@ const AdminPanel: React.FC = () => {
         toast.success('Изображение удалено из хранилища');
       } catch (error) {
         console.error('Ошибка удаления изображения из Firebase Storage:', error);
-        toast.error('Ошибка удаления изображения');
+        const msg = (error as any)?.message || String(error);
+        toast.error(`Ошибка удаления изображения: ${msg}`);
       }
     }
     
@@ -1032,6 +1037,10 @@ const AdminPanel: React.FC = () => {
           <Tab isActive={activeTab === 'categories'} onClick={() => setActiveTab('categories')}>
             <FiGrid />
             Категорії
+          </Tab>
+          <Tab isActive={activeTab === 'showcase'} onClick={() => setActiveTab('showcase')}>
+            <FiEye />
+            Витрина
           </Tab>
           <Tab isActive={activeTab === 'users'} onClick={() => setActiveTab('users')}>
             <FiUsers />
@@ -1226,6 +1235,23 @@ const AdminPanel: React.FC = () => {
               transition={{ duration: 0.3 }}
             >
               <CategoryManager />
+            </motion.div>
+          )}
+
+          {activeTab === 'showcase' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <SectionHeader>
+                <SectionTitle>
+                  <FiEye />
+                  Управление витриной
+                </SectionTitle>
+              </SectionHeader>
+
+              <CategoryShowcaseManager />
             </motion.div>
           )}
 

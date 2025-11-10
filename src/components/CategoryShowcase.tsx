@@ -17,6 +17,7 @@ import { useAdmin } from '../contexts/AdminContext';
 // и добавляет в него обязательное поле 'products'.
 interface ShowcaseCategory extends Category {
   products: Product[];
+  albumVideos?: string[]; // optional silent short videos
 }
 
 // 'CategoryItemProps' - описывает "пропсы" для компонента 'CategoryItem'
@@ -259,6 +260,19 @@ const AlbumImage = styled(motion.img)`
   top: 0;
 `;
 
+// 'AlbumVideo' - Видео в альбоме (аналог AlbumImage)
+const AlbumVideo = styled(motion.video)`
+  position: absolute !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  left: 0 !important;
+  top: 0 !important;
+  z-index: 2 !important;
+  background: #000;
+`;
+
 // 'SectionDivider' - НОВЫЙ КОМПОНЕНТ
 // (Линия на 100% ширины, *между* блоками категорий)
 const SectionDivider = styled.hr`
@@ -272,20 +286,114 @@ const SectionDivider = styled.hr`
 // ==========================================================
 // Компонент "Альбом" (Авто-смена фото)
 // ==========================================================
-const Album: React.FC<{ images: string[]; layout: 'left' | 'right' }> = ({ images, layout }) => {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+type MediaItem = { type: 'image' | 'video'; src: string };
 
+const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'right' }> = ({ images, videos, layout }) => {
+  // Проверяем, может ли браузер воспроизводить данный URL (по расширению и поддержке кодеков)
+  const canPlayUrl = (url: string): boolean => {
+    if (typeof document === 'undefined') return false;
+    const v = document.createElement('video');
+    // Чистим URL от query-параметров и берём только путь
+    let pathname = '';
+    try {
+      pathname = new URL(url).pathname.toLowerCase();
+    } catch {
+      pathname = url.split('?')[0].toLowerCase();
+    }
+
+    if (/\.mp4$/i.test(pathname)) {
+      // Наиболее совместимый вариант: H.264/AAC
+      const res = v.canPlayType('video/mp4; codecs="avc1.42E01E, mp4a.40.2"') || v.canPlayType('video/mp4');
+      return res === 'probably' || res === 'maybe';
+    }
+    if (/\.webm$/i.test(pathname)) {
+      const res = v.canPlayType('video/webm; codecs="vp9, vorbis"') || v.canPlayType('video/webm');
+      return res === 'probably' || res === 'maybe';
+    }
+    if (/\.mov$/i.test(pathname)) {
+      // Большинство браузеров (Chrome/Windows, Android) .mov почти не поддерживают
+      const res = v.canPlayType('video/quicktime');
+      return res === 'probably' || res === 'maybe';
+    }
+    // Если расширение неизвестно (есть токены/прокси) — даём шанс проигрыванию
+    return true;
+  };
+
+  // Merge images + videos into one rotating array (useMemo для оптимизации)
+  const mediaRaw: MediaItem[] = React.useMemo(() => [
+    ...(images || []).map(src => ({ type: 'image', src } as MediaItem)),
+    ...(videos || []).map(src => ({ type: 'video', src } as MediaItem))
+  ], [images, videos]);
+
+  // Фильтруем неподдерживаемые видео (например, .mov в Chrome/Windows)
+  const media: MediaItem[] = React.useMemo(() => {
+    const filtered = mediaRaw.filter(item => {
+      if (item.type === 'video') {
+        const ok = canPlayUrl(item.src);
+        if (!ok) {
+          console.warn('Видео-формат не поддерживается этим браузером, пропускаем:', item.src);
+        }
+        return ok;
+      }
+      return true;
+    });
+    return filtered;
+  }, [mediaRaw]);
+  
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // На первом рендере пытаемся начать с видео, если оно есть
   useEffect(() => {
-    if (!images || images.length === 0) return;
-    
-    const timer = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % images.length);
-    }, 4000); // Смена каждые 4 секунды
+    const firstVideo = media.findIndex(m => m.type === 'video');
+    if (firstVideo >= 0) {
+      setCurrentIndex(firstVideo);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    return () => clearInterval(timer);
-  }, [images]);
+  // Интервал показа: для видео дольше
+  useEffect(() => {
+    if (media.length === 0) return;
+    const duration = media[currentIndex]?.type === 'video' ? 6000 : 4000;
+    const timer = setTimeout(() => {
+      setCurrentIndex(prev => (prev + 1) % media.length);
+    }, duration);
+    return () => clearTimeout(timer);
+  }, [media, currentIndex]);
 
-  if (!images || images.length === 0) {
+  // Сброс состояния загрузки при смене медиа
+  useEffect(() => {
+    if (media[currentIndex]?.type === 'video') {
+      setVideoLoaded(false);
+      setVideoError(false);
+      // Перезагружаем элемент видео с новым src
+      if (videoRef.current) {
+        try { videoRef.current.load(); } catch {}
+      }
+    }
+  }, [currentIndex, media]);
+
+  // Принудительно запускаем видео после загрузки данных
+  useEffect(() => {
+    if (media[currentIndex]?.type === 'video' && videoRef.current && videoLoaded) {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          console.warn('Autoplay blocked, trying muted:', err);
+          // Пробуем ещё раз с явным muted
+          if (videoRef.current) {
+            videoRef.current.muted = true;
+            videoRef.current.play().catch(e => console.error('Video play failed:', e));
+          }
+        });
+      }
+    }
+  }, [currentIndex, media, videoLoaded]);
+
+  if (media.length === 0) {
     // Возвращаем заглушку, если у категории нет фото для альбома
     return (
       <AlbumContainer 
@@ -320,15 +428,134 @@ const Album: React.FC<{ images: string[]; layout: 'left' | 'right' }> = ({ image
       }}
     >
       <AnimatePresence mode="wait">
-        <AlbumImage
-          key={currentImageIndex}
-          src={images[currentImageIndex]}
-          alt={`Album image ${currentImageIndex + 1}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-        />
+        {media[currentIndex].type === 'image' ? (
+          <AlbumImage
+            key={media[currentIndex].src}
+            src={media[currentIndex].src}
+            alt="Album media"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+          />
+        ) : (
+          <>
+            {/* Показываем серый фон с лоадером пока видео не загрузилось */}
+            {!videoLoaded && !videoError && (
+              <motion.div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: '#e0e0e0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '2rem',
+                  color: '#999',
+                  zIndex: 1
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                ⏳
+              </motion.div>
+            )}
+            {/* Если произошла ошибка загрузки */}
+            {videoError && (
+              <motion.div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: '#f5f5f5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.2rem',
+                  color: '#999',
+                  textAlign: 'center',
+                  padding: '2rem',
+                  zIndex: 3
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                ⚠️<br />Видео не загрузилось
+              </motion.div>
+            )}
+            <AlbumVideo
+              key={media[currentIndex].src}
+              ref={videoRef}
+              initial={false}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              muted
+              playsInline
+              autoPlay
+              loop
+              preload="auto"
+              onLoadedMetadata={() => {
+                console.log('✅ Video metadata loaded:', media[currentIndex].src);
+              }}
+              onLoadedData={() => {
+                setVideoLoaded(true);
+                console.log('✅ Video data loaded, ready to play:', media[currentIndex].src);
+                // Принудительный запуск после загрузки
+                if (videoRef.current) {
+                  videoRef.current.muted = true; // Гарантируем muted
+                  // Проверяем реальные размеры видео
+                  console.log('📐 Video dimensions:', {
+                    videoWidth: videoRef.current.videoWidth,
+                    videoHeight: videoRef.current.videoHeight,
+                    duration: videoRef.current.duration
+                  });
+                  
+                  if (videoRef.current.videoWidth === 0 || videoRef.current.videoHeight === 0) {
+                    console.error('❌ Видео загрузилось, но размеры 0x0 — возможно, неподдерживаемый кодек');
+                    setVideoError(true);
+                    return;
+                  }
+                  
+                  const promise = videoRef.current.play();
+                  if (promise) {
+                    promise
+                      .then(() => console.log('▶️ Video playing'))
+                      .catch(err => console.warn('⚠️ Play rejected:', err));
+                  }
+                }
+              }}
+              onError={(e) => {
+                const target = e.currentTarget as HTMLVideoElement;
+                console.error('❌ Video error:', {
+                  src: media[currentIndex].src,
+                  error: target.error,
+                  code: target.error?.code,
+                  message: target.error?.message
+                });
+                setVideoError(true);
+              }}
+              onCanPlay={() => {
+                console.log('🎬 Video can play:', media[currentIndex].src);
+                if (videoRef.current && videoRef.current.paused) {
+                  videoRef.current.play().catch(err => console.warn('CanPlay autostart failed:', err));
+                }
+              }}
+              onPlay={() => {
+                console.log('▶️ Video started playing');
+              }}
+              onPause={() => {
+                console.log('⏸️ Video paused');
+              }}
+              onStalled={() => {
+                console.warn('⏱️ Video stalled (buffering)');
+              }}
+            >
+              <source src={media[currentIndex].src} type="video/mp4" />
+              Ваш браузер не поддерживает видео
+            </AlbumVideo>
+          </>
+        )}
       </AnimatePresence>
     </AlbumContainer>
   );
@@ -477,7 +704,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, layout }) => {
       {/* 'Album' - наш компонент альбома (колонка 55%) */}
       {/* 'category.albumImages || []' - передаем массив картинок. Если его нет (undefined),
           передаем пустой массив [], чтобы компонент 'Album' не сломался. */}
-      <Album images={category.albumImages || []} layout={layout} />
+  <Album images={category.albumImages || []} videos={category.albumVideos || []} layout={layout} />
       
     </CategoryContainer>
   );
@@ -547,6 +774,7 @@ const CategoryShowcase: React.FC = () => {
           // Если нет - используем 'c.image' (одиночную картинку) как массив.
           // Если нет ни того, ни другого - пустой массив [].
           albumImages: c.albumImages && c.albumImages.length > 0 ? c.albumImages : (c.image ? [c.image] : []),
+          albumVideos: c.albumVideos || [],
           
           // 'products: ...' - *главное*: добавляем отфильтрованные товары
           // 'allProducts.filter(...)' - ищем в *общем* списке продуктов

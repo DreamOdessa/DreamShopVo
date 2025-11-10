@@ -85,6 +85,7 @@ export interface Category {
   icon: string;
   image?: string;
   albumImages?: string[]; // images used for CategoryShowcase album
+  albumVideos?: string[]; // short silent videos for CategoryShowcase album (mp4/webm)
   showInShowcase?: boolean; // whether this category should appear in the homepage showcase
   isActive: boolean;
   sortOrder: number;

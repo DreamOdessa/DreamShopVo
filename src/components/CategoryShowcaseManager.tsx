@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useAdmin } from '../contexts/AdminContext';
 import { storageService, STORAGE_PATHS } from '../firebase/storageService';
-import { FiUpload, FiTrash2 } from 'react-icons/fi';
+import { FiUpload, FiTrash2, FiVideo } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 const Container = styled.div`
@@ -62,6 +62,14 @@ const Img = styled.img`
   object-fit: cover;
 `;
 
+const VideoThumb = styled.video`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
 const RemoveBtn = styled.button`
   position: absolute;
   top: 6px;
@@ -86,6 +94,7 @@ const CategoryShowcaseManager: React.FC = () => {
   const { categories, updateCategory } = useAdmin();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(categories?.[0]?.id || null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
   const selectedCategory = categories.find(c => c.id === selectedCategoryId) || null;
 
@@ -125,6 +134,47 @@ const CategoryShowcaseManager: React.FC = () => {
     }
   };
 
+  const handleVideos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length || !selectedCategory) return;
+
+    // Проверяем размер каждого файла (максимум 10 MB)
+    const MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+    const oversized = files.filter(f => f.size > MAX_SIZE);
+    if (oversized.length > 0) {
+      const sizes = oversized.map(f => `${f.name}: ${(f.size / 1024 / 1024).toFixed(1)} MB`).join(', ');
+      toast.error(`Видео слишком большие (макс 10 MB): ${sizes}. Сожмите их перед загрузкой.`);
+      if (e.target) e.target.value = '';
+      return;
+    }
+
+    // Проверяем MIME тип
+    const invalidTypes = files.filter(f => !f.type.startsWith('video/'));
+    if (invalidTypes.length > 0) {
+      toast.error(`Некоторые файлы не являются видео: ${invalidTypes.map(f => f.name).join(', ')}`);
+      if (e.target) e.target.value = '';
+      return;
+    }
+
+    setIsUploadingVideo(true);
+    try {
+      // Видеофайлы загружаем в отдельную папку категорий, потому что
+      // правила для products/gallery разрешают только image/* и блокируют видео.
+      const uploadPath = STORAGE_PATHS.CATEGORY_SHOWCASE_VIDEOS;
+      const urls = await storageService.uploadMultipleFiles(files, uploadPath);
+      const newVideos = [ ...(selectedCategory.albumVideos || []), ...urls];
+      await updateCategory(selectedCategory.id, { albumVideos: newVideos });
+      toast.success('Видео добавлены в альбом');
+    } catch (err) {
+      console.error('Ошибка при загрузке видео:', err);
+      const msg = (err as any)?.message || String(err);
+      toast.error(`Ошибка при загрузке видео: ${msg}`);
+    } finally {
+      setIsUploadingVideo(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
   const handleRemove = async (index: number) => {
     if (!selectedCategory) return;
     const url = selectedCategory.albumImages?.[index];
@@ -145,6 +195,26 @@ const CategoryShowcaseManager: React.FC = () => {
     toast.success('Изображение удалено');
   };
 
+  const handleRemoveVideo = async (index: number) => {
+    if (!selectedCategory) return;
+    const url = selectedCategory.albumVideos?.[index];
+    if (!url) return;
+
+    if (!window.confirm('Удалить видео из альбома?')) return;
+
+    try {
+      if (storageService.isFirebaseStorageURL(url)) {
+        await storageService.deleteFile(url);
+      }
+    } catch (err) {
+      console.warn('Ошибка удаления видео из storage, продолжим обновлять категорию', err);
+    }
+
+    const newVideos = (selectedCategory.albumVideos || []).filter((_, i) => i !== index);
+    await updateCategory(selectedCategory.id, { albumVideos: newVideos });
+    toast.success('Видео удалено');
+  };
+
   return (
     <Container>
       <Row>
@@ -160,6 +230,12 @@ const CategoryShowcaseManager: React.FC = () => {
           <input type="file" accept="image/*" multiple onChange={handleFiles} style={{ display: 'none' }} disabled={!selectedCategory || isUploading} />
           {isUploading ? 'Загрузка...' : 'Загрузить'}
         </UploadLabel>
+
+        <UploadLabel>
+          <FiVideo />
+          <input type="file" accept="video/*" multiple onChange={handleVideos} style={{ display: 'none' }} disabled={!selectedCategory || isUploadingVideo} />
+          {isUploadingVideo ? 'Загрузка видео...' : 'Загрузить видео'}
+        </UploadLabel>
         
         <UploadLabel as="button" style={{ background: selectedCategory?.showInShowcase ? 'linear-gradient(135deg,#27ae60 0%,#2ecc71 100%)' : undefined }} onClick={(e) => { e.preventDefault(); toggleShowcase(); }}>
           {selectedCategory?.showInShowcase ? 'Снять с витрины' : 'Показать в витрине'}
@@ -170,13 +246,21 @@ const CategoryShowcaseManager: React.FC = () => {
 
       {selectedCategory && (
         <>
-          <Info>Альбом: { (selectedCategory.albumImages || []).length } изображений</Info>
+          <Info>Альбом: {(selectedCategory.albumImages || []).length} изображений • {(selectedCategory.albumVideos || []).length} видео</Info>
 
           <Gallery>
             {(selectedCategory.albumImages || []).map((url, idx) => (
               <Thumb key={idx}>
                 <Img src={url} alt={`album-${idx}`} />
                 <RemoveBtn onClick={() => handleRemove(idx)} title="Удалить">
+                  <FiTrash2 />
+                </RemoveBtn>
+              </Thumb>
+            ))}
+            {(selectedCategory.albumVideos || []).map((url, idx) => (
+              <Thumb key={`v-${idx}`}>
+                <VideoThumb src={url} muted playsInline autoPlay loop preload="metadata" />
+                <RemoveBtn onClick={() => handleRemoveVideo(idx)} title="Удалить видео">
                   <FiTrash2 />
                 </RemoveBtn>
               </Thumb>

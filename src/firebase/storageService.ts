@@ -1,8 +1,8 @@
-import { 
-  ref, 
-  uploadBytes, 
-  uploadBytesResumable, 
-  getDownloadURL, 
+import {
+  ref,
+  uploadBytes,
+  uploadBytesResumable,
+  getDownloadURL,
   deleteObject
 } from 'firebase/storage';
 import { storage } from './config';
@@ -31,9 +31,12 @@ export const storageService = {
       
       const storageRef = ref(storage, fullPath);
       
-      // Если нужен прогресс, используем uploadBytesResumable
+      // Готовим metadata: важно передать правильный contentType (для правил Storage)
+      const metadata = file.type ? { contentType: file.type } : undefined;
+
+      // Если нужен прогресс, используем uploadBytesResumable и передаем metadata
       if (onProgress) {
-        const uploadTask = uploadBytesResumable(storageRef, file);
+        const uploadTask = uploadBytesResumable(storageRef, file, metadata);
         
         return new Promise((resolve, reject) => {
           uploadTask.on(
@@ -57,8 +60,8 @@ export const storageService = {
           );
         });
       } else {
-        // Простая загрузка без отслеживания прогресса
-        await uploadBytes(storageRef, file);
+        // Простая загрузка без отслеживания прогресса (передаем metadata)
+        await uploadBytes(storageRef, file, metadata);
         const downloadURL = await getDownloadURL(storageRef);
         return downloadURL;
       }
@@ -156,6 +159,7 @@ export const STORAGE_PATHS = {
   PRODUCT_HOVER_IMAGES: 'products/hover',
   PRODUCT_GALLERY: 'products/gallery',
   CATEGORIES: 'categories',
+  CATEGORY_SHOWCASE_VIDEOS: 'categories/showcase-videos',
   USERS: 'users',
   ORDERS: 'orders',
   BACKGROUNDS: 'backgrounds'

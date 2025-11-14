@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { FiMail, FiPhone, FiMapPin, FiInstagram, FiFacebook, FiTwitter } from 'react-icons/fi';
+import { FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
 
 const FooterContainer = styled.footer`
   background: linear-gradient(135deg, #00695c 0%, #004d40 100%);
@@ -52,22 +52,6 @@ const ContactInfo = styled.div`
   gap: 0.5rem;
   margin-bottom: 0.5rem;
   color: #bdc3c7;
-`;
-
-const SocialLinks = styled.div`
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-`;
-
-const SocialLink = styled.a`
-  color: #bdc3c7;
-  font-size: 1.5rem;
-  transition: color 0.3s ease;
-
-  &:hover {
-    color: white;
-  }
 `;
 
 const FooterBottom = styled.div`

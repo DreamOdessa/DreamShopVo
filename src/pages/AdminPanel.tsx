@@ -403,6 +403,41 @@ const TextArea = styled.textarea`
   }
 `;
 
+// Контейнер фільтра категорій
+const CategoryFilterContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 0;
+`;
+
+// Чіп категорії
+const CategoryChip = styled.button<{ isActive: boolean }>`
+  padding: 0.6rem 1.2rem;
+  border: 2px solid ${props => props.isActive ? '#00acc1' : '#e9ecef'};
+  background: ${props => props.isActive ? 'linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%)' : 'white'};
+  color: ${props => props.isActive ? 'white' : '#6c757d'};
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 172, 193, 0.2);
+    border-color: #00acc1;
+    color: ${props => props.isActive ? 'white' : '#00acc1'};
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+`;
+
 const Modal = styled.div`
   position: fixed;
   top: 0;
@@ -667,8 +702,9 @@ const UploadButtonWrapper = styled.div<{ $disabled?: boolean }>`
 
 const AdminPanel: React.FC = () => {
   const { user } = useAuth();
-  const { products, users, orders, addProduct, updateProduct, deleteProduct, updateUserDiscount, updateOrderStatus } = useAdmin();
+  const { products, users, orders, categories, addProduct, updateProduct, deleteProduct, updateUserDiscount, updateOrderStatus } = useAdmin();
   const [activeTab, setActiveTab] = useState('products');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all'); // Фільтр категорій
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -1070,6 +1106,28 @@ const AdminPanel: React.FC = () => {
                 </AddButton>
               </SectionHeader>
 
+              {/* Фільтр категорій */}
+              <CategoryFilterContainer>
+                <CategoryChip 
+                  isActive={selectedCategory === 'all'} 
+                  onClick={() => setSelectedCategory('all')}
+                >
+                  Всі ({products.length})
+                </CategoryChip>
+                {categories.map(cat => {
+                  const count = products.filter(p => p.category === (cat.slug || cat.id)).length;
+                  return (
+                    <CategoryChip 
+                      key={cat.id} 
+                      isActive={selectedCategory === (cat.slug || cat.id)}
+                      onClick={() => setSelectedCategory(cat.slug || cat.id)}
+                    >
+                      {cat.name} ({count})
+                    </CategoryChip>
+                  );
+                })}
+              </CategoryFilterContainer>
+
               <Table>
                 <thead>
                   <tr>
@@ -1082,7 +1140,9 @@ const AdminPanel: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map(product => (
+                  {products
+                    .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
+                    .map(product => (
                     <TableRow key={product.id}>
                       <TableCell>
                         <img
@@ -1153,7 +1213,9 @@ const AdminPanel: React.FC = () => {
 
               {/* Мобильная версия таблицы товаров */}
               <MobileTable>
-                {products.map(product => (
+                {products
+                  .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
+                  .map(product => (
                   <MobileCard key={product.id}>
                     <MobileCardHeader>
                       <MobileCardTitle>{product.name}</MobileCardTitle>

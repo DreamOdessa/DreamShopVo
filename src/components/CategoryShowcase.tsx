@@ -32,8 +32,13 @@ interface CategoryItemProps {
 const ShowcaseContainer = styled.section`
   // Вертикальный отступ для всей секции
   padding: 4rem 0;
-  background: white;
-  overflow: hidden; // Предотвращаем горизонтальный скролл из-за анимаций
+  background: transparent; // фон прозорий — без «світлих» країв
+  overflow: visible; // даємо контенту виходити до країв
+  width: 100vw; // секція на всю ширину екрана
+  max-width: 100vw;
+  margin-left: calc(-50vw + 50%); // вирівнюємо відносно центру сторінки
+  margin-right: 0;
+  box-sizing: border-box;
 `;
 
 // 'CategoryContainer' - контейнер для ОДНОГО ряда (Альбом + Карусель)
@@ -141,8 +146,8 @@ const SliderContainer = styled.div<{ layout: 'left' | 'right' }>`
   overflow: visible; /* даем треку возможность выходить за край */
   padding: 0;
   box-sizing: border-box;
-  /* Градиентная маска на стороне, соприкасающейся с альбомом */
-  &::after {
+  /* Градиентная маска ВІДКЛЮЧЕНА — перевіряємо, чи це впливає на відступ */
+  /* &::after {
     content: '';
     pointer-events: none;
     position: absolute;
@@ -153,8 +158,7 @@ const SliderContainer = styled.div<{ layout: 'left' | 'right' }>`
     background: ${props => props.layout === 'right'
       ? 'linear-gradient(to left, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 70%)'
       : 'linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 70%)'};
-    /* лёгкая дымка */
-  }
+  } */
 `;
 
 // 'SliderTrack' - Сама "лента" (track) с карточками, которая едет
@@ -239,6 +243,10 @@ const AlbumContainer = styled(motion.div)<{ $layout: 'left' | 'right' }>`
   border-radius: 0;
   margin: 0;
   padding: 0;
+  /* Убираем визуальные "поля" по краям: растягиваем фон до краев viewport */
+  ${props => props.$layout === 'right' 
+    ? 'margin-right: calc(-50vw + 50%); padding-right: calc(50vw - 50%);' 
+    : 'margin-left: calc(-50vw + 50%); padding-left: calc(50vw - 50%);'}
   
   /* 👇 ГРАДИЕНТНЫЙ ФОН: диагональная линия от угла до угла 👇 */
   /* $layout 'right': линия идет с ВЕРХНЕГО ЛЕВОГО в НИЖНИЙ ПРАВЫЙ (145deg)
@@ -256,6 +264,7 @@ const AlbumContainer = styled(motion.div)<{ $layout: 'left' | 'right' }>`
     aspect-ratio: 13 / 7.5;
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);
+    padding-left:0; padding-right:0; /* На мобильных убираем доп. растяжение */
   }
 `;
 

@@ -38,23 +38,20 @@ const ShowcaseContainer = styled.section`
 
 // 'CategoryContainer' - контейнер для ОДНОГО ряда (Альбом + Карусель)
 const CategoryContainer = styled.div<{ layout: 'left' | 'right' }>`
-  display: flex; // Включаем Flexbox
-  // 'props.layout === 'right' ? 'row' : 'row-reverse'
-  // Если layout='right' (альбом справа), то 'row' (Карусель | Альбом)
-  // Если layout='left' (альбом слева), то 'row-reverse' (Альбом | Карусель)
+  display: flex;
   flex-direction: ${props => props.layout === 'right' ? 'row' : 'row-reverse'};
-  gap: 0; // Убираем зазор, чтобы альбом прилегал к краю
-  width: 100%; // Занимает всю ширину
-  max-width: 100%; // Не даём выйти за пределы
-  margin: 0;
-  padding: 0; // Убираем внутренние отступы
+  gap: 0;
+  width: 100vw; // Полная ширина viewport
+  max-width: 100vw;
+  margin-left: calc(-50vw + 50%); // Центрируем и растягиваем на весь экран
+  margin-right: 0;
+  padding: 0;
   box-sizing: border-box;
-  position: relative; // Для позиционирования альбома
-  overflow: visible; // Разрешаем альбому вылезать за края
+  position: relative;
+  overflow: visible;
 
-  // Адаптация для мобильных:
   @media (max-width: 992px) {
-    flex-direction: column; // Ставим блоки друг под друга (Альбом сверху, Карусель снизу)
+    flex-direction: column;
   }
 `;
 
@@ -131,7 +128,7 @@ const CategoryTitle = styled(Link)`
 // 'CategoryDescription' - Описание (КРАТКОЕ ОПИСАНИЕ...)
 const CategoryDescription = styled.p`
   font-size: 1.1rem;
-  color: #6c757dff;
+  color: #495d6eff;
   line-height: 1.6;
   text-transform: uppercase;
   text-align: center;
@@ -197,8 +194,8 @@ const ArrowButton = styled.button<{ direction: 'left' | 'right' }>`
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: white;
-  color: #00acc1;
+  background: #02535eff;
+  color: #d8e4e6ff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
@@ -209,7 +206,7 @@ const ArrowButton = styled.button<{ direction: 'left' | 'right' }>`
   transition: all 0.18s ease;
 
   &:hover:not(:disabled) {
-    background: #00acc1;
+    background: #04c2dbff;
     color: white;
     transform: translateY(-50%) scale(1.05);
   }
@@ -229,38 +226,55 @@ const ArrowButton = styled.button<{ direction: 'left' | 'right' }>`
 `;
 
 // 'AlbumContainer' - Контейнер для колонки с Альбомом (40%)
-// Прижимается вплотную к краю экрана используя отрицательный margin
-const AlbumContainer = styled(motion.div)`
-  flex: 0 0 40%; // Альбом занимает 40%
+// Прижимается вплотную к краю экрана
+// 'AlbumContainer' - Контейнер для колонки с Альбомом с фиксированным фоном
+// Растягивается от края до края браузера
+const AlbumContainer = styled(motion.div)<{ $layout: 'left' | 'right' }>`
+  flex: 0 0 40%;
   min-height: 300px;
   height: auto;
-  aspect-ratio: 13 / 9; // Соотношение сторон для альбома
+  aspect-ratio: 13 / 9;
   position: relative;
   overflow: hidden;
-  border-radius: 0; // Без скругления углов - полностью flush
-  margin: 0; // Без отступов
-  padding: 0; // Без внутренних отступов
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
+  
+  /* 👇 ГРАДИЕНТНЫЙ ФОН: диагональная линия от угла до угла 👇 */
+  /* $layout 'right': линия идет с ВЕРХНЕГО ЛЕВОГО в НИЖНИЙ ПРАВЫЙ (145deg)
+     Верхняя левая половина - прозрачная, нижняя правая - голубой градиент. */
+  /* $layout 'left': линия идет с ВЕРХНЕГО ПРАВОГО в НИЖНИЙ ЛЕВЫЙ (215deg)
+     Верхняя правая половина - прозрачная, нижняя левая - голубой градиент. */
+  background: ${props => props.$layout === 'left' 
+    ? 'linear-gradient(215deg, transparent 50%, #00e1ffff 50.5%), linear-gradient(215deg, transparent 50%, #007bffff 50.5%)' 
+    : 'linear-gradient(145deg, transparent 50%, #00f1fee8 50.5%), linear-gradient(145deg, transparent 50%, #007bffff 50.5%)'};
 
   @media (max-width: 992px) {
     flex: auto;
-    width: 100%;
+    width: 100vw;
     min-height: 220px;
     aspect-ratio: 13 / 7.5;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
   }
 `;
 
-// 'AlbumImage' - Сама картинка в Альбоме
+// 'AlbumImage' - Сама картинка в Альбоме (поверх фона)
 const AlbumImage = styled(motion.img)`
   position: absolute;
   width: 100%;
   height: 100%;
-  object-fit: cover; // Фото адаптируется под контейнер (не искажается)
+  object-fit: cover;
   object-position: center;
   left: 0;
   top: 0;
+  z-index: 1; // Поверх фона
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 `;
 
-// 'AlbumVideo' - Видео в альбоме (аналог AlbumImage)
+// 'AlbumVideo' - Видео в альбоме (поверх фона)
 const AlbumVideo = styled(motion.video)`
   position: absolute !important;
   width: 100% !important;
@@ -269,8 +283,10 @@ const AlbumVideo = styled(motion.video)`
   object-position: center !important;
   left: 0 !important;
   top: 0 !important;
-  z-index: 2 !important;
-  background: #000;
+  z-index: 2 !important; // Поверх фона и изображений
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 `;
 
 // 'SectionDivider' - НОВЫЙ КОМПОНЕНТ
@@ -394,10 +410,10 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
   }, [currentIndex, media, videoLoaded]);
 
   if (media.length === 0) {
-    // Возвращаем заглушку, если у категории нет фото для альбома
+    // Заглушка: показываем контейнер с градиентным фоном без медиа
     return (
       <AlbumContainer 
-        style={{ background: '#eee', minHeight: '400px' }}
+        $layout={layout}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       />
@@ -406,6 +422,7 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
 
   return (
     <AlbumContainer
+      $layout={layout}
       // Анимация появления альбома
       initial={{ 
         opacity: 0, 
@@ -433,10 +450,15 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
             key={media[currentIndex].src}
             src={media[currentIndex].src}
             alt="Album media"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            initial={{ opacity: 0, x: layout === 'right' ? 80 : -80, scale: 1.05 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
+            exit={{ opacity: 0, x: layout === 'right' ? -50 : 50, scale: 0.95, filter: 'blur(8px)' }}
+            transition={{
+              opacity: { duration: 0.8, ease: [0.4, 0, 0.2, 1] },
+              x: { duration: 0.9, ease: [0.22, 0.61, 0.36, 1] },
+              scale: { duration: 0.9, ease: [0.22, 0.61, 0.36, 1] },
+              filter: { duration: 0.6, ease: 'easeOut' }
+            }}
           />
         ) : (
           <>
@@ -446,12 +468,12 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: '#e0e0e0',
+                  background: '#e0e0e018',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '2rem',
-                  color: '#999',
+                  color: '#99999918',
                   zIndex: 1
                 }}
                 initial={{ opacity: 0 }}
@@ -486,10 +508,15 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
             <AlbumVideo
               key={media[currentIndex].src}
               ref={videoRef}
-              initial={false}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              initial={{ opacity: 0, x: layout === 'right' ? 80 : -80, scale: 1.05 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: layout === 'right' ? -50 : 50, scale: 0.95, filter: 'blur(8px)' }}
+              transition={{
+                opacity: { duration: 0.8, ease: [0.4, 0, 0.2, 1] },
+                x: { duration: 0.9, ease: [0.22, 0.61, 0.36, 1] },
+                scale: { duration: 0.9, ease: [0.22, 0.61, 0.36, 1] },
+                filter: { duration: 0.6, ease: 'easeOut' }
+              }}
               muted
               playsInline
               autoPlay
@@ -771,9 +798,8 @@ const CategoryShowcase: React.FC = () => {
           
           // 'albumImages: ...' - логика для картинок альбома
           // Если есть 'albumImages' (массив) - используем его.
-          // Если нет - используем 'c.image' (одиночную картинку) как массив.
-          // Если нет ни того, ни другого - пустой массив [].
-          albumImages: c.albumImages && c.albumImages.length > 0 ? c.albumImages : (c.image ? [c.image] : []),
+          // Не используем c.image как заглушку - только явно загруженные albumImages
+          albumImages: c.albumImages && c.albumImages.length > 0 ? c.albumImages : [],
           albumVideos: c.albumVideos || [],
           
           // 'products: ...' - *главное*: добавляем отфильтрованные товары

@@ -6,7 +6,7 @@ const FooterContainer = styled.footer`
   background: linear-gradient(135deg, #00695c 0%, #004d40 100%);
   color: white;
   padding: 3rem 0 1rem;
-  margin-top: 4rem;
+  margin-top: 0rem;
 `;
 
 const FooterContent = styled.div`
@@ -88,17 +88,7 @@ const Footer: React.FC = () => {
             Магазин органічних фруктових чіпсів та прикрас для коктейлів в Україні. 
             Ми пропонуємо тільки натуральні продукти найвищої якості.
           </p>
-          <SocialLinks>
-            <SocialLink href="#" aria-label="Instagram">
-              <FiInstagram />
-            </SocialLink>
-            <SocialLink href="#" aria-label="Facebook">
-              <FiFacebook />
-            </SocialLink>
-            <SocialLink href="#" aria-label="Twitter">
-              <FiTwitter />
-            </SocialLink>
-          </SocialLinks>
+         
         </FooterSection>
 
         <FooterSection>

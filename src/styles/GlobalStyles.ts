@@ -7,6 +7,10 @@ export const GlobalStyles = createGlobalStyle`
     box-sizing: border-box;
   }
 
+  html {
+    overflow-x: hidden;
+  }
+
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
       'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -16,6 +20,7 @@ export const GlobalStyles = createGlobalStyle`
     background: linear-gradient(135deg, #e0f7fa 0%, #f0fdfa 100%);
     color: #2c3e50;
     line-height: 1.6;
+    overflow-x: hidden;
   }
 
   code {

@@ -1,5 +1,7 @@
 import { 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   signOut, 
   onAuthStateChanged, 
   User as FirebaseUser 
@@ -24,8 +26,20 @@ export const signInWithGoogle = async (): Promise<User> => {
     console.log('🔄 Начинаем вход через Google...');
     console.log('🔧 Auth domain:', auth.app.options.authDomain);
     console.log('🔧 Project ID:', auth.app.options.projectId);
-    
-    const result = await signInWithPopup(auth, googleProvider);
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    let result;
+    if (isMobile) {
+      console.log('📱 Мобильное устройство: используем signInWithRedirect');
+      await signInWithRedirect(auth, googleProvider);
+      // После редиректа страница перезагрузится, а результат нужно получить отдельно.
+      result = await getRedirectResult(auth);
+      if (!result) {
+        console.log('⏳ Ожидание результата redirect (он придет после перезагрузки)');
+        throw new Error('Redirect initiated');
+      }
+    } else {
+      result = await signInWithPopup(auth, googleProvider);
+    }
     console.log('✅ Google auth успешно:', result.user.email);
     
     // Проверяем, есть ли пользователь в базе данных

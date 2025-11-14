@@ -338,7 +338,7 @@ const categories = [
     title2: 'ЧІПСИ',
     description: 'Хрусткі та смачні органічні фруктові чіпси. Ідеальна здорова закуска для будь-якого часу дня. Виготовлені з натуральних фруктів без додавання цукру та консервантів.',
     link: '/products?category=chips',
-    image: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800'
+    image: ' '
   },
   {
     id: 'purees',

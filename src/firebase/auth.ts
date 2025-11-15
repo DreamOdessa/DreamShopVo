@@ -1,6 +1,7 @@
 import { 
   signInWithPopup, 
   signInWithRedirect,
+  getRedirectResult,
   signOut, 
   onAuthStateChanged, 
   User as FirebaseUser 
@@ -8,6 +9,36 @@ import {
 import { auth, googleProvider } from './config';
 import { userService } from './services';
 import { User } from '../types';
+
+// Проверка результата redirect при загрузке приложения
+export const checkRedirectResult = async (): Promise<User | null> => {
+  try {
+    console.log('🔍 Проверяем результат redirect...');
+    const result = await getRedirectResult(auth);
+    if (result?.user) {
+      console.log('✅ Redirect успешен:', result.user.email);
+      const existingUser = await userService.getById(result.user.uid);
+      let user: User;
+      if (existingUser) {
+        user = {
+          ...existingUser,
+          name: existingUser.name || result.user.displayName || 'Користувач',
+          email: result.user.email || existingUser.email,
+          avatar: result.user.photoURL || existingUser.avatar
+        };
+      } else {
+        user = mapFirebaseUser(result.user);
+      }
+      await userService.createOrUpdate(user);
+      return user;
+    }
+    console.log('ℹ️ Нет pending redirect');
+    return null;
+  } catch (error) {
+    console.error('❌ Ошибка при проверке redirect:', error);
+    return null;
+  }
+};
 
 // Преобразование Firebase User в наш User
 const mapFirebaseUser = (firebaseUser: FirebaseUser): User => ({
@@ -25,12 +56,17 @@ export const signInWithGoogle = async (): Promise<User> => {
     console.log('🔄 Начинаем вход через Google...');
     console.log('🔧 Auth domain:', auth.app.options.authDomain);
     console.log('🔧 Project ID:', auth.app.options.projectId);
+    console.log('🔧 User Agent:', navigator.userAgent);
+    console.log('🔧 Window location:', window.location.href);
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    console.log('📱 Мобильное устройство:', isMobile);
     let result;
     if (isMobile) {
-      console.log('📱 Мобильное устройство: используем signInWithRedirect');
+      console.log('📱 Используем signInWithRedirect');
+      console.log('🔧 Redirect URL будет:', window.location.origin);
       await signInWithRedirect(auth, googleProvider);
-      // Возвращаем заглушку; фактический пользователь придет через onAuthStateChanged после редиректа
+      console.log('✅ Redirect инициирован, страница должна перезагрузиться...');
+      // После успешного redirect страница перезагрузится; вернем заглушку
       return mapFirebaseUser({
         uid: 'redirect_pending',
         displayName: 'Redirecting',
@@ -56,6 +92,7 @@ export const signInWithGoogle = async (): Promise<User> => {
         emailVerified: false
       } as any);
     } else {
+      console.log('💻 Десктоп: используем signInWithPopup');
       result = await signInWithPopup(auth, googleProvider);
     }
     console.log('✅ Google auth успешно:', result.user.email);

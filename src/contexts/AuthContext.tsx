@@ -29,7 +29,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Проверяем redirect result при первой загрузке
+    const initAuth = async () => {
+      console.log('🔐 Инициализация Auth...');
+      console.log('📱 User Agent:', navigator.userAgent);
+      console.log('🌐 Location:', window.location.href);
+      
+      try {
+        const { checkRedirectResult } = await import('../firebase/auth');
+        const redirectUser = await checkRedirectResult();
+        if (redirectUser) {
+          console.log('✅ Пользователь получен из redirect:', redirectUser.email);
+          setUser(redirectUser);
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.error('❌ Ошибка проверки redirect:', error);
+      }
+      
+      console.log('👂 Подписываемся на изменения auth...');
+    };
+    
+    initAuth();
+    
     const unsubscribe = onAuthStateChange(async (user) => {
+      console.log('🔄 Auth state changed:', user?.email || 'null');
       if (user) {
         // Загружаем полные данные пользователя из Firestore
         try {
@@ -52,7 +77,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setUser(user);
           }
         } catch (error) {
-          console.error('Ошибка загрузки данных пользователя:', error);
+          console.error('❌ Ошибка загрузки данных пользователя:', error);
           setUser(user);
         }
       } else {
@@ -76,8 +101,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async () => {
     try {
+      console.log('🔑 Login initiated from UI');
       setLoading(true);
       const userData = await signInWithGoogle();
+      console.log('✅ signInWithGoogle returned:', userData.email);
       
       // Загружаем полные данные пользователя из Firestore
       try {
@@ -103,8 +130,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('Ошибка загрузки данных пользователя:', error);
         setUser(userData);
       }
-    } catch (error) {
-      console.error('Помилка входу:', error);
+    } catch (error: any) {
+      console.error('❌ Помилка входу:', error);
+      console.error('❌ Error code:', error?.code);
+      console.error('❌ Error message:', error?.message);
+      const errorMsg = `Auth Error: ${error?.code || 'unknown'} - ${error?.message || 'Unknown error'}`;
+      alert(errorMsg);
       throw error;
     } finally {
       setLoading(false);

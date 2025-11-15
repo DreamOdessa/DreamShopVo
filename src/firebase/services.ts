@@ -60,7 +60,11 @@ export const productService = {
   // Обновить товар
   async update(id: string, product: Partial<Product>): Promise<void> {
     const docRef = doc(db, PRODUCTS_COLLECTION, id);
-    await updateDoc(docRef, product);
+    // Удаляем undefined поля, т.к. Firestore их не принимает
+    const cleanedData = Object.fromEntries(
+      Object.entries(product).filter(([_, value]) => value !== undefined)
+    );
+    await updateDoc(docRef, cleanedData);
   },
 
   // Удалить товар
@@ -104,7 +108,10 @@ export const categoryService = {
   // Обновить категорию
   async update(id: string, category: Partial<Category>): Promise<void> {
     const docRef = doc(db, CATEGORIES_COLLECTION, id);
-    await updateDoc(docRef, category);
+    const cleanedData = Object.fromEntries(
+      Object.entries(category).filter(([_, value]) => value !== undefined)
+    );
+    await updateDoc(docRef, cleanedData);
   },
 
   // Удалить категорию
@@ -134,15 +141,18 @@ export const userService = {
   async createOrUpdate(user: User): Promise<void> {
     const docRef = doc(db, USERS_COLLECTION, user.id);
     const userData = { ...user };
+    const cleanedData = Object.fromEntries(
+      Object.entries(userData).filter(([_, value]) => value !== undefined)
+    );
     
     try {
       // Пытаемся обновить существующий документ
-      await updateDoc(docRef, userData);
+      await updateDoc(docRef, cleanedData);
       console.log(`✅ Пользователь ${user.email} обновлен`);
     } catch (error) {
       // Если документ не существует, создаем его с конкретным ID
       try {
-        await setDoc(docRef, userData);
+        await setDoc(docRef, cleanedData);
         console.log(`✅ Пользователь ${user.email} создан с ID: ${user.id}`);
       } catch (setError) {
         console.error('❌ Ошибка создания пользователя:', setError);

@@ -151,13 +151,21 @@ const ProductName = styled.h3`
   font-weight: 600;
   color: #2c3e50;
   margin-bottom: 0.5rem;
-  line-height: 1.3;
+  line-height: 1.4;
+  /* Фиксированная высота для 3 строк */
+  height: calc(1.2rem * 1.4 * 3); /* font-size * line-height * 3 строки */
+  display: flex;
+  align-items: center; /* Центрирование по вертикали */
+  overflow: hidden;
+  
   @media (max-width: 768px) {
     font-size: 1rem;
+    height: calc(1rem * 1.4 * 3);
     margin-bottom: 0.4rem;
   }
   @media (max-width: 480px) {
     font-size: 0.9rem;
+    height: calc(0.9rem * 1.4 * 3);
   }
 `;
 

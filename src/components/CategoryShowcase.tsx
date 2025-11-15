@@ -30,15 +30,22 @@ interface CategoryItemProps {
 
 // 'ShowcaseContainer' - самый внешний контейнер
 const ShowcaseContainer = styled.section`
-  // Вертикальный отступ для всей секции
   padding: 4rem 0;
-  background: transparent; // фон прозорий — без «світлих» країв
-  overflow: visible; // даємо контенту виходити до країв
-  width: 100vw; // секція на всю ширину екрана
-  max-width: 100vw;
-  margin-left: calc(-50vw + 50%); // вирівнюємо відносно центру сторінки
-  margin-right: 0;
+  background: transparent;
+  width: 100%;
+  overflow: visible;
   box-sizing: border-box;
+  position: relative;
+
+  @media (max-width: 1200px) {
+    padding: 3rem 0;
+  }
+  @media (max-width: 768px) {
+    padding: 2rem 0;
+  }
+  @media (max-width: 480px) {
+    padding: 1.5rem 0;
+  }
 `;
 
 // 'CategoryContainer' - контейнер для ОДНОГО ряда (Альбом + Карусель)
@@ -46,63 +53,90 @@ const CategoryContainer = styled.div<{ layout: 'left' | 'right' }>`
   display: flex;
   flex-direction: ${props => props.layout === 'right' ? 'row' : 'row-reverse'};
   gap: 0;
-  width: 100vw; // Полная ширина viewport
+  width: 100vw;
   max-width: 100vw;
-  margin-left: calc(-50vw + 50%); // Центрируем и растягиваем на весь экран
-  margin-right: 0;
+  margin-left: calc(-50vw + 50%);
   padding: 0;
   box-sizing: border-box;
   position: relative;
   overflow: visible;
 
+  @media (max-width: 1200px) {
+    flex-direction: column !important; /* На планшетах всегда вертикально */
+  }
   @media (max-width: 992px) {
-    flex-direction: column;
+    flex-direction: column !important;
+  }
+  @media (max-width: 768px) {
+    margin-left: 0;
+    width: 100%;
   }
 `;
 
-// 'CarouselContainer' - контейнер для колонки с каруселью (45%)
+// 'CarouselContainer' - контейнер для колонки с каруселью
 const CarouselContainer = styled.div<{ layout: 'left' | 'right' }>`
-  flex: 0 0 60%; // Карусель занимает 60% ширины
-  padding: 0rem; // Уменьшили padding, чтобы карточки были ближе к альбому
+  flex: 0 0 58%;
+  padding: 0 2rem;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  justify-content: center; // Центрируем контент по вертикали
-  min-width: 0; // Важно для flex-элементов, чтобы они могли сжиматься
-  position: relative; /* для градиентной маски */
-  /* Негативный отступ на стороне ПРОТИВОЛОЖНОЙ альбому, чтобы карточки "выглядывали" */
-  ${props => props.layout === 'right' ? 'margin-left:-42px;' : 'margin-right:-42px;'}
-  overflow: visible; /* позволяем треку выходить чуть наружу */
+  justify-content: center;
+  min-width: 0;
+  position: relative;
+  overflow: visible;
+  z-index: 2;
 
-  @media (max-width: 992px) {
-    flex: auto; // На мобильных занимает авто-ширину
+  @media (max-width: 1200px) {
+    flex: auto;
     width: 100%;
-    padding: 1.5rem;
-    margin-left:0;
-    margin-right:0;
+    padding: 2rem 1.5rem;
+  }
+  @media (max-width: 992px) {
+    flex: auto;
+    width: 100%;
+    padding: 1.5rem 1rem;
+  }
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+  @media (max-width: 480px) {
+    padding: 0.75rem;
   }
 `;
 
 // 'CarouselContentWrapper' - Внутренняя обертка
-// Выравниваем контент к стороне альбома (не по центру)
 const CarouselContentWrapper = styled.div<{ layout: 'left' | 'right' }>`
   width: 100%;
-  max-width: 700px; // Ограничиваем контент карусели
-  /* Прижимаем контент к стороне альбома */
-  margin: ${props => props.layout === 'right' ? '0 0 0 auto' : '0 auto 0 0'};
-  position: relative; /* для линии растягивающейся влево */
+  max-width: 100%; // Используем всю доступную ширину
+  margin: 0;
+  position: relative;
 `;
 
-// Полноширинная линия - выходит за пределы всех контейнеров
-const FullWidthLine = styled.hr`
+// Обёртка для линии на всю ширину экрана
+const LineWrapper = styled.div`
   position: relative;
+  width: 200vw;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 2px;
+  margin: 1.25rem 0;
+  z-index: 1;
+
+  @media (max-width: 768px) {
+    margin: 1rem 0;
+  }
+  @media (max-width: 480px) {
+    margin: 0.75rem 0;
+  }
+`;
+
+// Полноширинная линия - на 100% ширины
+const FullWidthLine = styled.hr`
   border: none;
   height: 2px;
   background: #3f3f3f;
-  width: 200vw;
-  margin: 1.25rem 0;
-  left: 50%;
-  transform: translateX(-50%);
+  width: 100%;
+  margin: 0;
 `;
 
 // 'CategoryHeader' - контейнер для Заголовка и Линии
@@ -121,12 +155,25 @@ const CategoryTitle = styled(Link)`
   margin: 0;
   text-transform: uppercase;
   text-align: center;
-  text-decoration: none; // Убираем подчеркивание ссылки
+  text-decoration: none;
   transition: color 0.3s ease;
   
   &:hover {
-    color: #00acc1; // Цвет при наведении
+    color: #00acc1;
     cursor: pointer;
+  }
+
+  @media (max-width: 1200px) {
+    font-size: 1.8rem;
+  }
+  @media (max-width: 992px) {
+    font-size: 1.6rem;
+  }
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
+  }
+  @media (max-width: 480px) {
+    font-size: 1.2rem;
   }
 `;
 
@@ -137,44 +184,57 @@ const CategoryDescription = styled.p`
   line-height: 1.6;
   text-transform: uppercase;
   text-align: center;
-  margin-top: 1.5rem; // Отступ от заголовка
+  margin-top: 1.5rem;
+
+  @media (max-width: 1200px) {
+    font-size: 1rem;
+    margin-top: 1.2rem;
+  }
+  @media (max-width: 992px) {
+    font-size: 0.95rem;
+    margin-top: 1rem;
+  }
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    margin-top: 0.8rem;
+    line-height: 1.5;
+  }
+  @media (max-width: 480px) {
+    font-size: 0.85rem;
+    margin-top: 0.6rem;
+    line-height: 1.4;
+  }
 `;
 
 // 'SliderContainer' - Контейнер, который "обрезает" карусель
 const SliderContainer = styled.div<{ layout: 'left' | 'right' }>`
   position: relative;
-  overflow: visible; /* даем треку возможность выходить за край */
+  overflow: hidden; // На десктопе скрываем overflow
   padding: 0;
   box-sizing: border-box;
-  /* Градиентная маска ВІДКЛЮЧЕНА — перевіряємо, чи це впливає на відступ */
-  /* &::after {
-    content: '';
-    pointer-events: none;
-    position: absolute;
-    top: 0;
-    ${props => props.layout === 'right' ? 'right: 0;' : 'left: 0;'}
-    width: 160px;
-    height: 100%;
-    background: ${props => props.layout === 'right'
-      ? 'linear-gradient(to left, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 70%)'
-      : 'linear-gradient(to right, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 70%)'};
-  } */
+  scrollbar-width: none; /* Firefox */
+  &::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+  /* На мобільних увімкнути свайп */
+  @media (max-width: 992px) {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
 `;
 
 // 'SliderTrack' - Сама "лента" (track) с карточками, которая едет
 const SliderTrack = styled(motion.div)`
   display: flex;
-  gap: 1rem; // УБРАЛИ GAP (как вы просили, убираем рамки)
+  gap: 1rem;
   align-items: stretch; // Карточки выравниваются по высоте
 `;
 
 // 'ItemWrapper' - Обертка для каждой карточки (задает ширину)
 const ItemWrapper = styled.div<{ itemsPerView: number }>`
-  // 'flex: 0 0 calc(100% / ${props => props.itemsPerView})'
-  // (100% / 2.5) = 40% ширины.
   flex: 0 0 calc(100% / ${props => props.itemsPerView});
   box-sizing: border-box;
-  padding: 0; // УБРАЛИ PADDING (как вы просили, убираем рамки)
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -223,9 +283,9 @@ const ArrowButton = styled.button<{ direction: 'left' | 'right' }>`
     opacity: 0.7;
   }
 
-  @media (max-width: 768px) {
-    width: 40px;
-    height: 40px;
+  /* Ховаємо кнопки на мобільних */
+  @media (max-width: 992px) {
+    display: none;
   }
 `;
 
@@ -234,7 +294,7 @@ const ArrowButton = styled.button<{ direction: 'left' | 'right' }>`
 // 'AlbumContainer' - Контейнер для колонки с Альбомом с фиксированным фоном
 // Растягивается от края до края браузера
 const AlbumContainer = styled(motion.div)<{ $layout: 'left' | 'right' }>`
-  flex: 0 0 40%;
+  flex: 0 0 42%;
   min-height: 300px;
   height: auto;
   aspect-ratio: 13 / 9;
@@ -243,28 +303,32 @@ const AlbumContainer = styled(motion.div)<{ $layout: 'left' | 'right' }>`
   border-radius: 0;
   margin: 0;
   padding: 0;
-  /* Убираем визуальные "поля" по краям: растягиваем фон до краев viewport */
-  ${props => props.$layout === 'right' 
-    ? 'margin-right: calc(-50vw + 50%); padding-right: calc(50vw - 50%);' 
-    : 'margin-left: calc(-50vw + 50%); padding-left: calc(50vw - 50%);'}
+  z-index: 2;
   
   /* 👇 ГРАДИЕНТНЫЙ ФОН: диагональная линия от угла до угла 👇 */
-  /* $layout 'right': линия идет с ВЕРХНЕГО ЛЕВОГО в НИЖНИЙ ПРАВЫЙ (145deg)
-     Верхняя левая половина - прозрачная, нижняя правая - голубой градиент. */
-  /* $layout 'left': линия идет с ВЕРХНЕГО ПРАВОГО в НИЖНИЙ ЛЕВЫЙ (215deg)
-     Верхняя правая половина - прозрачная, нижняя левая - голубой градиент. */
   background: ${props => props.$layout === 'left' 
-    ? 'linear-gradient(215deg, transparent 50%, #00e1ffff 50.5%), linear-gradient(215deg, transparent 50%, #007bffff 50.5%)' 
-    : 'linear-gradient(145deg, transparent 50%, #00f1fee8 50.5%), linear-gradient(145deg, transparent 50%, #007bffff 50.5%)'};
+    ? 'linear-gradient(215deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.05) 48%, rgba(0, 225, 255, 0.96) 50%, rgba(0, 58, 255, 0.98) 100%)' 
+    : 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.05) 48%, rgba(0, 241, 254, 0.94) 50%, rgba(0, 60, 255, 0.97) 100%)'};
 
+  @media (max-width: 1200px) {
+    flex: auto;
+    width: 100%;
+    min-height: 280px;
+    aspect-ratio: 16 / 9;
+  }
   @media (max-width: 992px) {
     flex: auto;
-    width: 100vw;
+    width: 100%;
+    min-height: 250px;
+    aspect-ratio: 16 / 9;
+  }
+  @media (max-width: 768px) {
     min-height: 220px;
-    aspect-ratio: 13 / 7.5;
-    margin-left: calc(-50vw + 50%);
-    margin-right: calc(-50vw + 50%);
-    padding-left:0; padding-right:0; /* На мобильных убираем доп. растяжение */
+    aspect-ratio: 16 / 10;
+  }
+  @media (max-width: 480px) {
+    min-height: 180px;
+    aspect-ratio: 4 / 3;
   }
 `;
 
@@ -302,7 +366,7 @@ const AlbumVideo = styled(motion.video)`
 // (Линия на 100% ширины, *между* блоками категорий)
 const SectionDivider = styled.hr`
   border: none;
-  border-top: 1px solid #f1f1f1ff; // Еле заметная линия
+  border-top: 2px solid #ffffffff; // Еле заметная линия
   margin: 0 auto;
   width: 90%; // 90% от ширины экрана
 `;
@@ -609,9 +673,18 @@ const ProductSlider: React.FC<{
   layout: 'left' | 'right';
   categorySlug: string; // Добавляем slug для ссылки
 }> = ({ products, categoryName, categoryDescription, layout, categorySlug }) => {
-  const [itemsPerView, setItemsPerView] = useState(
-    typeof window !== 'undefined' && window.innerWidth <= 992 ? 1.5 : 2.5
-  );
+  // Функция для определения количества видимых карточек в зависимости от ширины экрана
+  const getItemsPerView = () => {
+    if (typeof window === 'undefined') return 5.5;
+    const width = window.innerWidth;
+    if (width <= 480) return 1.5;      // Маленькие телефоны
+    if (width <= 768) return 2;        // Телефоны
+    if (width <= 992) return 2.5;      // Планшеты вертикально
+    if (width <= 1200) return 4;       // Планшеты горизонтально / маленькие ноутбуки
+    return 5.5;                        // Десктопы
+  };
+
+  const [itemsPerView, setItemsPerView] = useState(getItemsPerView());
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const trackRef = useRef<HTMLDivElement>(null);
   
@@ -620,38 +693,32 @@ const ProductSlider: React.FC<{
   // Обновляем itemsPerView при ресайзе
   useEffect(() => {
     const onResize = () => {
-      const newVal = window.innerWidth <= 992 ? 1.5 : 2.5;
-      setItemsPerView(newVal);
+      setItemsPerView(getItemsPerView());
     };
 
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  // Вычисляем максимальный *индекс* для прокрутки
-  // Math.ceil() гарантирует, что мы можем прокрутить до последнего элемента
+  // Вычисляем максимальный индекс для прокрутки
   const maxIndex = Math.max(0, Math.ceil(totalItems - itemsPerView));
   
-  // При изменении maxIndex (например, ресайз), убеждаемся, что currentIndex не выходит за пределы
+  // При изменении maxIndex убеждаемся, что currentIndex не выходит за пределы
   useEffect(() => {
     if (currentIndex > maxIndex) {
       setCurrentIndex(maxIndex);
     }
-  }, [currentIndex, maxIndex, totalItems]); // Добавил totalItems
-
+  }, [currentIndex, maxIndex, totalItems]);
 
   const handleNext = () => {
-    // Двигаемся на 1, но не дальше maxIndex
     setCurrentIndex(prev => Math.min(prev + 1, maxIndex));
   };
 
   const handlePrev = () => {
-    // Двигаемся на 1, но не меньше 0
     setCurrentIndex(prev => Math.max(prev - 1, 0));
   };
 
   // Рассчитываем сдвиг для SliderTrack
-  // Умножаем currentIndex на ширину ОДНОГО элемента (100% / itemsPerView)
   const translateX = totalItems > 0 ? `calc(-${currentIndex * (100 / itemsPerView)}%)` : '0%';
   
   // Не показываем стрелки, если все товары и так влезают
@@ -659,7 +726,9 @@ const ProductSlider: React.FC<{
 
   return (
     <CarouselContentWrapper layout={layout}> {/* Обертка для центрирования */}
-      <FullWidthLine /> {/* Линия на всю ширину над заголовком */}
+      <LineWrapper>
+        <FullWidthLine /> {/* Линия на всю ширину над заголовком */}
+      </LineWrapper>
       <CategoryHeader>
         <CategoryTitle to={`/products?category=${categorySlug}`}>
           {categoryName}
@@ -694,7 +763,6 @@ const ProductSlider: React.FC<{
               direction="right"
               onClick={handleNext}
               aria-label="Next slide"
-              // Сравниваем с maxIndex. Если товаров мало, maxIndex будет 0, и кнопка будет disabled
               disabled={currentIndex >= maxIndex}
             >
               <FiChevronRight size={24} />
@@ -704,7 +772,9 @@ const ProductSlider: React.FC<{
       </SliderContainer>
       
       <CategoryDescription>{categoryDescription}</CategoryDescription>
-      <FullWidthLine /> {/* Линия на всю ширину под описанием */}
+      <LineWrapper>
+        <FullWidthLine /> {/* Линия на всю ширину под описанием */}
+      </LineWrapper>
       
     </CarouselContentWrapper>
   );
@@ -867,9 +937,6 @@ const CategoryShowcase: React.FC = () => {
               once: true, // Анимация сработает только 1 раз (не повторяется при обратном скролле)
               amount: 0.2 // Запустить анимацию когда 20% элемента видно на экране
             }} 
-            style={{ 
-              overflow: 'hidden' // Прячем "вылезание" контента за границы
-            }}
           >
             {/* 'CategoryItem' - наш компонент ряда (Альбом + Карусель) */}
             <CategoryItem

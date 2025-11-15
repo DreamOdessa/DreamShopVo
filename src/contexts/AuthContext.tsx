@@ -122,10 +122,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     login,
     logout,
-    loading,
-    // Экспортируем setter, чтобы страницы могли мгновенно обновлять профиль в UI
-    setUser,
-  } as const;
+    loading
+  };
 
   return (
     <AuthContext.Provider value={value}>
@@ -133,4 +131,3 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-

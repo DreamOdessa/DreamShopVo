@@ -18,8 +18,17 @@ const firebaseConfig = {
   measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || "G-KZHPZJXTS1"
 };
 
+console.log('🔧 Initializing Firebase with explicit config (не загружаем из reserved URLs)');
+console.log('🔧 Auth Domain:', firebaseConfig.authDomain);
+console.log('🔧 Project ID:', firebaseConfig.projectId);
+
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig, {
+  // Явно указываем имя приложения чтобы избежать автозагрузки конфига
+  name: 'dreamshop-main'
+});
+
+console.log('✅ Firebase app initialized:', app.name);
 // const analytics = getAnalytics(app); // Отключено для избежания неиспользуемой переменной
 
 // Инициализация сервисов

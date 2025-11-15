@@ -10,20 +10,19 @@ import { useAdmin } from '../contexts/AdminContext';
 const HeroSection = styled.section`
   background: linear-gradient(135deg,rgba(77, 208, 225, 0.52) 0%,rgba(38, 197, 218, 0.51) 50%,rgba(0, 171, 193, 0.44) 100%);
   color: white;
-  padding: 9rem 0;
+  padding: clamp(4rem, 12vw, 9rem) 0;
   text-align: center;
   position: relative;
   overflow: hidden;
   background-image: url('https://firebasestorage.googleapis.com/v0/b/dreamshop-odessa.firebasestorage.app/o/products%2Fhover%2Fbackground-first.png?alt=media&token=88566e3b-ec96-429e-9266-ab6909e82fa9');
   background-size: 100%;
   background-position: center;
-  /* background-attachment: fixed; */ /* ОСТАВЛЯЕМ ВАШ КОД КАК БЫЛ - с параллаксом */
   background-attachment: fixed;
   background-blend-mode: overlay;
   min-height: 100vh;
   display: flex;
   align-items: center;
-  margin-top: -6rem;
+  margin-top: clamp(-3rem, -8vw, -6rem);
 
   /* overlay для затемнения боков (эффект тумана/вытягивания краёв) */
   &::after {
@@ -45,23 +44,6 @@ const HeroSection = styled.section`
   }
 
   @media (max-width: 768px) {
-    padding: 6rem 0;
-    min-height: 80vh;
-    margin-top: -3.5rem;
-    background-size: 200%;
-  }
-
-  @media (max-width: 480px) {
-    padding: 5rem 0;
-    min-height: 70vh;
-    margin-top: -3rem;
-    background-size: 200%;
-  }
-
-  @media (max-width: 360px) {
-    padding: 4rem 0;
-    min-height: 60vh;
-    margin-top: -2.5rem;
     background-size: 200%;
   }
 
@@ -75,62 +57,29 @@ const HeroSection = styled.section`
 
 const HeroContent = styled.div`
   position: relative;
-  z-index: 2; /* выше оверлея */
-  max-width: 800px;
+  z-index: 2;
+  max-width: 50rem;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 20px;
-
-  @media (max-width: 480px) {
-    padding: 0 15px;
-  }
-
-  @media (max-width: 360px) {
-    padding: 0 10px;
-  }
+  padding: 0 clamp(0.75rem, 2.5vw, 1.5rem);
 `;
 
 const HeroTitle = styled(motion.h1)`
-  font-size: 3.5rem;
+  font-size: clamp(1.5rem, 5vw, 3.5rem);
   font-weight: 700;
-  margin-bottom: 1rem;
+  margin-bottom: clamp(0.5rem, 1.5vw, 1rem);
   line-height: 1.2;
-  /* Сделаем цвет текста более тёмным (темно-березовый) и добавим тень для читабельности */
-  color: #1f4b5fff; /* темно-березовый оттенок */
+  color: #1f4b5fff;
   text-shadow: 0 6px 20px rgba(0,0,0,0.45);
-
-  @media (max-width: 768px) {
-    font-size: 2rem;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 1.6rem;
-  }
-
-  @media (max-width: 360px) {
-    font-size: 1.4rem;
-  }
 `;
 
 const HeroSubtitle = styled(motion.p)`
-  font-size: 1.3rem;
-  margin-bottom: 2rem;
+  font-size: clamp(0.875rem, 2vw, 1.3rem);
+  margin-bottom: clamp(1rem, 3vw, 2rem);
   opacity: 0.9;
   line-height: 1.6;
-  /* Более тёмный цвет для лучшей читаемости на светлом/градиентном фоне */
   color: rgba(56, 71, 82, 0.95);
   text-shadow: 0 4px 12px rgba(0,0,0,0.35);
-
-  @media (max-width: 768px) {
-    font-size: 1rem;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 0.9rem;
-  }
-
-  @media (max-width: 360px) {
-    font-size: 0.8rem;
-  }
 `;
 
 // Анимация для стрелки
@@ -255,7 +204,7 @@ const SectionTitle = styled.h2`
 
 const ProductsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 1.5rem;
   max-width: 1400px;
   margin: 0 auto;

@@ -30,22 +30,12 @@ interface CategoryItemProps {
 
 // 'ShowcaseContainer' - самый внешний контейнер
 const ShowcaseContainer = styled.section`
-  padding: 4rem 0;
+  padding: clamp(1.5rem, 5vw, 4rem) 0;
   background: transparent;
   width: 100%;
   overflow: visible;
   box-sizing: border-box;
   position: relative;
-
-  @media (max-width: 1200px) {
-    padding: 3rem 0;
-  }
-  @media (max-width: 768px) {
-    padding: 2rem 0;
-  }
-  @media (max-width: 480px) {
-    padding: 1.5rem 0;
-  }
 `;
 
 // 'CategoryContainer' - контейнер для ОДНОГО ряда (Альбом + Карусель)
@@ -76,7 +66,7 @@ const CategoryContainer = styled.div<{ layout: 'left' | 'right' }>`
 // 'CarouselContainer' - контейнер для колонки с каруселью
 const CarouselContainer = styled.div<{ layout: 'left' | 'right' }>`
   flex: 0 0 58%;
-  padding: 0 2rem;
+  padding: 0 clamp(0.75rem, 2.5vw, 2rem);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -89,18 +79,6 @@ const CarouselContainer = styled.div<{ layout: 'left' | 'right' }>`
   @media (max-width: 1200px) {
     flex: auto;
     width: 100%;
-    padding: 2rem 1.5rem;
-  }
-  @media (max-width: 992px) {
-    flex: auto;
-    width: 100%;
-    padding: 1.5rem 1rem;
-  }
-  @media (max-width: 768px) {
-    padding: 1rem;
-  }
-  @media (max-width: 480px) {
-    padding: 0.75rem;
   }
 `;
 
@@ -149,7 +127,7 @@ const CategoryHeader = styled.div`
 
 // 'CategoryTitle' - Заголовок (ФРУКТОВЫЕ ЧИПСЫ) - кликабельный
 const CategoryTitle = styled(Link)`
-  font-size: 2rem;
+  font-size: clamp(1.2rem, 3vw, 2rem);
   font-weight: 700;
   color: #2c3e50ff;
   margin: 0;
@@ -162,48 +140,16 @@ const CategoryTitle = styled(Link)`
     color: #00acc1;
     cursor: pointer;
   }
-
-  @media (max-width: 1200px) {
-    font-size: 1.8rem;
-  }
-  @media (max-width: 992px) {
-    font-size: 1.6rem;
-  }
-  @media (max-width: 768px) {
-    font-size: 1.4rem;
-  }
-  @media (max-width: 480px) {
-    font-size: 1.2rem;
-  }
 `;
 
 // 'CategoryDescription' - Описание (КРАТКОЕ ОПИСАНИЕ...)
 const CategoryDescription = styled.p`
-  font-size: 1.1rem;
+  font-size: clamp(0.85rem, 1.8vw, 1.1rem);
   color: #495d6eff;
   line-height: 1.6;
   text-transform: uppercase;
   text-align: center;
-  margin-top: 1.5rem;
-
-  @media (max-width: 1200px) {
-    font-size: 1rem;
-    margin-top: 1.2rem;
-  }
-  @media (max-width: 992px) {
-    font-size: 0.95rem;
-    margin-top: 1rem;
-  }
-  @media (max-width: 768px) {
-    font-size: 0.9rem;
-    margin-top: 0.8rem;
-    line-height: 1.5;
-  }
-  @media (max-width: 480px) {
-    font-size: 0.85rem;
-    margin-top: 0.6rem;
-    line-height: 1.4;
-  }
+  margin-top: clamp(0.6rem, 2vw, 1.5rem);
 `;
 
 // 'SliderContainer' - Контейнер, который "обрезает" карусель

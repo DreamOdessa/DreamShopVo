@@ -46,20 +46,37 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [productsData, usersData, ordersData, categoriesData] = await Promise.all([
-        productService.getAll(),
-        userService.getAll(),
-        orderService.getAll(),
-        categoryService.getAll()
+      // Загружаем только публичные данные (товары и категории)
+      // Users и Orders загрузятся только в AdminPanel при необходимости
+      const [productsData, categoriesData] = await Promise.all([
+        productService.getAll().catch(err => {
+          console.error('Ошибка загрузки товаров:', err);
+          return [];
+        }),
+        categoryService.getAll().catch(err => {
+          console.error('Ошибка загрузки категорий:', err);
+          return [];
+        })
       ]);
       
       setProducts(productsData);
-      setUsers(usersData);
-      setOrders(ordersData);
       setCategories(categoriesData);
+      
+      // Users и Orders загружаем только если нужно (не блокируем загрузку сайта)
+      try {
+        const [usersData, ordersData] = await Promise.all([
+          userService.getAll(),
+          orderService.getAll()
+        ]);
+        setUsers(usersData);
+        setOrders(ordersData);
+      } catch (error) {
+        // Если не авторизован или нет прав - не страшно, сайт работает
+        console.log('Пользователь не авторизован для загрузки users/orders');
+      }
     } catch (error) {
       console.error('Помилка завантаження даних:', error);
-      toast.error('Помилка завантаження даних з Firebase. Перевірте налаштування.');
+      // Убрали toast.error - не пугаем пользователя при первой загрузке
     } finally {
       setLoading(false);
     }

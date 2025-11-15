@@ -14,82 +14,41 @@ import SideCartDrawer from './SideCartDrawer';
 const HeaderContainer = styled.header`
   background: linear-gradient(to bottom,rgb(37, 159, 175) 0%,rgba(61, 174, 194, 0.9) 50%,rgba(84, 226, 245, 0.47) 100%);
   color: white;
-  padding: 1rem 0;
+  padding: clamp(0.6rem, 1.5vw, 1rem) 0;
   position: sticky;
   top: 0;
   z-index: 100;
   box-shadow: 0 2px 20px rgba(0, 150, 136, 0.2);
-
-  @media (max-width: 768px) {
-    padding: 0.8rem 0;
-  }
-
-  @media (max-width: 480px) {
-    padding: 0.6rem 0;
-  }
 `;
 
 const Nav = styled.nav`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
+  max-width: 75rem;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 clamp(0.5rem, 2.5vw, 1.5rem);
   position: relative;
 
   @media (max-width: 768px) {
-    padding: 0 15px;
     justify-content: center;
-  }
-
-  @media (max-width: 480px) {
-    padding: 0 10px;
-  }
-
-  @media (max-width: 360px) {
-    padding: 0 5px;
   }
 `;
 
 const Logo = styled(Link)`
-  font-size: 1.8rem;
+  font-size: clamp(0.8rem, 3vw, 1.8rem);
   font-weight: 700;
   color: white;
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-
-  @media (max-width: 768px) {
-    font-size: 1.4rem;
-    gap: 0.3rem;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 1.2rem;
-    gap: 0.2rem;
-  }
-
-  @media (max-width: 360px) {
-    font-size: 0.9rem;
-    gap: 0.1rem;
-  }
-
-  @media (max-width: 320px) {
-    font-size: 0.8rem;
-    gap: 0.05rem;
-  }
-
-  @media (max-width: 280px) {
-    font-size: 0.7rem;
-    gap: 0.02rem;
-  }
+  gap: clamp(0.1rem, 0.8vw, 0.5rem);
 `;
 
 const LogoIcon = styled.div`
-  width: 50px;
-  height: 50px;
+  width: clamp(2rem, 7vw, 3.125rem);
+  height: clamp(2rem, 7vw, 3.125rem);
   display: flex;
   align-items: center;
   justify-content: center;

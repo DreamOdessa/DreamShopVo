@@ -17,14 +17,14 @@ const ProductsContainer = styled.div`
 const Header = styled.div`
   background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
   color: #1f4b5fff;
-  padding: 7rem 0;
+  padding: clamp(4rem, 10vw, 7rem) 0;
   text-align: center;
   background-image: url('https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/background-second.jpg');
   background-size: cover;
   background-position: center;
   background-blend-mode: overlay;
   position: relative;
-  margin-top: -7rem;
+  margin-top: clamp(-4rem, -9vw, -7rem);
 
   &::before {
     content: '';
@@ -39,33 +39,30 @@ const Header = styled.div`
 `;
 
 const Title = styled.h1`
-  font-size: 3rem;
+  font-size: clamp(1.5rem, 4.5vw, 3rem);
   font-weight: 700;
-  margin-bottom: 1rem;
+  margin-bottom: clamp(0.5rem, 1.5vw, 1rem);
   position: relative;
   z-index: 2;
-
-  @media (max-width: 768px) {
-    font-size: 2rem;
-  }
 `;
 
 const Subtitle = styled.p`
-  font-size: 1.2rem;
+  font-size: clamp(0.875rem, 2vw, 1.2rem);
   opacity: 0.9;
-  max-width: 600px;
+  max-width: 37.5rem;
   margin: 0 auto;
   position: relative;
   z-index: 2;
 `;
 
 const FiltersSection = styled.div`
-  max-width: 1200px;
+  max-width: 75rem;
+  width: 100%;
   margin: 0 auto;
-  padding: 2rem 20px;
+  padding: clamp(1rem, 3vw, 2rem) clamp(0.75rem, 2.5vw, 1.5rem);
   background: white;
-  border-radius: 20px;
-  margin-top: -2rem;
+  border-radius: clamp(1rem, 2.5vw, 1.5rem);
+  margin-top: clamp(-1rem, -2.5vw, -2rem);
   position: relative;
   z-index: 1;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -229,7 +226,6 @@ const ProductsGrid = styled.div`
     padding: 0 12px;
   }
 
-  /* На очень узких экранах показываем строго 2 карточки в ряд */
   @media (max-width: 480px) {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;

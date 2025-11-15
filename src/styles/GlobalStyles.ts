@@ -50,15 +50,10 @@ export const GlobalStyles = createGlobalStyle`
   }
 
   .container {
-    max-width: 1200px;
+    max-width: 1400px;
+    width: 100%;
     margin: 0 auto;
-    padding: 0 20px;
-  }
-
-  @media (max-width: 768px) {
-    .container {
-      padding: 0 15px;
-    }
+    padding: 0 clamp(1rem, 2.5vw, 2rem);
   }
 `;
 

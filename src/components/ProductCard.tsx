@@ -25,18 +25,9 @@ const Card = styled(motion.div)`
 
 const ImageContainer = styled.div`
   position: relative;
-  height: 200px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-
-  @media (max-width: 992px) {
-    height: 180px;
-  }
-  @media (max-width: 768px) {
-    height: 150px;
-  }
-  @media (max-width: 480px) {
-    height: 110px;
-  }
 `;
 
 const ImageWrapper = styled.div`
@@ -127,23 +118,16 @@ const ActionButton = styled.button`
 `;
 
 const CardContent = styled.div`
-  padding: 1.5rem;
-
-  @media (max-width: 768px) {
-    padding: 0.8rem;
-  }
-  @media (max-width: 480px) {
-    padding: 0.6rem;
-  }
+  padding: clamp(0.75rem, 2.5vw, 1.75rem);
 `;
 
 const Category = styled.div`
   color: #18646eff;
-  font-size: 0.9rem;
+  font-size: clamp(0.75rem, 1.5vw, 0.9rem);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 0.5rem;
+  margin-bottom: clamp(0.3rem, 1vw, 0.5rem);
 `;
 
 const ProductName = styled.h3`
@@ -171,20 +155,13 @@ const ProductName = styled.h3`
 
 const ProductDescription = styled.p`
   color: #6c757d;
-  font-size: 0.9rem;
+  font-size: clamp(0.85rem, 1.6vw, 1rem);
   line-height: 1.5;
-  margin-bottom: 1rem;
+  margin-bottom: clamp(0.75rem, 1.8vw, 1.2rem);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  @media (max-width: 768px) {
-    font-size: 0.85rem;
-    margin-bottom: 0.6rem;
-  }
-  @media (max-width: 480px) {
-    font-size: 0.8rem;
-  }
 `;
 
 const ProductFooter = styled.div`
@@ -200,51 +177,32 @@ const PriceContainer = styled.div`
 `;
 
 const Price = styled.span<{ isDiscounted?: boolean }>`
-  font-size: 1.3rem;
+  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
   font-weight: 700;
   color: #27ae60;
   text-decoration: ${props => props.isDiscounted ? 'line-through' : 'none'};
   opacity: ${props => props.isDiscounted ? 0.6 : 1};
-  @media (max-width: 768px) {
-    font-size: 1.1rem;
-  }
-  @media (max-width: 480px) {
-    font-size: 1rem;
-  }
 `;
 
 const OriginalPrice = styled.span`
-  font-size: 1.1rem;
+  font-size: clamp(0.9rem, 1.8vw, 1.1rem);
   font-weight: 600;
   color: #e74c3c;
-  @media (max-width: 768px) {
-    font-size: 1rem;
-  }
-  @media (max-width: 480px) {
-    font-size: 0.9rem;
-  }
 `;
 
 const AddToCartButton = styled.button`
   background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
   color: white;
   border: none;
-  padding: 0.8rem 1.2rem;
-  border-radius: 25px;
+  padding: clamp(0.5rem, 1.5vw, 0.8rem) clamp(0.7rem, 2vw, 1.2rem);
+  border-radius: clamp(1.25rem, 3vw, 1.5625rem);
   font-weight: 600;
+  font-size: clamp(0.85rem, 1.5vw, 1rem);
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  @media (max-width: 768px) {
-    padding: 0.6rem 0.8rem;
-    font-size: 0.9rem;
-  }
-  @media (max-width: 480px) {
-    padding: 0.5rem 0.7rem;
-    font-size: 0.85rem;
-  }
+  gap: clamp(0.3rem, 1vw, 0.5rem);
 `;
 
 const getCategoryName = (category: string) => {

@@ -66,6 +66,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
+  // Страховка: если onAuthStateChange зависнет на мобильных (из-за ограничений хранилища),
+  // снимаем лоадер через несколько секунд, чтобы публичные страницы открывались.
+  useEffect(() => {
+    if (!loading) return;
+    const t = setTimeout(() => setLoading(false), 3500);
+    return () => clearTimeout(t);
+  }, [loading]);
+
   const login = async () => {
     try {
       setLoading(true);

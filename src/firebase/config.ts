@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 // import { getAnalytics } from "firebase/analytics"; // Отключено для избежания неиспользуемого импорта
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence, inMemoryPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
@@ -28,5 +28,9 @@ export const storage = getStorage(app);
 
 // Провайдеры аутентификации
 export const googleProvider = new GoogleAuthProvider();
+
+// Настройка устойчивости с безопасным фолбэком для мобильных браузеров
+// Если постоянное хранилище недоступно (например, iOS Private Mode), используем in-memory
+setPersistence(auth, browserLocalPersistence).catch(() => setPersistence(auth, inMemoryPersistence));
 
 export default app;

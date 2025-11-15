@@ -1,7 +1,6 @@
 import { 
   signInWithPopup, 
   signInWithRedirect,
-  getRedirectResult,
   signOut, 
   onAuthStateChanged, 
   User as FirebaseUser 
@@ -31,12 +30,8 @@ export const signInWithGoogle = async (): Promise<User> => {
     if (isMobile) {
       console.log('📱 Мобильное устройство: используем signInWithRedirect');
       await signInWithRedirect(auth, googleProvider);
-      // После редиректа страница перезагрузится, а результат нужно получить отдельно.
-      result = await getRedirectResult(auth);
-      if (!result) {
-        console.log('⏳ Ожидание результата redirect (он придет после перезагрузки)');
-        throw new Error('Redirect initiated');
-      }
+      // Дальше управление перейдет после возврата с Google; состояние подхватит onAuthStateChanged
+      return new Promise<User>(() => {});
     } else {
       result = await signInWithPopup(auth, googleProvider);
     }

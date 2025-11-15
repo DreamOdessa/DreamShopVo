@@ -10,36 +10,6 @@ import { auth, googleProvider } from './config';
 import { userService } from './services';
 import { User } from '../types';
 
-// Проверка результата redirect при загрузке приложения
-export const checkRedirectResult = async (): Promise<User | null> => {
-  try {
-    console.log('🔍 Проверяем результат redirect...');
-    const result = await getRedirectResult(auth);
-    if (result?.user) {
-      console.log('✅ Redirect успешен:', result.user.email);
-      const existingUser = await userService.getById(result.user.uid);
-      let user: User;
-      if (existingUser) {
-        user = {
-          ...existingUser,
-          name: existingUser.name || result.user.displayName || 'Користувач',
-          email: result.user.email || existingUser.email,
-          avatar: result.user.photoURL || existingUser.avatar
-        };
-      } else {
-        user = mapFirebaseUser(result.user);
-      }
-      await userService.createOrUpdate(user);
-      return user;
-    }
-    console.log('ℹ️ Нет pending redirect');
-    return null;
-  } catch (error) {
-    console.error('❌ Ошибка при проверке redirect:', error);
-    return null;
-  }
-};
-
 // Преобразование Firebase User в наш User
 const mapFirebaseUser = (firebaseUser: FirebaseUser): User => ({
   id: firebaseUser.uid,
@@ -47,10 +17,40 @@ const mapFirebaseUser = (firebaseUser: FirebaseUser): User => ({
   email: firebaseUser.email || '',
   avatar: firebaseUser.photoURL || undefined,
   discount: 0,
-  isAdmin: false // По умолчанию не админ, можно настроить через базу данных
+  isAdmin: false
 });
 
-// Вход через Google
+// Проверка результата redirect при загрузке приложения
+export const checkRedirectResult = async (): Promise<User | null> => {
+  try {
+    console.log('🔍 Проверяем результат redirect...');
+    const result = await getRedirectResult(auth);
+    if (!result?.user) {
+      console.log('ℹ️ Нет pending redirect');
+      return null;
+    }
+    console.log('✅ Redirect успешен:', result.user.email);
+    const existingUser = await userService.getById(result.user.uid);
+    let user: User;
+    if (existingUser) {
+      user = {
+        ...existingUser,
+        name: existingUser.name || result.user.displayName || 'Користувач',
+        email: result.user.email || existingUser.email,
+        avatar: result.user.photoURL || existingUser.avatar
+      };
+    } else {
+      user = mapFirebaseUser(result.user);
+    }
+    await userService.createOrUpdate(user);
+    return user;
+  } catch (error) {
+    console.error('❌ Ошибка при проверке redirect:', error);
+    return null;
+  }
+};
+
+// Вход через Google (popup сначала, redirect как фолбэк)
 export const signInWithGoogle = async (): Promise<User> => {
   try {
     console.log('🔄 Начинаем вход через Google...');
@@ -58,69 +58,42 @@ export const signInWithGoogle = async (): Promise<User> => {
     console.log('🔧 Project ID:', auth.app.options.projectId);
     console.log('🔧 User Agent:', navigator.userAgent);
     console.log('🔧 Window location:', window.location.href);
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    console.log('📱 Мобильное устройство:', isMobile);
+
     let result;
-    if (isMobile) {
-      console.log('📱 Используем signInWithRedirect');
-      console.log('🔧 Redirect URL будет:', window.location.origin);
-      await signInWithRedirect(auth, googleProvider);
-      console.log('✅ Redirect инициирован, страница должна перезагрузиться...');
-      // После успешного redirect страница перезагрузится; вернем заглушку
-      return mapFirebaseUser({
-        uid: 'redirect_pending',
-        displayName: 'Redirecting',
-        email: '',
-        photoURL: undefined,
-        providerData: [],
-        phoneNumber: null,
-        tenantId: null,
-        delete: async () => {},
-        getIdToken: async () => '',
-        getIdTokenResult: async () => ({
-          authTime: '',
-          expirationTime: '',
-          issuedAtTime: '',
-          signInProvider: '',
-          signInSecondFactor: null,
-          claims: {}
-        }),
-        reload: async () => {},
-        isAnonymous: false,
-        metadata: { creationTime: '', lastSignInTime: '' },
-        providerId: 'google',
-        emailVerified: false
-      } as any);
-    } else {
-      console.log('💻 Десктоп: используем signInWithPopup');
+    try {
+      console.log('🪟 Пробуем signInWithPopup...');
       result = await signInWithPopup(auth, googleProvider);
+      console.log('✅ Popup success');
+    } catch (e: any) {
+      console.warn('⚠️ Popup auth failed:', e?.code, e?.message);
+      if (
+        e?.code === 'auth/popup-blocked' ||
+        e?.code === 'auth/popup-closed-by-user' ||
+        e?.code === 'auth/operation-not-supported-in-this-environment'
+      ) {
+        console.log('↪️ Переключаемся на signInWithRedirect');
+        await signInWithRedirect(auth, googleProvider);
+        // Вернем заглушку; фактический пользователь придет из onAuthStateChanged после редиректа
+        return mapFirebaseUser({ uid: 'redirect_pending' } as any);
+      }
+      throw e;
     }
+
     console.log('✅ Google auth успешно:', result.user.email);
-    
-    // Проверяем, есть ли пользователь в базе данных
     const existingUser = await userService.getById(result.user.uid);
-    let user;
-    
+    let user: User;
     if (existingUser) {
-      // Если пользователь существует, обновляем только основные данные, сохраняя права администратора
-      console.log('👤 Обновляем существующего пользователя');
       user = {
         ...existingUser,
-        // Сохраняем имя из базы, а Google-имя используем только как резервное
         name: existingUser.name || result.user.displayName || 'Користувач',
         email: result.user.email || existingUser.email,
         avatar: result.user.photoURL || existingUser.avatar
       };
     } else {
-      // Если пользователя нет, создаем нового
-      console.log('➕ Создаем нового пользователя');
       user = mapFirebaseUser(result.user);
     }
-    
-    // Сохраняем пользователя в базе данных
     await userService.createOrUpdate(user);
     console.log('💾 Пользователь сохранен в базе данных');
-    
     return user;
   } catch (error) {
     console.error('❌ Помилка входу через Google:', error);

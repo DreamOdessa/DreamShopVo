@@ -6,7 +6,7 @@ import CategoryManager from '../components/CategoryManager';
 import CategoryShowcaseManager from '../components/CategoryShowcaseManager';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
-import { Product, Order, Category } from '../types';
+import { Product, Order } from '../types';
 import OrderDetails from '../components/OrderDetails';
 import toast from 'react-hot-toast';
 import { storageService, STORAGE_PATHS } from '../firebase/storageService';

@@ -1,0 +1,42 @@
+[
+  {
+    "id": "syrup_strawberry_full",
+    "name": "Syrup Strawberry Full",
+    "flavorTag": "strawberry_full",
+    "category": "syrups",
+    "organic": false,
+    "colorHint": "#f9a0a0ff"
+  },
+  {
+    "id": "syrup_rose",
+    "name": "Syrup Rose",
+    "flavorTag": "rose",
+    "category": "syrups",
+    "organic": false,
+    "colorHint": "#f8d3d9ff"
+  },
+  {
+    "id": "syrup_cream_soda",
+    "name": "Syrup Cream Soda",
+    "flavorTag": "cream_soda",
+    "category": "syrups",
+    "organic": false,
+    "colorHint": "#f7f0d6ff"
+  },
+  {
+    "id": "syrup_tarragon",
+    "name": "Syrup Tarragon",
+    "flavorTag": "tarragon",
+    "category": "syrups",
+    "organic": false,
+    "colorHint": "#b5d9b1ff"
+  },
+  {
+    "id": "syrup_echinacea",
+    "name": "Syrup Echinacea",
+    "flavorTag": "echinacea",
+    "category": "syrups",
+    "organic": false,
+    "colorHint": "#e3b5c6ff"
+  }
+]

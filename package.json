@@ -51,6 +51,7 @@
     ]
   },
   "devDependencies": {
+    "skia-canvas": "^3.0.8",
     "ts-node": "^10.9.2"
   }
 }

@@ -24,6 +24,7 @@ export interface Product {
   image: string; // основное изображение (для совместимости)
   images?: string[]; // массив изображений (до 5): [главное, hover, галерея1, галерея2, галерея3]
   category: 'chips' | 'decorations' | 'syrups' | 'purees' | 'dried_flowers';
+  subcategory?: string; // подкатегория внутри выбранной категории
   organic: boolean;
   inStock: boolean;
   isActive?: boolean; // включен/выключен товар (опционально для совместимости)
@@ -89,5 +90,7 @@ export interface Category {
   showInShowcase?: boolean; // whether this category should appear in the homepage showcase
   isActive: boolean;
   sortOrder: number;
+  parentSlug?: string; // slug родительской категории (если это подкатегория)
+  subcategories?: string[]; // (legacy) список подкатегорий, будет заменено отдельными документами
 }
 

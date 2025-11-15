@@ -6,7 +6,7 @@ import CategoryManager from '../components/CategoryManager';
 import CategoryShowcaseManager from '../components/CategoryShowcaseManager';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
-import { Product, Order } from '../types';
+import { Product, Order, Category } from '../types';
 import OrderDetails from '../components/OrderDetails';
 import toast from 'react-hot-toast';
 import { storageService, STORAGE_PATHS } from '../firebase/storageService';
@@ -717,6 +717,7 @@ const AdminPanel: React.FC = () => {
     hoverImage: '',
     images: [] as string[],
     category: 'chips',
+    subcategory: '',
     organic: false,
     inStock: true,
     isActive: true,
@@ -753,6 +754,7 @@ const AdminPanel: React.FC = () => {
       hoverImage: '',
       images: [],
       category: 'chips',
+      subcategory: '',
       organic: false,
       inStock: true,
       isActive: true,
@@ -782,6 +784,7 @@ const AdminPanel: React.FC = () => {
       hoverImage: hoverImg,
       images: galleryImages,
       category: product.category,
+      subcategory: product.subcategory || '',
       organic: product.organic,
       inStock: product.inStock,
       isActive: product.isActive ?? true,
@@ -815,6 +818,7 @@ const AdminPanel: React.FC = () => {
       images: allImages.length > 0 ? allImages : [productForm.image], // Всегда массив с хотя бы одним изображением
       price: parseFloat(productForm.price),
       category: productForm.category as 'chips' | 'decorations' | 'syrups' | 'purees' | 'dried_flowers',
+      subcategory: productForm.subcategory || undefined,
       isActive: productForm.isActive,
       isPopular: productForm.isPopular,
       ingredients: productForm.ingredients ? productForm.ingredients.split(',').map(i => i.trim()) : []
@@ -1133,7 +1137,7 @@ const AdminPanel: React.FC = () => {
                   <tr>
                     <TableHeader>Изображение</TableHeader>
                     <TableHeader>Название</TableHeader>
-                    <TableHeader>Категория</TableHeader>
+                    <TableHeader>Категория / Подкатегория</TableHeader>
                     <TableHeader>Цена</TableHeader>
                     <TableHeader>Наличие</TableHeader>
                     <TableHeader>Действия</TableHeader>
@@ -1159,7 +1163,12 @@ const AdminPanel: React.FC = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{product.category}</TableCell>
+                      <TableCell>
+                        {product.category}
+                        {product.subcategory && (
+                          <div style={{ fontSize: '0.7rem', color: '#00acc1', marginTop: '2px' }}>↳ {product.subcategory}</div>
+                        )}
+                      </TableCell>
                       <TableCell>{product.price} ₴</TableCell>
                       <TableCell>
                         <span style={{
@@ -1232,7 +1241,12 @@ const AdminPanel: React.FC = () => {
                       </MobileCardRow>
                       <MobileCardRow>
                         <MobileCardLabel>Категория:</MobileCardLabel>
-                        <MobileCardValue>{product.category}</MobileCardValue>
+                        <MobileCardValue>
+                          {product.category}
+                          {product.subcategory && (
+                            <span style={{ display: 'block', fontSize: '0.65rem', color: '#00acc1' }}>↳ {product.subcategory}</span>
+                          )}
+                        </MobileCardValue>
                       </MobileCardRow>
                       <MobileCardRow>
                         <MobileCardLabel>Цена:</MobileCardLabel>
@@ -1761,15 +1775,35 @@ const AdminPanel: React.FC = () => {
               <Label>Категория</Label>
               <Select
                 value={productForm.category}
-                onChange={(e) => setProductForm(prev => ({ ...prev, category: e.target.value as any }))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setProductForm(prev => ({ ...prev, category: val as any, subcategory: '' }));
+                }}
               >
-                <option value="chips">Фруктовые чипсы</option>
-                <option value="decorations">Украшения</option>
-                <option value="syrups">Сиропы</option>
-                <option value="purees">Пюре</option>
-                <option value="dried_flowers">Сухоцветы</option>
+                {categories.filter(c => !c.parentSlug).sort((a,b)=>a.sortOrder-b.sortOrder).map(c => (
+                  <option key={c.id} value={c.slug}>{c.name}</option>
+                ))}
               </Select>
             </FormGroup>
+
+            {(() => {
+              const subcats = categories.filter(c => c.parentSlug === productForm.category);
+              if (!subcats.length) return null;
+              return (
+                <FormGroup>
+                  <Label>Підкатегорія</Label>
+                  <Select
+                    value={productForm.subcategory}
+                    onChange={(e) => setProductForm(prev => ({ ...prev, subcategory: e.target.value }))}
+                  >
+                    <option value=''>— вибрати —</option>
+                    {subcats.sort((a,b)=>a.sortOrder-b.sortOrder).map(sc => (
+                      <option key={sc.id} value={sc.slug}>{sc.name}</option>
+                    ))}
+                  </Select>
+                </FormGroup>
+              );
+            })()}
 
             <FormGroup>
               <Label>Статус товара</Label>

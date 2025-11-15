@@ -138,7 +138,7 @@ const CardContent = styled.div`
 `;
 
 const Category = styled.div`
-  color: #00acc1;
+  color: #18646eff;
   font-size: 0.9rem;
   font-weight: 600;
   text-transform: uppercase;

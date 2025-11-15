@@ -30,8 +30,31 @@ export const signInWithGoogle = async (): Promise<User> => {
     if (isMobile) {
       console.log('📱 Мобильное устройство: используем signInWithRedirect');
       await signInWithRedirect(auth, googleProvider);
-      // Дальше управление перейдет после возврата с Google; состояние подхватит onAuthStateChanged
-      return new Promise<User>(() => {});
+      // Возвращаем заглушку; фактический пользователь придет через onAuthStateChanged после редиректа
+      return mapFirebaseUser({
+        uid: 'redirect_pending',
+        displayName: 'Redirecting',
+        email: '',
+        photoURL: undefined,
+        providerData: [],
+        phoneNumber: null,
+        tenantId: null,
+        delete: async () => {},
+        getIdToken: async () => '',
+        getIdTokenResult: async () => ({
+          authTime: '',
+          expirationTime: '',
+          issuedAtTime: '',
+          signInProvider: '',
+          signInSecondFactor: null,
+          claims: {}
+        }),
+        reload: async () => {},
+        isAnonymous: false,
+        metadata: { creationTime: '', lastSignInTime: '' },
+        providerId: 'google',
+        emailVerified: false
+      } as any);
     } else {
       result = await signInWithPopup(auth, googleProvider);
     }

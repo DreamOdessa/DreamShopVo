@@ -21,10 +21,6 @@ import './utils/adminUtils'; // Импортируем утилиты для к�
 const App: React.FC = () => {
   const { loading } = useAuth();
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
   return (
     <WishlistProvider>
       <CategorySidebarProvider>
@@ -44,6 +40,11 @@ const App: React.FC = () => {
           </Routes>
         </main>
         <Footer />
+        {loading && (
+          <div style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(255,255,255,0.6)',backdropFilter:'blur(2px)',zIndex:9999}}>
+            <LoadingSpinner />
+          </div>
+        )}
       </CategorySidebarProvider>
     </WishlistProvider>
   );

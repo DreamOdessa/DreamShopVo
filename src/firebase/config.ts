@@ -11,7 +11,8 @@ const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyAxCHgP-eF_xp1kPan6HtcYUCYCJBZc7VE",
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "dreamshop-odessa.firebaseapp.com",
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "dreamshop-odessa",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "dreamshop-odessa.firebasestorage.app",
+  // Исправлено имя bucket: должно быть projectId + '.appspot.com'
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "dreamshop-odessa.appspot.com",
   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "941215601569",
   appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:941215601569:web:a4e5c1bb2892892bbc31e0",
   measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || "G-KZHPZJXTS1"

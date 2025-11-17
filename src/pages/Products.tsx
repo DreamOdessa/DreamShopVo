@@ -287,22 +287,88 @@ const ClearFilters = styled.button`
   }
 `;
 
+const SubcategoriesSection = styled.div`
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+`;
+
+const SubcategoriesLabel = styled.div`
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #6c757d;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const SubcategoriesRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+`;
+
+const SubcategoryToggle = styled.button<{ isActive: boolean }>`
+  padding: 0.6rem 1.2rem;
+  border: 2px solid ${props => props.isActive ? '#00acc1' : '#e9ecef'};
+  border-radius: 20px;
+  background: ${props => props.isActive ? '#00acc1' : 'white'};
+  color: ${props => props.isActive ? 'white' : '#6c757d'};
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: #00acc1;
+    background: ${props => props.isActive ? '#0097a7' : '#e8f8f9'};
+    color: ${props => props.isActive ? 'white' : '#00acc1'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 172, 193, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
 const Products: React.FC = () => {
   const { products, categories } = useAdmin();
   const { closeSidebar, isOpen: isCategorySidebarOpen } = useCategorySidebar();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null); // Новое состояние для подкатегории
   const [showOrganicOnly, setShowOrganicOnly] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [lastSubcategoryClickTime, setLastSubcategoryClickTime] = useState<{ [key: string]: number }>({});
 
-  // Фильтруем только активные категории и сортируем их
-  const activeCategories = useMemo(() => {
+  // Фильтруем только активные категории (родительские) и сортируем их
+  const activeParentCategories = useMemo(() => {
+    if (!categories || !Array.isArray(categories)) return [];
+    return categories
+      .filter(cat => cat && cat.isActive !== false && !cat.parentSlug) // Только родительские категории
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  }, [categories]);
+
+  // Получаем все категории и подкатегории (для фильтрации и отображения)
+  const allActiveCategories = useMemo(() => {
     if (!categories || !Array.isArray(categories)) return [];
     return categories
       .filter(cat => cat && cat.isActive !== false)
       .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   }, [categories]);
+
+  // Получаем подкатегории для выбранной родительской категории
+  const availableSubcategories = useMemo(() => {
+    if (selectedCategory === 'all') return [];
+    
+    const category = allActiveCategories?.find(cat => cat.id === selectedCategory);
+    if (!category || category.parentSlug) return []; // Если это подкатегория, не показываем подкатегории
+
+    return allActiveCategories.filter(cat => cat.parentSlug === category.slug);
+  }, [selectedCategory, allActiveCategories]);
 
   // Читаем параметр category из URL при загрузке страницы
   useEffect(() => {
@@ -329,11 +395,32 @@ const Products: React.FC = () => {
       );
       if (!matchesSearch) return false;
 
-      // Проверка категории
+      // Проверка категории и подкатегории
       if (selectedCategory !== 'all') {
-        const category = categories?.find(cat => cat.id === selectedCategory);
-        if (!category || product.category !== category.slug) {
+        const category = allActiveCategories?.find(cat => cat.id === selectedCategory);
+        if (!category) {
           return false;
+        }
+
+        // Если выбрана родительская категория (без parentSlug)
+        if (!category.parentSlug) {
+          // Проверяем соответствие категории
+          if (product.category !== category.slug) {
+            return false;
+          }
+
+          // Если выбрана подкатегория - фильтруем по ней
+          if (selectedSubcategory) {
+            if (product.subcategory !== selectedSubcategory) {
+              return false;
+            }
+          }
+        } else {
+          // Если выбрана подкатегория из dropdown - показываем только товары с этой подкатегорией
+          const parentCategory = allActiveCategories?.find(cat => cat.slug === category.parentSlug);
+          if (!parentCategory || product.category !== parentCategory.slug || product.subcategory !== category.name) {
+            return false;
+          }
         }
       }
 
@@ -344,15 +431,44 @@ const Products: React.FC = () => {
 
       return true;
     });
-  }, [products, searchTerm, selectedCategory, showOrganicOnly, categories]);
+  }, [products, searchTerm, selectedCategory, selectedSubcategory, showOrganicOnly, allActiveCategories]);
 
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedCategory('all');
+    setSelectedSubcategory(null);
     setShowOrganicOnly(false);
     setIsDropdownOpen(false);
     // Очищаем URL от параметров фильтрации
     setSearchParams({});
+  };
+
+  const handleSubcategoryClick = (subcategoryName: string) => {
+    const now = Date.now();
+    const lastClick = lastSubcategoryClickTime[subcategoryName] || 0;
+    const isDoubleClick = now - lastClick < 300; // 300ms для двойного клика
+
+    if (isDoubleClick) {
+      // Двойной клик - отключаем фильтр подкатегории
+      setSelectedSubcategory(null);
+      setLastSubcategoryClickTime({});
+    } else {
+      // Одиночный клик - включаем/переключаем фильтр
+      setSelectedSubcategory(selectedSubcategory === subcategoryName ? null : subcategoryName);
+      setLastSubcategoryClickTime({ ...lastSubcategoryClickTime, [subcategoryName]: now });
+    }
+  };
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setSelectedSubcategory(null); // Сбрасываем выбранную подкатегорию при смене категории
+    setIsDropdownOpen(false);
+    
+    if (categoryId === 'all') {
+      setSearchParams({});
+    } else {
+      setSearchParams({ category: categoryId });
+    }
   };
 
   // Закрытие выпадающего списка при клике вне его
@@ -402,7 +518,7 @@ const Products: React.FC = () => {
             Тільки органічні
           </FilterButton>
 
-          {(searchTerm || selectedCategory !== 'all' || showOrganicOnly) && (
+          {(searchTerm || selectedCategory !== 'all' || selectedSubcategory || showOrganicOnly) && (
             <ClearFilters onClick={clearFilters}>
               <FiX />
               Очистити фільтри
@@ -415,7 +531,9 @@ const Products: React.FC = () => {
             isOpen={isDropdownOpen}
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-            {selectedCategory === 'all' ? 'Всі товари' : categories?.find(cat => cat.id === selectedCategory)?.name || 'Всі товари'}
+            {selectedCategory === 'all' 
+              ? 'Всі товари' 
+              : allActiveCategories?.find(cat => cat.id === selectedCategory)?.name || 'Всі товари'}
             <FiChevronDown style={{ 
               transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
               transition: 'transform 0.3s ease'
@@ -426,30 +544,43 @@ const Products: React.FC = () => {
             <DropdownItem
               key="all"
               isActive={selectedCategory === 'all'}
-              onClick={() => {
-                setSelectedCategory('all');
-                setIsDropdownOpen(false);
-                setSearchParams({});
-              }}
+              onClick={() => handleCategoryChange('all')}
             >
               Всі товари
             </DropdownItem>
-            {activeCategories.map(category => (
+            {activeParentCategories.map(category => (
               <DropdownItem
                 key={category.id}
                 isActive={selectedCategory === category.id}
-                onClick={() => {
-                  setSelectedCategory(category.id);
-                  setIsDropdownOpen(false);
-                  // Обновляем URL с выбранной категорией
-                  setSearchParams({ category: category.id });
-                }}
+                onClick={() => handleCategoryChange(category.id)}
               >
                 {category.name}
               </DropdownItem>
             ))}
           </DropdownList>
         </CategoryDropdown>
+
+        {/* Горизонтальные кнопки подкатегорий */}
+        {availableSubcategories.length > 0 && (
+          <SubcategoriesSection>
+            <SubcategoriesLabel>
+              <FiFilter size={16} />
+              Підкатегорії (подвійний клік для скидання):
+            </SubcategoriesLabel>
+            <SubcategoriesRow>
+              {availableSubcategories.map(subcat => (
+                <SubcategoryToggle
+                  key={subcat.id}
+                  isActive={selectedSubcategory === subcat.name}
+                  onClick={() => handleSubcategoryClick(subcat.name)}
+                  title="Клік - вибрати, подвійний клік - скинути"
+                >
+                  {subcat.name}
+                </SubcategoryToggle>
+              ))}
+            </SubcategoriesRow>
+          </SubcategoriesSection>
+        )}
 
         {filteredProducts.length === 0 ? (
           <NoProducts>
@@ -480,13 +611,11 @@ const Products: React.FC = () => {
       <CategorySidebar
         isOpen={isCategorySidebarOpen}
         onClose={closeSidebar}
-        categories={activeCategories}
+        categories={allActiveCategories}
         selectedCategory={selectedCategory}
         onCategorySelect={(categoryId) => {
-          setSelectedCategory(categoryId);
+          handleCategoryChange(categoryId);
           closeSidebar();
-          // Обновляем URL с выбранной категорией
-          setSearchParams({ category: categoryId });
         }}
       />
     </>

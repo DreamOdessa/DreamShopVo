@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiGrid, FiTag } from 'react-icons/fi';
+import { FiX, FiGrid, FiTag, FiChevronDown, FiChevronRight } from 'react-icons/fi';
 
 interface Category {
   id: string;
@@ -12,6 +12,7 @@ interface Category {
   image?: string;
   isActive: boolean;
   sortOrder: number;
+  parentSlug?: string; // slug родительской категории (если это подкатегория)
 }
 
 interface CategorySidebarProps {
@@ -178,6 +179,69 @@ const CategoryIcon = styled.div`
 
 const CategoryName = styled.span`
   font-size: 1rem;
+  flex: 1;
+`;
+
+const ChevronIcon = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: transform 0.3s ease;
+`;
+
+const SubcategoryItem = styled(motion.div)<{ isActive: boolean }>`
+  padding: 0.9rem 1.2rem 0.9rem 3rem;
+  margin: 0;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  border-left: 3px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  position: relative;
+  background: ${props => props.isActive 
+    ? 'linear-gradient(90deg, rgba(77, 208, 225, 0.15) 0%, rgba(38, 197, 218, 0.08) 100%)' 
+    : 'rgba(255, 255, 255, 0.02)'};
+  border-left-color: ${props => props.isActive ? '#4dd0e1' : 'transparent'};
+  color: ${props => props.isActive ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.75)'};
+  font-size: 0.9rem;
+  font-weight: ${props => props.isActive ? '600' : '400'};
+
+  &::before {
+    content: '↳';
+    position: absolute;
+    left: 1.5rem;
+    color: rgba(77, 208, 225, 0.6);
+    font-size: 1rem;
+  }
+
+  &:hover {
+    background: linear-gradient(90deg, 
+      rgba(77, 208, 225, 0.2) 0%, 
+      rgba(38, 197, 218, 0.15) 100%);
+    border-left-color: #4dd0e1;
+    color: rgba(255, 255, 255, 0.95);
+    padding-left: 3.2rem;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.08), 
+      transparent);
+    transition: left 0.5s ease;
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
 `;
 
 const Footer = styled.div`
@@ -216,10 +280,33 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
   selectedCategory,
   onCategorySelect
 }) => {
-  // Используем категории как есть, они уже должны включать "Все товары"
-  const allCategories = useMemo(() => {
-    return (propCategories || []).sort((a, b) => a.sortOrder - b.sortOrder);
+  // Разделяем на родительские категории и подкатегории
+  const { parentCategories, subcategoriesMap } = useMemo(() => {
+    const parents: Category[] = [];
+    const subMap: { [key: string]: Category[] } = {};
+
+    (propCategories || []).forEach(cat => {
+      if (!cat.parentSlug) {
+        parents.push(cat);
+      } else {
+        if (!subMap[cat.parentSlug]) {
+          subMap[cat.parentSlug] = [];
+        }
+        subMap[cat.parentSlug].push(cat);
+      }
+    });
+
+    // Сортируем родительские категории и подкатегории
+    parents.sort((a, b) => a.sortOrder - b.sortOrder);
+    Object.keys(subMap).forEach(key => {
+      subMap[key].sort((a, b) => a.sortOrder - b.sortOrder);
+    });
+
+    return { parentCategories: parents, subcategoriesMap: subMap };
   }, [propCategories]);
+
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [lastClickTime, setLastClickTime] = useState<{ [key: string]: number }>({});
   const [startX, setStartX] = useState<number>(0);
   const [currentX, setCurrentX] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -232,6 +319,36 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
 
   const handleClearFilters = () => {
     onCategorySelect('all');
+  };
+
+  const handleCategoryClick = (category: Category) => {
+    const now = Date.now();
+    const lastClick = lastClickTime[category.id] || 0;
+    const isDoubleClick = now - lastClick < 300; // 300ms для двойного клика
+
+    if (isDoubleClick) {
+      // Двойной клик - открываем все товары категории
+      onCategorySelect(category.id);
+      setLastClickTime({});
+    } else {
+      // Одиночный клик - раскрываем/скрываем подкатегории
+      const subcategories = subcategoriesMap[category.slug] || [];
+      if (subcategories.length > 0) {
+        setExpandedCategories(prev => {
+          const newSet = new Set(prev);
+          if (newSet.has(category.id)) {
+            newSet.delete(category.id);
+          } else {
+            newSet.add(category.id);
+          }
+          return newSet;
+        });
+      } else {
+        // Если нет подкатегорий - сразу открываем категорию
+        onCategorySelect(category.id);
+      }
+      setLastClickTime({ ...lastClickTime, [category.id]: now });
+    }
   };
 
   // Touch events for swipe gestures
@@ -293,23 +410,62 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
             </Header>
 
             <CategoriesList>
-              {allCategories.map((category: Category, index: number) => (
-                <CategoryItem
-                  key={category.id}
-                  isActive={selectedCategory === category.id}
-                  onClick={() => onCategorySelect(category.id)}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <CategoryIcon>
-                    {category.icon || <FiTag />}
-                  </CategoryIcon>
-                  <CategoryName>{category.name}</CategoryName>
-                </CategoryItem>
-              ))}
+              {parentCategories.map((category: Category, index: number) => {
+                const subcategories = subcategoriesMap[category.slug] || [];
+                const isExpanded = expandedCategories.has(category.id);
+                const hasSubcategories = subcategories.length > 0;
+
+                return (
+                  <React.Fragment key={category.id}>
+                    <CategoryItem
+                      isActive={selectedCategory === category.id}
+                      onClick={() => handleCategoryClick(category)}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      title={hasSubcategories ? 'Клик - раскрыть, двойной клик - открыть все товары' : 'Открыть категорию'}
+                    >
+                      <CategoryIcon>
+                        {category.icon || <FiTag />}
+                      </CategoryIcon>
+                      <CategoryName>{category.name}</CategoryName>
+                      {hasSubcategories && (
+                        <ChevronIcon
+                          animate={{ rotate: isExpanded ? 90 : 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <FiChevronRight />
+                        </ChevronIcon>
+                      )}
+                    </CategoryItem>
+
+                    {/* Подкатегории */}
+                    <AnimatePresence>
+                      {isExpanded && subcategories.map((subcat: Category, subIndex: number) => (
+                        <SubcategoryItem
+                          key={subcat.id}
+                          isActive={selectedCategory === subcat.id}
+                          onClick={() => onCategorySelect(subcat.id)}
+                          initial={{ opacity: 0, height: 0, x: -10 }}
+                          animate={{ opacity: 1, height: 'auto', x: 0 }}
+                          exit={{ opacity: 0, height: 0, x: -10 }}
+                          transition={{ 
+                            duration: 0.2, 
+                            delay: subIndex * 0.03,
+                            ease: 'easeOut'
+                          }}
+                          whileHover={{ scale: 1.01, x: 5 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <CategoryName>{subcat.name}</CategoryName>
+                        </SubcategoryItem>
+                      ))}
+                    </AnimatePresence>
+                  </React.Fragment>
+                );
+              })}
             </CategoriesList>
 
             <Footer>

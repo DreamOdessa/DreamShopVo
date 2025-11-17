@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye, FiUpload, FiEyeOff, FiStar } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye, FiUpload, FiEyeOff, FiStar, FiTag, FiChevronDown } from 'react-icons/fi';
 import CategoryManager from '../components/CategoryManager';
 import CategoryShowcaseManager from '../components/CategoryShowcaseManager';
 import { useAuth } from '../contexts/AuthContext';
@@ -700,11 +700,90 @@ const UploadButtonWrapper = styled.div<{ $disabled?: boolean }>`
   }
 `;
 
+const SubcategoryDropdownWrapper = styled.div`
+  position: relative;
+  display: inline-block;
+`;
+
+const SubcategoryButton = styled.button<{ hasSubcategory: boolean }>`
+  padding: 0.5rem 0.8rem;
+  background: ${props => props.hasSubcategory ? '#00acc1' : '#f8f9fa'};
+  color: ${props => props.hasSubcategory ? 'white' : '#6c757d'};
+  border: 2px solid ${props => props.hasSubcategory ? '#00acc1' : '#e9ecef'};
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+
+  &:hover {
+    background: ${props => props.hasSubcategory ? '#0097a7' : '#e9ecef'};
+    border-color: #00acc1;
+    transform: translateY(-1px);
+  }
+
+  svg {
+    font-size: 0.9rem;
+  }
+`;
+
+const SubcategoryDropdown = styled.div<{ isOpen: boolean }>`
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  min-width: 180px;
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: ${props => props.isOpen ? 'block' : 'none'};
+  max-height: 300px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+  }
+`;
+
+const SubcategoryOption = styled.div<{ isSelected: boolean }>`
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${props => props.isSelected ? '#e8f8f9' : 'transparent'};
+  color: ${props => props.isSelected ? '#00acc1' : '#495057'};
+  font-weight: ${props => props.isSelected ? '600' : '400'};
+  font-size: 0.9rem;
+
+  &:hover {
+    background: #e8f8f9;
+    color: #00acc1;
+  }
+
+  &:first-child {
+    border-radius: 10px 10px 0 0;
+  }
+
+  &:last-child {
+    border-radius: 0 0 10px 10px;
+  }
+`;
+
 const AdminPanel: React.FC = () => {
   const { user } = useAuth();
   const { products, users, orders, categories, addProduct, updateProduct, deleteProduct, updateUserDiscount, updateOrderStatus } = useAdmin();
   const [activeTab, setActiveTab] = useState('products');
-  const [selectedCategory, setSelectedCategory] = useState<string>('all'); // Фільтр категорій
+  const [selectedCategory, setSelectedCategory] = useState<string>('all'); // Фільтр по категории (slug)
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | 'none' | null>(null); // Фильтр по подкатегории
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -730,6 +809,22 @@ const AdminPanel: React.FC = () => {
   const [hoverImagePreview, setHoverImagePreview] = useState<string>('');
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [isUploading, setIsUploading] = useState(false);
+  const [openSubcategoryDropdown, setOpenSubcategoryDropdown] = useState<string | null>(null);
+
+  // Закрытие dropdown при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openSubcategoryDropdown) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('[data-dropdown-wrapper]')) {
+          setOpenSubcategoryDropdown(null);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openSubcategoryDropdown]);
 
   if (!user?.isAdmin) {
     return (
@@ -853,6 +948,25 @@ const AdminPanel: React.FC = () => {
     const newPopularState = !product.isPopular;
     updateProduct(product.id, { isPopular: newPopularState });
     toast.success(newPopularState ? '⭐ Товар добавлен в популярные' : '⭐ Товар убран из популярных');
+  };
+
+  const handleQuickSubcategoryChange = async (productId: string, newSubcategory: string | null) => {
+    try {
+      await updateProduct(productId, { subcategory: newSubcategory || undefined });
+      toast.success(newSubcategory ? `📂 Подкатегория "${newSubcategory}" назначена` : '📂 Подкатегория удалена');
+      setOpenSubcategoryDropdown(null);
+    } catch (error) {
+      toast.error('Ошибка при обновлении подкатегории');
+      console.error(error);
+    }
+  };
+
+  const getSubcategoriesForProduct = (product: Product): string[] => {
+    // Находим подкатегории для категории товара
+    return categories
+      .filter(cat => cat.parentSlug === product.category && cat.isActive)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map(cat => cat.name);
   };
 
   const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1110,27 +1224,63 @@ const AdminPanel: React.FC = () => {
                 </AddButton>
               </SectionHeader>
 
-              {/* Фільтр категорій */}
+              {/* Фильтр категорий (только родительские) */}
               <CategoryFilterContainer>
                 <CategoryChip 
                   isActive={selectedCategory === 'all'} 
-                  onClick={() => setSelectedCategory('all')}
+                  onClick={() => { setSelectedCategory('all'); setSelectedSubcategory(null); }}
                 >
                   Всі ({products.length})
                 </CategoryChip>
-                {categories.map(cat => {
-                  const count = products.filter(p => p.category === (cat.slug || cat.id)).length;
+                {categories.filter(c => !c.parentSlug).map(cat => {
+                  const slug = cat.slug || cat.id;
+                  const count = products.filter(p => p.category === slug).length;
                   return (
                     <CategoryChip 
                       key={cat.id} 
-                      isActive={selectedCategory === (cat.slug || cat.id)}
-                      onClick={() => setSelectedCategory(cat.slug || cat.id)}
+                      isActive={selectedCategory === slug}
+                      onClick={() => { setSelectedCategory(slug); setSelectedSubcategory(null); }}
                     >
                       {cat.name} ({count})
                     </CategoryChip>
                   );
                 })}
               </CategoryFilterContainer>
+
+              {/* Фильтр подкатегорий внутри выбранной категории */}
+              {selectedCategory !== 'all' && (
+                <CategoryFilterContainer>
+                  {/* Показать все товары категории */}
+                  <CategoryChip 
+                    isActive={selectedSubcategory === null}
+                    onClick={() => setSelectedSubcategory(null)}
+                  >
+                    Всі підкатегорії
+                  </CategoryChip>
+                  {/* Фильтр только без подкатегории */}
+                  <CategoryChip 
+                    isActive={selectedSubcategory === 'none'}
+                    onClick={() => setSelectedSubcategory(selectedSubcategory === 'none' ? null : 'none')}
+                  >
+                    Без підкатегорії ({products.filter(p => p.category === selectedCategory && !p.subcategory).length})
+                  </CategoryChip>
+                  {/* Список подкатегорий для выбранной категории */}
+                  {categories
+                    .filter(c => c.parentSlug === selectedCategory)
+                    .map(sub => {
+                      const count = products.filter(p => p.category === selectedCategory && p.subcategory === sub.name).length;
+                      return (
+                        <CategoryChip
+                          key={sub.id}
+                          isActive={selectedSubcategory === sub.name}
+                          onClick={() => setSelectedSubcategory(selectedSubcategory === sub.name ? null : sub.name)}
+                        >
+                          {sub.name} ({count})
+                        </CategoryChip>
+                      );
+                    })}
+                </CategoryFilterContainer>
+              )}
 
               <Table>
                 <thead>
@@ -1145,7 +1295,14 @@ const AdminPanel: React.FC = () => {
                 </thead>
                 <tbody>
                   {products
-                    .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
+                    .filter(p => {
+                      // Фильтр по категории
+                      if (selectedCategory !== 'all' && p.category !== selectedCategory) return false;
+                      // Фильтр по подкатегории
+                      if (selectedSubcategory === 'none') return !p.subcategory;
+                      if (selectedSubcategory) return p.subcategory === selectedSubcategory;
+                      return true;
+                    })
                     .map(product => (
                     <TableRow key={product.id}>
                       <TableCell>
@@ -1183,7 +1340,7 @@ const AdminPanel: React.FC = () => {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                           <ActionButton 
                             variant="edit" 
                             onClick={() => handleToggleActive(product)}
@@ -1207,6 +1364,48 @@ const AdminPanel: React.FC = () => {
                           >
                             <FiStar style={{ fill: product.isPopular ? '#f39c12' : 'none' }} />
                           </ActionButton>
+                          
+                          {/* Быстрое назначение подкатегории */}
+                          <SubcategoryDropdownWrapper data-dropdown-wrapper>
+                            <SubcategoryButton
+                              hasSubcategory={!!product.subcategory}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenSubcategoryDropdown(openSubcategoryDropdown === product.id ? null : product.id);
+                              }}
+                              title="Быстро назначить подкатегорию"
+                            >
+                              <FiTag />
+                              {product.subcategory ? product.subcategory.substring(0, 8) : 'Подкат.'}
+                              <FiChevronDown style={{ fontSize: '0.8rem' }} />
+                            </SubcategoryButton>
+                            <SubcategoryDropdown 
+                              isOpen={openSubcategoryDropdown === product.id}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <SubcategoryOption
+                                isSelected={!product.subcategory}
+                                onClick={() => handleQuickSubcategoryChange(product.id, null)}
+                              >
+                                Без подкатегории
+                              </SubcategoryOption>
+                              {getSubcategoriesForProduct(product).map(subcat => (
+                                <SubcategoryOption
+                                  key={subcat}
+                                  isSelected={product.subcategory === subcat}
+                                  onClick={() => handleQuickSubcategoryChange(product.id, subcat)}
+                                >
+                                  {subcat}
+                                </SubcategoryOption>
+                              ))}
+                              {getSubcategoriesForProduct(product).length === 0 && (
+                                <SubcategoryOption isSelected={false} style={{ cursor: 'default', color: '#999' }}>
+                                  Нет подкатегорий
+                                </SubcategoryOption>
+                              )}
+                            </SubcategoryDropdown>
+                          </SubcategoryDropdownWrapper>
+
                           <ActionButton variant="edit" onClick={() => handleEditProduct(product)}>
                             <FiEdit />
                           </ActionButton>
@@ -1291,6 +1490,48 @@ const AdminPanel: React.FC = () => {
                       >
                         <FiStar style={{ fill: product.isPopular ? '#f39c12' : 'none' }} />
                       </ActionButton>
+                      
+                      {/* Быстрое назначение подкатегории - мобильная версия */}
+                      <SubcategoryDropdownWrapper data-dropdown-wrapper>
+                        <SubcategoryButton
+                          hasSubcategory={!!product.subcategory}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenSubcategoryDropdown(openSubcategoryDropdown === product.id ? null : product.id);
+                          }}
+                          title="Быстро назначить подкатегорию"
+                          style={{ fontSize: '0.75rem', padding: '0.6rem 0.7rem' }}
+                        >
+                          <FiTag />
+                          <FiChevronDown style={{ fontSize: '0.7rem' }} />
+                        </SubcategoryButton>
+                        <SubcategoryDropdown 
+                          isOpen={openSubcategoryDropdown === product.id}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <SubcategoryOption
+                            isSelected={!product.subcategory}
+                            onClick={() => handleQuickSubcategoryChange(product.id, null)}
+                          >
+                            Без подкатегории
+                          </SubcategoryOption>
+                          {getSubcategoriesForProduct(product).map(subcat => (
+                            <SubcategoryOption
+                              key={subcat}
+                              isSelected={product.subcategory === subcat}
+                              onClick={() => handleQuickSubcategoryChange(product.id, subcat)}
+                            >
+                              {subcat}
+                            </SubcategoryOption>
+                          ))}
+                          {getSubcategoriesForProduct(product).length === 0 && (
+                            <SubcategoryOption isSelected={false} style={{ cursor: 'default', color: '#999' }}>
+                              Нет подкатегорий
+                            </SubcategoryOption>
+                          )}
+                        </SubcategoryDropdown>
+                      </SubcategoryDropdownWrapper>
+
                       <ActionButton variant="edit" onClick={() => handleEditProduct(product)}>
                         <FiEdit />
                       </ActionButton>

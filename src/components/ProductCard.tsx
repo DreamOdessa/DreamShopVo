@@ -16,6 +16,10 @@ const Card = styled(motion.div)`
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   position: relative;
+  /* ИЗМЕНЕНО: Добавим display: flex, чтобы контент мог растягиваться */
+  display: flex;
+  flex-direction: column;
+  height: 100%; /* Карточка будет занимать всю высоту ячейки грида */
 
   &:hover {
     transform: translateY(-5px);
@@ -119,6 +123,10 @@ const ActionButton = styled.button`
 
 const CardContent = styled.div`
   padding: clamp(0.75rem, 2.5vw, 1.75rem);
+  /* ИЗМЕНЕНО: Добавим flex-grow, чтобы контент занимал оставшееся место */
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 `;
 
 const Category = styled.div`
@@ -130,28 +138,34 @@ const Category = styled.div`
   margin-bottom: clamp(0.3rem, 1vw, 0.5rem);
 `;
 
+// --- ИЗМЕНЕНИЯ ЗДЕСЬ ---
 const ProductName = styled.h3`
-  font-size: 1.2rem;
+  /* ИЗМЕНЕНО: Размер шрифта теперь плавный */
+  font-size: clamp(0.9rem, 2.5vw, 1.2rem);
   font-weight: 600;
   color: #2c3e50;
   margin-bottom: 0.5rem;
   line-height: 1.4;
-  /* Фиксированная высота для 3 строк */
-  height: calc(1.2rem * 1.4 * 3); /* font-size * line-height * 3 строки */
-  display: flex;
-  align-items: center; /* Центрирование по вертикали */
-  overflow: hidden;
   
-  @media (max-width: 768px) {
-    font-size: 1rem;
-    height: calc(1rem * 1.4 * 3);
-    margin-bottom: 0.4rem;
-  }
-  @media (max-width: 480px) {
-    font-size: 0.9rem;
-    height: calc(0.9rem * 1.4 * 3);
-  }
+  /* ИЗМЕНЕНО: 
+    - Убрана фиксированная высота 'height' и 'align-items: center'.
+    - Добавлено ограничение по строкам (как в ProductDescription).
+  */
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Показываем 3 строки */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  
+  /* ИЗМЕНЕНО: 
+    - Добавлена *минимальная* высота, чтобы карточки не прыгали.
+    - Эта высота тоже плавная, т.к. зависит от плавного font-size.
+  */
+  min-height: calc(clamp(0.9rem, 2.5vw, 1.2rem) * 1.4 * 3); /* min-height = (fluid font-size * line-height * 3 строки) */
+
+  /* ИЗМЕНЕНО: @media запросы, менявшие height и font-size, удалены */
 `;
+// --- КОНЕЦ ИЗМЕНЕНИЙ ---
 
 const ProductDescription = styled.p`
   color: #6c757d;
@@ -168,6 +182,8 @@ const ProductFooter = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  /* ИЗМЕНЕНО: Добавим margin-top: auto, чтобы прижать футер к низу */
+  margin-top: auto;
 `;
 
 const PriceContainer = styled.div`
@@ -258,7 +274,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     : product.price;
 
   return (
-    <Link to={`/products/${product.id}`} style={{ textDecoration: 'none' }}>
+    <Link to={`/products/${product.id}`} style={{ textDecoration: 'none', height: '100%' }}>
       <Card
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}

@@ -1,10 +1,8 @@
 import React from 'react';
-// import { createPortal } from 'react-dom'; // УБРАЛИ createPortal
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import CategoryShowcase from '../components/CategoryShowcase';
 import ProductCard from '../components/ProductCard';
-// import CategoryCarousel from '../components/CategoryCarousel';
 import { useAdmin } from '../contexts/AdminContext';
 
 const HeroSection = styled.section`
@@ -284,12 +282,7 @@ const Home: React.FC = () => {
         </HeroContent>
       </HeroSection>
 
-      {/* УБРАЛИ createPortal - ОН БОЛЬШЕ НЕ НУЖЕН */}
-      
-
       <CategoryShowcase />
-
-      {/* <CategoryCarousel /> */}
 
       {popularProducts.length > 0 && (
         <ProductsSection id="products-section">

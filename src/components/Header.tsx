@@ -30,25 +30,33 @@ const Nav = styled.nav`
   margin: 0 auto;
   padding: 0 clamp(0.5rem, 2.5vw, 1.5rem);
   position: relative;
-
-  @media (max-width: 768px) {
-    justify-content: center;
-  }
+  
+  /* ИЗМЕНЕНО: Убрали justify-content: center для мобильных */
 `;
 
 const Logo = styled(Link)`
-  font-size: clamp(0.8rem, 3vw, 1.8rem);
+  /* ИЗМЕНЕНО: Размер шрифта стал крупнее на минимуме */
+  font-size: clamp(1rem, 4vw, 1.8rem);
   font-weight: 700;
   color: white;
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: clamp(0.1rem, 0.8vw, 0.5rem);
+  /* ИЗМЕНЕНО: Отступ стал крупнее на минимуме */
+  gap: clamp(0.25rem, 1vw, 0.5rem);
+
+  /* ИЗМЕНЕНО: Логотип теперь (order: 2) на мобильных, чтобы быть в центре */
+  @media (max-width: 768px) {
+    order: 2;
+    /* Уменьшим flex-shrink, чтобы он не сжимался так сильно */
+    flex-shrink: 2; 
+  }
 `;
 
 const LogoIcon = styled.div`
-  width: clamp(2rem, 7vw, 3.125rem);
-  height: clamp(2rem, 7vw, 3.125rem);
+  /* ИЗМЕНЕНО: Clamp() теперь не позволяет лого быть "масюской". Мин. ~34px. */
+  width: clamp(2.1rem, 7vw, 3.125rem);
+  height: clamp(2.1rem, 7vw, 3.125rem);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,34 +67,15 @@ const LogoIcon = styled.div`
     object-fit: contain;
   }
 
-  @media (max-width: 768px) {
-    width: 40px;
-    height: 40px;
-  }
-
-  @media (max-width: 480px) {
-    width: 35px;
-    height: 35px;
-  }
-
-  @media (max-width: 360px) {
-    width: 28px;
-    height: 28px;
-  }
-
-  @media (max-width: 320px) {
-    width: 25px;
-    height: 25px;
-  }
-
-  @media (max-width: 280px) {
-    width: 22px;
-    height: 22px;
-  }
+  /* ИЗМЕНЕНО: Удалены ВСЕ @media запросы, которые делали иконку 28px, 25px, 22px */
 `;
 
 const LogoText = styled.span`
-  @media (max-width: 280px) {
+  /* ИЗМЕНЕНО: Удален @media (max-width: 280px) { display: none; } 
+     Логотип_текст больше не прячется.
+  */
+  @media (max-width: 320px) {
+    /* На очень маленьких экранах можно скрыть, чтобы не ломать layout */
     display: none;
   }
 `;
@@ -94,7 +83,8 @@ const LogoText = styled.span`
 const NavLinks = styled.div<{ isOpen: boolean }>`
   display: flex;
   align-items: center;
-  gap: 2rem;
+  /* ИЗМЕНЕНО: Отступ стал плавным */
+  gap: clamp(0.5rem, 2vw, 2rem);
 
   @media (max-width: 768px) {
     position: fixed;
@@ -167,26 +157,18 @@ const NavLink = styled(Link)<{ isActive: boolean }>`
 const UserActions = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  /* ИЗМЕНЕНО: Отступ стал плавным */
+  gap: clamp(0.5rem, 1.5vw, 1rem);
 
-  @media (max-width: 768px) {
-    gap: 0.5rem;
-  }
-
-  @media (max-width: 480px) {
-    gap: 0.3rem;
-  }
-
-  @media (max-width: 360px) {
-    gap: 0.2rem;
-  }
+  /* ИЗМЕНЕНО: Удалены @media запросы для gap */
 `;
 
 const CategoryButton = styled.button`
   position: relative;
   color: white;
-  font-size: 1.5rem;
-  padding: 0.5rem;
+  /* ИЗМЕНЕНО: Размер иконки плавный */
+  font-size: clamp(1.3rem, 4vw, 1.5rem);
+  padding: clamp(0.3rem, 1vw, 0.5rem);
   background: none;
   border: none;
   cursor: pointer;
@@ -205,10 +187,10 @@ const CategoryButton = styled.button`
 
 const MobileCategoryButton = styled.button`
   display: none;
-  right: 20px;
   color: white;
-  font-size: 1.3rem;
-  padding: 0.4rem;
+  /* ИЗМЕНЕНО: Размер иконки плавный */
+  font-size: clamp(1.1rem, 4vw, 1.3rem);
+  padding: clamp(0.2rem, 1vw, 0.4rem);
   background: none;
   border: none;
   cursor: pointer;
@@ -222,20 +204,9 @@ const MobileCategoryButton = styled.button`
 
   @media (max-width: 768px) {
     display: block;
-    margin-left: 1rem;
   }
-
-  @media (max-width: 480px) {
-    font-size: 1.2rem;
-    padding: 0.3rem;
-    right: 15px;
-  }
-
-  @media (max-width: 360px) {
-    font-size: 1.1rem;
-    padding: 0.2rem;
-    right: 10px;
-  }
+  
+  /* ИЗМЕНЕНО: Удалены @media запросы для font-size, padding, right */
 `;
 
 const ProfileDropdown = styled.div`
@@ -246,32 +217,23 @@ const ProfileDropdown = styled.div`
 const ProfileButton = styled.button`
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  /* ИЗМЕНЕНО: Отступы и шрифты плавные */
+  gap: clamp(0.2rem, 1vw, 0.5rem);
   color: white;
   background: none;
   border: none;
-  padding: 0.5rem;
+  padding: clamp(0.3rem, 1vw, 0.5rem);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-size: 1rem;
+  font-size: clamp(0.8rem, 2.5vw, 1rem);
   font-weight: 600;
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);
   }
 
-  @media (max-width: 768px) {
-    font-size: 0.9rem;
-    padding: 0.4rem;
-    gap: 0.3rem;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 0.8rem;
-    padding: 0.3rem;
-    gap: 0.2rem;
-  }
+  /* ИЗМЕНЕНО: Удалены @media запросы */
 `;
 
 const ProfileDropdownList = styled.div<{ isOpen: boolean }>`
@@ -321,8 +283,9 @@ const ProfileDropdownItem = styled(Link)<{ isActive?: boolean }>`
 const CartButton = styled.button`
   position: relative;
   color: white;
-  font-size: 1.5rem;
-  padding: 0.5rem;
+  /* ИЗМЕНЕНО: Плавный размер и отступ */
+  font-size: clamp(1.2rem, 4vw, 1.5rem);
+  padding: clamp(0.3rem, 1vw, 0.5rem);
   border-radius: 8px;
   transition: all 0.3s ease;
   background: none;
@@ -332,15 +295,7 @@ const CartButton = styled.button`
     background: rgba(255, 255, 255, 0.1);
   }
 
-  @media (max-width: 768px) {
-    font-size: 1.3rem;
-    padding: 0.4rem;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 1.2rem;
-    padding: 0.3rem;
-  }
+  /* ИЗМЕНЕНО: Удалены @media запросы */
 `;
 
 const CartBadge = styled.span`
@@ -362,8 +317,9 @@ const CartBadge = styled.span`
 const WishlistButton = styled.button`
   position: relative;
   color: white;
-  font-size: 1.5rem;
-  padding: 0.5rem;
+  /* ИЗМЕНЕНО: Плавный размер и отступ */
+  font-size: clamp(1.2rem, 4vw, 1.5rem);
+  padding: clamp(0.3rem, 1vw, 0.5rem);
   border-radius: 8px;
   transition: all 0.3s ease;
   background: none;
@@ -374,56 +330,38 @@ const WishlistButton = styled.button`
     background: rgba(255, 255, 255, 0.1);
   }
 
-  @media (max-width: 768px) {
-    font-size: 1.3rem;
-    padding: 0.4rem;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 1.2rem;
-    padding: 0.3rem;
-  }
+  /* ИЗМЕНЕНО: Удалены @media запросы */
 `;
 
 const MobileLeftActions = styled.div`
   display: none;
   align-items: center;
-  gap: 0.5rem;
-  position: absolute;
-  left: 20px;
+  /* ИЗМЕНЕНО: Плавный отступ */
+  gap: clamp(0.25rem, 1.5vw, 0.5rem);
+  
+  /* ИЗМЕНЕНО: Убрано 'position: absolute' и 'left' */
 
   @media (max-width: 768px) {
     display: flex;
-  }
-
-  @media (max-width: 480px) {
-    left: 15px;
-  }
-
-  @media (max-width: 360px) {
-    left: 10px;
+    order: 1; /* Ставим слева */
   }
 `;
 
 const MobileMenuButton = styled.button`
   color: white;
-  font-size: 1.5rem;
+  /* ИЗМЕНЕНО: Плавный размер */
+  font-size: clamp(1.2rem, 4vw, 1.5rem);
   background: none;
   border: none;
   cursor: pointer;
 
-  @media (max-width: 480px) {
-    font-size: 1.3rem;
-  }
-
-  @media (max-width: 360px) {
-    font-size: 1.2rem;
-  }
+  /* ИЗМЕНЕНО: Удалены @media запросы */
 `;
 
 const MobileProfileButton = styled.button`
   color: white;
-  font-size: 1.5rem;
+  /* ИЗМЕНЕНО: Плавный размер */
+  font-size: clamp(1.2rem, 4vw, 1.5rem);
   background: none;
   border: none;
   cursor: pointer;
@@ -435,13 +373,7 @@ const MobileProfileButton = styled.button`
     border-radius: 50%;
   }
 
-  @media (max-width: 480px) {
-    font-size: 1.3rem;
-  }
-
-  @media (max-width: 360px) {
-    font-size: 1.2rem;
-  }
+  /* ИЗМЕНЕНО: Удалены @media запросы */
 `;
 
 const MobileProfileDropdown = styled.div<{ isOpen: boolean }>`
@@ -563,11 +495,10 @@ const MobileActionsContainer = styled.div`
   @media (max-width: 768px) {
     display: flex; // Показываем на экранах меньше 768px
     align-items: center;
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    gap: 1rem;
+    order: 3; /* Ставим справа */
+    /* ИЗМЕНЕНО: Убрано 'position: absolute', 'right', 'top', 'transform' */
+    /* ИЗМЕНЕНО: Плавный отступ */
+    gap: clamp(0.25rem, 2vw, 0.75rem);
   }
 `;
 
@@ -676,8 +607,8 @@ const Header: React.FC = () => {
           <Logo to="/">
             <LogoIcon>
               <img src="https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/small-icon.png" alt="DreamShop Logo" /> 
-              <LogoText>DreamShop</LogoText>
             </LogoIcon>
+            <LogoText>DreamShop</LogoText>
           </Logo>
 
         <NavLinks isOpen={isMenuOpen}>
@@ -794,6 +725,7 @@ const Header: React.FC = () => {
         </NavLinks>
 
         {/* Мобільний порядок: ліворуч меню та профіль, праворуч — кошик і категорії */}
+        {/* ИЗМЕНЕНА ЛОГИКА РАСПОЛОЖЕНИЯ: 'order' во flex-контейнере 'Nav' */}
         <MobileLeftActions>
           <MobileMenuButton onClick={toggleMenu}>
             <FiMenu />

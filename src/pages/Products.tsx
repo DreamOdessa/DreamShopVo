@@ -207,31 +207,52 @@ const DropdownItem = styled.button<{ isActive: boolean }>`
   }
 `;
 
+// --- ИЗМЕНЕНИЯ ЗДЕСЬ (ProductsGrid) ---
 const ProductsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.5rem;
+  display: flex; /* ИЗМЕНЕНО: было 'grid' */
+  flex-wrap: wrap; /* ДОБАВЛЕНО: разрешаем перенос карточек */
+  
+  /* ДОБАВЛЕНО: Вот магия. 
+    Центрируем карточки по горизонтали.
+    Это заставит последнюю строку (с 1 карточкой) стать по центру.
+  */
+  justify-content: center; 
+  
+  gap: clamp(0.5rem, 2vw, 1.5rem);
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 clamp(0.5rem, 2.5vw, 1.25rem);
 
-  @media (max-width: 992px) {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 1rem;
-  }
+  /* УДАЛЕНО: 'grid-template-columns', так как это больше не грид */
+`;
 
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 0.8rem;
-    padding: 0 12px;
-  }
-
-  @media (max-width: 480px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    padding: 0 8px;
+// --- ДОБАВЛЕН НОВЫЙ КОМПОНЕНТ (ProductWrapper) ---
+// Эта "обертка" теперь будет управлять размерами карточек,
+// раз ProductsGrid (как flex) этим больше не занимается.
+const ProductWrapper = styled(motion.div)`
+  /* Это "жидкая" ширина:
+    - flex-grow: 1 (растягиваться, чтобы заполнить ряд)
+    - flex-shrink: 1 (сжиматься, если нужно)
+    - flex-basis: clamp(...) (базовый "жидкий" размер)
+  */
+  flex: 1 1 clamp(150px, 30vw, 220px);
+  
+  /* Ограничитель, чтобы 1 или 2 карточки на планшете
+    не растягивались СЛИШКОМ сильно.
+    Можете поиграться с этим значением.
+  */
+  max-width: 350px; 
+  
+  /* Это нужно, чтобы ссылка (Link) внутри обертки 
+    растягивалась на 100% высоты, передавая ее ProductCard
+  */
+  & > a {
+    height: 100%;
+    display: block;
   }
 `;
+// --- КОНЕЦ ИЗМЕНЕНИЙ ---
+
 
 const NoProducts = styled.div`
   text-align: center;
@@ -438,14 +459,17 @@ const Products: React.FC = () => {
         ) : (
           <ProductsGrid>
             {filteredProducts.map((product, index) => (
-              <motion.div
+              // --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
+              // Обернули <ProductCard> в <ProductWrapper>
+              <ProductWrapper
                 key={product.id}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
                 <ProductCard product={product} />
-              </motion.div>
+              </ProductWrapper>
+              // --- КОНЕЦ ИЗМЕНЕНИЯ ---
             ))}
           </ProductsGrid>
         )}

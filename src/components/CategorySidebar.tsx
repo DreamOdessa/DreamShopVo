@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiGrid, FiTag, FiChevronDown, FiChevronRight } from 'react-icons/fi';
+import { FiX, FiGrid, FiTag, FiChevronRight } from 'react-icons/fi';
 
 interface Category {
   id: string;

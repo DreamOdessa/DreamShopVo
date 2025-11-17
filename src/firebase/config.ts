@@ -18,6 +18,10 @@ const firebaseConfig = {
   measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || "G-KZHPZJXTS1"
 };
 
+// VAPID ключ для Web Push уведомлений (FCM)
+// Получить: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
+export const FIREBASE_VAPID_KEY = process.env.REACT_APP_FIREBASE_VAPID_KEY || "BIHiR_I7lAdFsAAQQZzU4ScS78H7oB84HqoCAx1E9xfY5WSiMCKGdKq3xVkXZ2OXH6XGHMWwwMCBfe_0fwvPEks";
+
 console.log('🔧 Initializing Firebase with explicit config (не загружаем из reserved URLs)');
 console.log('🔧 Auth Domain:', firebaseConfig.authDomain);
 console.log('🔧 Project ID:', firebaseConfig.projectId);

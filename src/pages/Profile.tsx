@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiUser, FiLogOut, FiEdit3, FiSave, FiX, FiMapPin } from 'react-icons/fi';
+import { FiUser, FiLogOut, FiEdit3, FiSave, FiX, FiMapPin, FiBell } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
 import { novaPoshtaApi } from '../services/novaPoshtaApi';
 import { geocodingApi } from '../services/geocodingApi';
 import toast from 'react-hot-toast';
+import { requestNotificationPermission, onMessageListener, showLocalNotification } from '../firebase/messaging';
 
 const ProfileContainer = styled.div`
   padding: 2rem 0;
@@ -355,6 +356,7 @@ const ukrainianCities = [
 
 const Profile: React.FC = () => {
   const { user, logout } = useAuth();
+  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     name: user?.name || '',
@@ -378,6 +380,22 @@ const Profile: React.FC = () => {
         ...profileData
       }));
     }
+    // Инициализируем статус разрешения
+    if ('Notification' in window) {
+      setNotificationsEnabled(Notification.permission === 'granted');
+    }
+
+    // Подписка на входящие уведомления
+    onMessageListener().then((payload) => {
+      if (payload.notification) {
+        showLocalNotification({
+          title: payload.notification.title || 'DreamShop',
+          body: payload.notification.body || '',
+          icon: payload.notification.icon,
+          data: payload.data
+        });
+      }
+    }).catch(() => {});
   }, []);
 
   // Сохраняем данные профиля в localStorage при изменении
@@ -425,6 +443,30 @@ const Profile: React.FC = () => {
       }
     }
   }, [user]);
+
+  const handleEnableNotifications = async () => {
+    if (!user) {
+      toast.error('Спочатку увійдіть в акаунт');
+      return;
+    }
+
+    try {
+      const token = await requestNotificationPermission(user.id);
+      if (token) {
+        setNotificationsEnabled(true);
+        toast.success('✅ Сповіщення увімкнено');
+      }
+    } catch (error: any) {
+      console.error('Помилка увімкнення сповіщень:', error);
+      if (error.message?.includes('VAPID')) {
+        toast.error('⚙️ VAPID ключ не налаштовано. Перевірте консоль для інструкцій.');
+      } else if (error.message?.includes('отклонено') || error.message?.includes('denied')) {
+        toast.error('❌ Ви відхилили дозвіл на сповіщення');
+      } else {
+        toast.error('❌ Не вдалося увімкнути сповіщення: ' + (error.message || 'Невідома помилка'));
+      }
+    }
+  };
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -571,6 +613,36 @@ const Profile: React.FC = () => {
         <div className="container">
           <Title>Мій профіль</Title>
           <Subtitle>Керуйте своїми даними та замовленнями</Subtitle>
+          {!notificationsEnabled && (
+            <button
+              onClick={handleEnableNotifications}
+              style={{
+                marginTop: '1rem',
+                padding: '0.8rem 1.5rem',
+                background: 'rgba(0, 172, 193, 0.15)',
+                border: '2px solid rgba(0, 172, 193, 0.5)',
+                borderRadius: '25px',
+                color: '#1f4b5f',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 172, 193, 0.25)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(0, 172, 193, 0.15)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <FiBell />
+              Увімкнути сповіщення
+            </button>
+          )}
         </div>
       </Header>
 

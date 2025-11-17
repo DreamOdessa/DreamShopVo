@@ -10,6 +10,8 @@ import { Product, Order } from '../types';
 import OrderDetails from '../components/OrderDetails';
 import toast from 'react-hot-toast';
 import { storageService, STORAGE_PATHS } from '../firebase/storageService';
+import { requestNotificationPermission, onMessageListener, showLocalNotification } from '../firebase/messaging';
+import { FiBell } from 'react-icons/fi';
 
 const AdminContainer = styled.div`
   padding: 2rem 0;
@@ -810,6 +812,7 @@ const AdminPanel: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState<{ [key: string]: number }>({});
   const [isUploading, setIsUploading] = useState(false);
   const [openSubcategoryDropdown, setOpenSubcategoryDropdown] = useState<string | null>(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   // Закрытие dropdown при клике вне его
   useEffect(() => {
@@ -825,6 +828,55 @@ const AdminPanel: React.FC = () => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [openSubcategoryDropdown]);
+
+  // Слушатель входящих уведомлений
+  useEffect(() => {
+    if (user?.isAdmin) {
+      onMessageListener().then((payload) => {
+        console.log('Получено уведомление:', payload);
+        if (payload.notification) {
+          showLocalNotification({
+            title: payload.notification.title || 'DreamShop',
+            body: payload.notification.body || '',
+            icon: payload.notification.icon,
+            data: payload.data
+          });
+          toast.success(`📬 ${payload.notification.title}: ${payload.notification.body}`);
+        }
+      }).catch(err => console.log('Ошибка слушателя уведомлений:', err));
+    }
+  }, [user]);
+
+  // Проверка статуса разрешения уведомлений
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationsEnabled(Notification.permission === 'granted');
+    }
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    if (!user) {
+      toast.error('Необходимо авторизоваться');
+      return;
+    }
+
+    try {
+      const token = await requestNotificationPermission(user.id);
+      if (token) {
+        setNotificationsEnabled(true);
+        toast.success('✅ Уведомления включены!');
+      }
+    } catch (error: any) {
+      console.error('Ошибка включения уведомлений:', error);
+      if (error.message?.includes('VAPID')) {
+        toast.error('⚙️ VAPID ключ не настроен. Проверьте консоль для инструкций.');
+      } else if (error.message?.includes('отклонено')) {
+        toast.error('❌ Вы отклонили разрешение на уведомления');
+      } else {
+        toast.error('❌ Не удалось включить уведомления: ' + (error.message || 'Неизвестная ошибка'));
+      }
+    }
+  };
 
   if (!user?.isAdmin) {
     return (
@@ -1179,6 +1231,36 @@ const AdminPanel: React.FC = () => {
         <div className="container">
           <Title>Адмін панель</Title>
           <Subtitle>Управління товарами, користувачами та замовленнями</Subtitle>
+                  {!notificationsEnabled && (
+                    <button
+                      onClick={handleEnableNotifications}
+                      style={{
+                        marginTop: '1rem',
+                        padding: '0.8rem 1.5rem',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        border: '2px solid rgba(255, 255, 255, 0.5)',
+                        borderRadius: '25px',
+                        color: 'white',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                      }}
+                    >
+                      <FiBell />
+                      Включить уведомления о заказах
+                    </button>
+                  )}
         </div>
       </Header>
 

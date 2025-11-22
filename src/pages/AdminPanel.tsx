@@ -1,19 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye, FiUpload, FiEyeOff, FiStar, FiTag, FiChevronDown } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye, FiUpload, FiEyeOff, FiStar, FiTag, FiChevronDown, FiSettings } from 'react-icons/fi';
 import CategoryManager from '../components/CategoryManager';
 import CategoryShowcaseManager from '../components/CategoryShowcaseManager';
+import AdminSidebar from '../components/admin/AdminSidebar';
+import AdminNavbar from '../components/admin/AdminNavbar';
+import AdminDashboard from '../components/admin/AdminDashboard';
+import UserProfileModal from '../components/admin/UserProfileModal';
+import DiagnosticPanel from '../components/admin/DiagnosticPanel';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
-import { Product, Order } from '../types';
+import { Product, Order, User } from '../types';
 import OrderDetails from '../components/OrderDetails';
 import toast from 'react-hot-toast';
 import { storageService, STORAGE_PATHS } from '../firebase/storageService';
 import { requestNotificationPermission, onMessageListener, showLocalNotification } from '../firebase/messaging';
 import { FiBell } from 'react-icons/fi';
 
-const AdminContainer = styled.div`
+const AdminContainer = styled.div<{ isSidebarHidden: boolean }>`
+  position: relative;
+  width: calc(100% - ${props => props.isSidebarHidden ? '60px' : '280px'});
+  left: ${props => props.isSidebarHidden ? '60px' : '280px'};
+  transition: all 0.3s ease;
+  min-height: 100vh;
+  background: var(--admin-content-bg, #f8f9fa);
+
+  @media (max-width: 768px) {
+    width: ${props => props.isSidebarHidden ? '100%' : 'calc(100% - 250px)'};
+    left: ${props => props.isSidebarHidden ? '0' : '250px'};
+  }
+`;
+
+const OldAdminContainer = styled.div`
   padding: 2rem 0;
   min-height: 80vh;
 
@@ -782,14 +801,16 @@ const SubcategoryOption = styled.div<{ isSelected: boolean }>`
 
 const AdminPanel: React.FC = () => {
   const { user } = useAuth();
-  const { products, users, orders, categories, addProduct, updateProduct, deleteProduct, updateUserDiscount, updateOrderStatus } = useAdmin();
-  const [activeTab, setActiveTab] = useState('products');
+  const { products, users, orders, categories, addProduct, updateProduct, deleteProduct, updateUser, updateUserDiscount, updateOrderStatus, deleteOrder } = useAdmin();
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarHidden, setIsSidebarHidden] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all'); // Фільтр по категории (slug)
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | 'none' | null>(null); // Фильтр по подкатегории
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  // const [editingUser, setEditingUser] = useState<User | null>(null); // Отключено для избежания неиспользуемой переменной
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [productForm, setProductForm] = useState({
     name: '',
     description: '',
@@ -813,6 +834,47 @@ const AdminPanel: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [openSubcategoryDropdown, setOpenSubcategoryDropdown] = useState<string | null>(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  // Dark mode toggle
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem('admin-dark-mode');
+    if (savedDarkMode === 'enabled') {
+      setIsDarkMode(true);
+      document.body.classList.add('admin-dark-mode');
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    const newDarkMode = !isDarkMode;
+    setIsDarkMode(newDarkMode);
+    if (newDarkMode) {
+      document.body.classList.add('admin-dark-mode');
+      localStorage.setItem('admin-dark-mode', 'enabled');
+    } else {
+      document.body.classList.remove('admin-dark-mode');
+      localStorage.setItem('admin-dark-mode', 'disabled');
+    }
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarHidden(!isSidebarHidden);
+  };
+
+  // Calculate stats for dashboard
+  const dashboardStats = {
+    totalOrders: orders.length,
+    totalUsers: users.length,
+    totalRevenue: orders.reduce((sum, order) => sum + order.total, 0),
+    totalProducts: products.length,
+    ordersGrowth: 12.5,
+    usersGrowth: 8.3,
+    revenueGrowth: 15.7,
+    productsGrowth: 5.2,
+    processingOrders: orders.filter(o => o.status === 'processing' || o.status === 'shipped').length,
+    completedOrders: orders.filter(o => o.status === 'delivered').length,
+    cancelledOrders: orders.filter(o => o.status === 'cancelled').length
+  };
+  const pendingOrders = orders.filter(o => o.status === 'pending');
 
   // Закрытие dropdown при клике вне его
   useEffect(() => {
@@ -880,7 +942,7 @@ const AdminPanel: React.FC = () => {
 
   if (!user?.isAdmin) {
     return (
-      <AdminContainer>
+      <AdminContainer isSidebarHidden={false}>
         <div className="container">
           <EmptyState>
             <h3>Доступ запрещен</h3>
@@ -1226,42 +1288,67 @@ const AdminPanel: React.FC = () => {
   // }; // Отключено для избежания неиспользуемой функции
 
   return (
-    <AdminContainer>
-      <Header>
-        <div className="container">
-          <Title>Адмін панель</Title>
-          <Subtitle>Управління товарами, користувачами та замовленнями</Subtitle>
-                  {!notificationsEnabled && (
-                    <button
-                      onClick={handleEnableNotifications}
-                      style={{
-                        marginTop: '1rem',
-                        padding: '0.8rem 1.5rem',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        border: '2px solid rgba(255, 255, 255, 0.5)',
-                        borderRadius: '25px',
-                        color: 'white',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        transition: 'all 0.3s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
-                        e.currentTarget.style.transform = 'translateY(-2px)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                        e.currentTarget.style.transform = 'translateY(0)';
-                      }}
-                    >
-                      <FiBell />
-                      Включить уведомления о заказах
-                    </button>
-                  )}
-        </div>
+    <>
+      <AdminSidebar 
+        isHidden={isSidebarHidden} 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab} 
+      />
+      <AdminContainer isSidebarHidden={isSidebarHidden}>
+        <AdminNavbar 
+          onToggleSidebar={toggleSidebar}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={toggleDarkMode}
+          pendingCount={pendingOrders.length}
+          pendingPreview={pendingOrders.slice(0,5)}
+          onNavigateToOrders={() => setActiveTab('orders')}
+        />
+        
+        {activeTab === 'dashboard' && (
+          <AdminDashboard 
+            stats={dashboardStats} 
+            onAddProduct={() => { setActiveTab('products'); handleAddProduct(); }}
+            onTabChange={setActiveTab}
+          />
+        )}
+
+        {activeTab !== 'dashboard' && (
+          <OldAdminContainer>
+            <Header>
+              <div className="container">
+                <Title>Адмін панель</Title>
+                <Subtitle>Управління товарами, користувачами та замовленнями</Subtitle>
+                        {!notificationsEnabled && (
+                          <button
+                            onClick={handleEnableNotifications}
+                            style={{
+                              marginTop: '1rem',
+                              padding: '0.8rem 1.5rem',
+                              background: 'rgba(255, 255, 255, 0.2)',
+                              border: '2px solid rgba(255, 255, 255, 0.5)',
+                              borderRadius: '25px',
+                              color: 'white',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              transition: 'all 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)';
+                              e.currentTarget.style.transform = 'translateY(-2px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                          >
+                            <FiBell />
+                            Включить уведомления о заказах
+                          </button>
+                        )}
+              </div>
       </Header>
 
       <AdminContent>
@@ -1693,9 +1780,9 @@ const AdminPanel: React.FC = () => {
                         <span style={{ marginLeft: '0.5rem', color: '#6c757d' }}>%</span>
                       </TableCell>
                       <TableCell>
-                        {/*<ActionButton variant="edit" onClick={() => setEditingUser(user)}>
-                          <FiEdit />
-                        </ActionButton>*/}
+                        <ActionButton variant="edit" onClick={() => setSelectedUser(user)}>
+                          <FiEye />
+                        </ActionButton>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -1732,6 +1819,23 @@ const AdminPanel: React.FC = () => {
                   </MobileCard>
                 ))}
               </MobileTable>
+            </motion.div>
+          )}
+
+          {activeTab === 'settings' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <SectionHeader>
+                <SectionTitle>
+                  <FiSettings />
+                  Настройки системы
+                </SectionTitle>
+              </SectionHeader>
+
+              <DiagnosticPanel />
             </motion.div>
           )}
 
@@ -1790,9 +1894,19 @@ const AdminPanel: React.FC = () => {
                           <TableCell>
                             {new Date(order.createdAt).toLocaleDateString('ru-RU')}
                           </TableCell>
-                          <TableCell>
+                          <TableCell style={{display:'flex',gap:'6px'}}>
                             <ActionButton variant="edit" onClick={() => setSelectedOrder(order)}>
                               <FiEye />
+                            </ActionButton>
+                            <ActionButton 
+                              variant="delete" 
+                              onClick={async () => {
+                                if (window.confirm('Удалить заказ навсегда?')) {
+                                  await deleteOrder(order.id);
+                                }
+                              }}
+                            >
+                              <FiX />
                             </ActionButton>
                           </TableCell>
                         </TableRow>
@@ -2293,7 +2407,18 @@ const AdminPanel: React.FC = () => {
           }}
         />
       )}
-    </AdminContainer>
+
+      {selectedUser && (
+        <UserProfileModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onUpdateUser={updateUser}
+        />
+      )}
+          </OldAdminContainer>
+        )}
+      </AdminContainer>
+    </>
   );
 };
 

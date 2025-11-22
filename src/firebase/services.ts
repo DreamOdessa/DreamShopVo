@@ -10,7 +10,9 @@ import {
   query, 
   where, 
   orderBy,
-  serverTimestamp 
+  limit,
+  serverTimestamp,
+  increment
 } from 'firebase/firestore';
 import { db } from './config';
 import { sendNotificationToAdmins } from '../utils/notificationUtils';
@@ -22,6 +24,9 @@ const PRODUCTS_COLLECTION = 'products';
 const USERS_COLLECTION = 'users';
 const ORDERS_COLLECTION = 'orders';
 const CATEGORIES_COLLECTION = 'categories';
+const PRODUCT_VIEWS_COLLECTION = 'product_views'; // doc(productId) { viewCount }
+const VISITORS_COLLECTION = 'visitors'; // daily visitor logs { visitorId, date, month, createdAt }
+const SITE_SETTINGS_COLLECTION = 'site_settings'; // single doc 'main' { heroSubtitle }
 
 // === ТОВАРЫ ===
 export const productService = {
@@ -169,6 +174,15 @@ export const userService = {
     await updateDoc(docRef, { discount });
   },
 
+  // Обновить пользователя (универсальный метод)
+  async update(userId: string, updates: Partial<User>): Promise<void> {
+    const docRef = doc(db, USERS_COLLECTION, userId);
+    const cleanedData = Object.fromEntries(
+      Object.entries(updates).filter(([_, value]) => value !== undefined)
+    );
+    await updateDoc(docRef, cleanedData);
+  },
+
   // Получить всех пользователей (только для админов)
   async getAll(): Promise<User[]> {
     const snapshot = await getDocs(collection(db, USERS_COLLECTION));
@@ -190,6 +204,11 @@ export const orderService = {
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
     })) as Order[];
+  },
+  // Удалить заказ полностью
+  async delete(id: string): Promise<void> {
+    const docRef = doc(db, ORDERS_COLLECTION, id);
+    await deleteDoc(docRef);
   },
 
   // Получить заказы пользователя
@@ -293,3 +312,70 @@ export const orderService = {
     }
   }
 };
+
+// === ПРОСМОТРЫ ТОВАРОВ ===
+export const productViewsService = {
+  async incrementView(productId: string): Promise<void> {
+    if (!productId) return;
+    const docRef = doc(db, PRODUCT_VIEWS_COLLECTION, productId);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      await updateDoc(docRef, { viewCount: increment(1), lastViewedAt: serverTimestamp() });
+    } else {
+      await setDoc(docRef, { viewCount: 1, createdAt: serverTimestamp(), lastViewedAt: serverTimestamp() });
+    }
+  },
+  async getTopViewed(limitCount: number = 5): Promise<{ productId: string; viewCount: number }[]> {
+    // Firestore не позволяет orderBy по несуществующему индексу без создания - предполагаем что index создан или будет создан
+    const q = query(collection(db, PRODUCT_VIEWS_COLLECTION), orderBy('viewCount', 'desc'), limit(limitCount));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ productId: d.id, viewCount: d.data().viewCount || 0 }));
+  },
+  async getViewCount(productId: string): Promise<number> {
+    const snap = await getDoc(doc(db, PRODUCT_VIEWS_COLLECTION, productId));
+    return snap.exists() ? (snap.data().viewCount || 0) : 0;
+  }
+};
+
+// === УНИКАЛЬНЫЕ ПОСЕТИТЕЛИ ===
+export const visitorService = {
+  async logVisit(visitorId: string): Promise<void> {
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const monthStr = now.toISOString().slice(0, 7); // YYYY-MM
+    // Создаем документ с id `${dateStr}_${visitorId}` чтобы избежать дубликатов
+    const docId = `${dateStr}_${visitorId}`;
+    const docRef = doc(db, VISITORS_COLLECTION, docId);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) {
+      await setDoc(docRef, { visitorId, date: dateStr, month: monthStr, createdAt: serverTimestamp() });
+    }
+  },
+  async getCounts(): Promise<{ today: number; month: number }> {
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10);
+    const monthStr = now.toISOString().slice(0, 7);
+    const todayQ = query(collection(db, VISITORS_COLLECTION), where('date', '==', dateStr));
+    const monthQ = query(collection(db, VISITORS_COLLECTION), where('month', '==', monthStr));
+    const [todaySnap, monthSnap] = await Promise.all([getDocs(todayQ), getDocs(monthQ)]);
+    return { today: todaySnap.size, month: monthSnap.size };
+  }
+};
+
+// === НАСТРОЙКИ САЙТА (CMS) ===
+export const siteSettingsService = {
+  async getMain(): Promise<{ heroSubtitle: string } | null> {
+    const docRef = doc(db, SITE_SETTINGS_COLLECTION, 'main');
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      return { heroSubtitle: data.heroSubtitle || '' };
+    }
+    return null;
+  },
+  async updateMain(values: { heroSubtitle: string }): Promise<void> {
+    const docRef = doc(db, SITE_SETTINGS_COLLECTION, 'main');
+    await setDoc(docRef, { heroSubtitle: values.heroSubtitle, updatedAt: serverTimestamp() }, { merge: true });
+  }
+};
+

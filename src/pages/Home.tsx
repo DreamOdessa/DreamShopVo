@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { motion } from 'framer-motion';
 import CategoryShowcase from '../components/CategoryShowcase';
 import ProductCard from '../components/ProductCard';
 import { useAdmin } from '../contexts/AdminContext';
+import { onSnapshot, doc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 
 const HeroSection = styled.section`
   background: linear-gradient(135deg,rgba(77, 208, 225, 0.52) 0%,rgba(38, 197, 218, 0.51) 50%,rgba(0, 171, 193, 0.44) 100%);
@@ -233,6 +235,23 @@ const ProductsGrid = styled.div`
 
 const Home: React.FC = () => {
   const { products } = useAdmin();
+  const [heroSubtitle, setHeroSubtitle] = useState('Органічні фруктові чіпси та прикраси для коктейлів. Натуральні продукти для здорового харчування та гарної подачі страв.');
+
+  // Реалтайм подписка на heroSubtitle
+  useEffect(() => {
+    const docRef = doc(db, 'site_settings', 'main');
+    const unsubscribe = onSnapshot(docRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as { heroSubtitle?: string };
+        if (data.heroSubtitle && data.heroSubtitle.trim().length > 0) {
+          setHeroSubtitle(data.heroSubtitle);
+        }
+      }
+    }, (err) => {
+      console.error('Ошибка подписки на heroSubtitle', err);
+    });
+    return () => unsubscribe();
+  }, []);
   
   // Фильтруем только активные товары
   const activeProducts = products.filter(p => p.isActive !== false);
@@ -260,8 +279,7 @@ const Home: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Органічні фруктові чіпси та прикраси для коктейлів. 
-            Натуральні продукти для здорового харчування та гарної подачі страв.
+            {heroSubtitle}
           </HeroSubtitle>
           
           {/* ВОТ СТРЕЛКА - ВНУТРИ HeroContent, ОНА БУДЕТ УЕЗЖАТЬ ВВЕРХ */}

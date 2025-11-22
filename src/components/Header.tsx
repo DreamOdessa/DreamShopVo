@@ -616,23 +616,28 @@ const Header: React.FC = () => {
             <FiX />
           </CloseButton>
           
-          <NavLink 
-            to="/" 
-            isActive={location.pathname === '/'}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Головна
-          </NavLink>
-          
-          <NavLink 
-            to="/products" 
-            isActive={location.pathname === '/products'}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Товари
-          </NavLink>
+          {/* Скрываем навигационные ссылки на админ-маршрутах */}
+          {!location.pathname.startsWith('/admin') && (
+            <>
+              <NavLink 
+                to="/" 
+                isActive={location.pathname === '/'}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Головна
+              </NavLink>
+              
+              <NavLink 
+                to="/products" 
+                isActive={location.pathname === '/products'}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Товари
+              </NavLink>
+            </>
+          )}
 
-          {user?.isAdmin && (
+          {user?.isAdmin && !location.pathname.startsWith('/admin') && (
             <NavLink 
               to="/admin" 
               isActive={location.pathname === '/admin'}

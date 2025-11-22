@@ -16,11 +16,27 @@ import Profile from './pages/Profile';
 import Wishlist from './pages/Wishlist';
 import Orders from './pages/Orders';
 import AdminPanel from './pages/AdminPanel';
+import AdminProductsPage from './pages/admin/AdminProductsPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminOrdersPage from './pages/admin/AdminOrdersPage';
+import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
+import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+import { visitorService } from './firebase/services';
 import LoadingSpinner from './components/LoadingSpinner';
 import './utils/adminUtils'; // Импортируем утилиты для консоли
 
 const App: React.FC = () => {
   const { loading } = useAuth();
+
+  // Логирование уникального посетителя (guest или auth)
+  React.useEffect(() => {
+    let vid = localStorage.getItem('visitor_id');
+    if (!vid) {
+      vid = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem('visitor_id', vid);
+    }
+    visitorService.logVisit(vid).catch(console.error);
+  }, []);
 
   return (
     <WishlistProvider>
@@ -38,6 +54,11 @@ const App: React.FC = () => {
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/orders" element={<Orders />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/admin/products" element={<AdminProductsPage />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
+            <Route path="/admin/orders" element={<AdminOrdersPage />} />
+            <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+            <Route path="/admin/settings" element={<AdminSettingsPage />} />
           </Routes>
         </main>
         <Footer />

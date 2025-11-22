@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { FiShoppingCart, FiHeart, FiArrowLeft, FiZap, FiMinus, FiPlus } from 'react-icons/fi';
 import { useAdmin } from '../contexts/AdminContext';
+import { productViewsService } from '../firebase/services';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useWishlist } from '../contexts/WishlistContext';
@@ -343,6 +344,15 @@ const ProductDetail: React.FC = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const product = products.find(p => p.id === id);
+
+  // Инкремент просмотров при загрузке продукта
+  useEffect(() => {
+    if (product?.id) {
+      productViewsService.incrementView(product.id).catch(err => {
+        console.error('Ошибка инкремента просмотров', err);
+      });
+    }
+  }, [product?.id]);
   
   // Получаем изображения: [главное фото, доп фото при hover, ...галерея]
   // Для страницы товара показываем ВСЕ изображения (до 5 шт)

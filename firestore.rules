@@ -22,5 +22,23 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null;
     }
+
+    // Настройки сайта (CMS)
+    match /site_settings/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null; // можно сузить до админов, если добавить custom claims
+    }
+
+    // Просмотры товаров (статистика)
+    match /product_views/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null; // инкремент просмотров после авторизации
+    }
+
+    // Уникальные посетители (для логирования анонимных заходов)
+    match /visitors/{docId} {
+      allow read: if true;
+      allow write: if true; // разрешено без авторизации для записи посещений
+    }
   }
 }

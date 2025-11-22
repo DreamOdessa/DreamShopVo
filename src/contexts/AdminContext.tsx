@@ -15,8 +15,10 @@ interface AdminContextType {
   addCategory: (category: Omit<Category, 'id'>) => Promise<void>;
   updateCategory: (id: string, category: Partial<Category>) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
+  updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
   updateUserDiscount: (userId: string, discount: number) => Promise<void>;
   updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
+  deleteOrder: (orderId: string) => Promise<void>;
   refreshData: () => Promise<void>;
 }
 
@@ -152,6 +154,17 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
     }
   };
 
+  const updateUser = async (userId: string, updates: Partial<User>) => {
+    try {
+      await userService.update(userId, updates);
+      await loadData();
+      toast.success('Користувач оновлено!');
+    } catch (error) {
+      console.error('Помилка оновлення користувача:', error);
+      toast.error('Помилка оновлення користувача');
+    }
+  };
+
   const updateUserDiscount = async (userId: string, discount: number) => {
     try {
       await userService.updateDiscount(userId, discount);
@@ -174,6 +187,17 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
     }
   };
 
+  const deleteOrder = async (orderId: string) => {
+    try {
+      await orderService.delete(orderId);
+      await loadData();
+      toast.success('Замовлення видалено!');
+    } catch (error) {
+      console.error('Помилка видалення замовлення:', error);
+      toast.error('Помилка видалення замовлення');
+    }
+  };
+
   const refreshData = async () => {
     await loadData();
   };
@@ -190,8 +214,10 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
     addCategory,
     updateCategory,
     deleteCategory,
+    updateUser,
     updateUserDiscount,
     updateOrderStatus,
+    deleteOrder,
     refreshData
   };
 

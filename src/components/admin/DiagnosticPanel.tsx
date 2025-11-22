@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FiRefreshCw, FiInfo, FiTrash2, FiCheckCircle, FiEdit } from 'react-icons/fi';
 import { siteSettingsService, productViewsService, productService } from '../../firebase/services';
+import { getAuth } from 'firebase/auth';
 import toast from 'react-hot-toast';
 
 const DiagnosticContainer = styled.div`
@@ -214,17 +215,27 @@ const DiagnosticPanel: React.FC = () => {
   const loadProductViews = async () => {
     try {
       const views = await productViewsService.getTopViewed(10);
+      console.log('Raw product views data:', views);
+      
+      if (!views || views.length === 0) {
+        console.log('No product views found');
+        setTopProducts([]);
+        return;
+      }
+      
       // Загружаем названия продуктов
       const formatted = await Promise.all(
         views.map(async (v) => {
           try {
             const product = await productService.getById(v.productId);
+            console.log(`Product ${v.productId}:`, product?.name);
             return {
               productId: v.productId,
               productName: product?.name || `Товар ${v.productId.substring(0, 8)}`,
               views: v.viewCount
             };
           } catch (error) {
+            console.warn(`Failed to load product ${v.productId}:`, error);
             return {
               productId: v.productId,
               productName: `Товар ${v.productId.substring(0, 8)}`,
@@ -233,22 +244,46 @@ const DiagnosticPanel: React.FC = () => {
           }
         })
       );
+      console.log('Formatted product views:', formatted);
       setTopProducts(formatted);
     } catch (error) {
       console.error('Error loading product views:', error);
+      toast.error('Ошибка загрузки статистики просмотров');
     } finally {
       setLoadingViews(false);
     }
   };
 
   const handleSaveHero = async () => {
+    // Проверка авторизации
+    const auth = getAuth();
+    const currentUser = auth.currentUser;
+    
+    if (!currentUser) {
+      toast.error('Необходимо войти в систему для сохранения настроек');
+      console.error('User not authenticated');
+      return;
+    }
+    
+    console.log('Saving hero text as user:', currentUser.email);
+    
     setSavingHero(true);
     try {
       await siteSettingsService.updateMain({ heroSubtitle: heroSubtitle.trim() });
       toast.success('Текст приветствия сохранен!');
     } catch (error) {
       console.error('Error saving hero:', error);
-      toast.error('Ошибка сохранения');
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      const errorCode = (error as any)?.code || 'unknown';
+      toast.error(`Ошибка сохранения: ${errorMessage} (код: ${errorCode})`, { duration: 5000 });
+      
+      // Дополнительная информация в консоль
+      console.error('Full error details:', {
+        error,
+        errorCode,
+        errorMessage,
+        stack: error instanceof Error ? error.stack : undefined
+      });
     } finally {
       setSavingHero(false);
     }

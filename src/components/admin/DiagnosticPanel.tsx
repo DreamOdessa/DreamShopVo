@@ -77,6 +77,9 @@ const ActionButton = styled.button`
   align-items: center;
   gap: 0.5rem;
   margin-right: 0.75rem;
+  position: relative;
+  z-index: 10;
+  pointer-events: auto;
 
   &:hover {
     transform: translateY(-2px);
@@ -90,6 +93,7 @@ const ActionButton = styled.button`
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    pointer-events: none;
   }
 
   svg {
@@ -409,14 +413,35 @@ const DiagnosticPanel: React.FC = () => {
               rows={4}
               placeholder="Введите текст приветствия..."
             />
-            <ActionButton 
-              onClick={handleSaveHero} 
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔘 DIRECT BUTTON CLICK!');
+                handleSaveHero();
+              }}
               disabled={savingHero}
-              style={{ marginTop: '1rem' }}
+              style={{
+                background: 'linear-gradient(135deg, #26c6da, #00acc1)',
+                color: 'white',
+                border: 'none',
+                padding: '0.75rem 1.5rem',
+                borderRadius: '25px',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginTop: '1rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                position: 'relative',
+                zIndex: 100
+              }}
             >
               <FiEdit />
               {savingHero ? 'Сохранение...' : 'Сохранить текст'}
-            </ActionButton>
+            </button>
           </>
         )}
       </HeroEditorSection>

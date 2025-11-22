@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { FiRefreshCw, FiInfo, FiTrash2, FiCheckCircle, FiEdit } from 'react-icons/fi';
 import { siteSettingsService, productViewsService, productService } from '../../firebase/services';
-import { getAuth } from 'firebase/auth';
+import { auth } from '../../firebase/config';
 import toast from 'react-hot-toast';
 
 const DiagnosticContainer = styled.div`
@@ -261,27 +261,25 @@ const DiagnosticPanel: React.FC = () => {
   const handleSaveHero = async () => {
     console.log('🔘 Save button clicked!');
     console.log('Current heroSubtitle:', heroSubtitle);
+    console.log('Auth app name:', auth.app.name);
     
-    // Проверка авторизации
-    const auth = getAuth();
     const currentUser = auth.currentUser;
-    
     console.log('Current user:', currentUser?.email || 'not logged in');
-    
+
     if (!currentUser) {
       toast.error('Необходимо войти в систему для сохранения настроек');
       console.error('User not authenticated');
       return;
     }
-    
+
     if (!heroSubtitle.trim()) {
       toast.error('Текст не может быть пустым');
       console.error('Empty hero subtitle');
       return;
     }
-    
+
     console.log('Saving hero text as user:', currentUser.email);
-    
+
     setSavingHero(true);
     try {
       await siteSettingsService.updateMain({ heroSubtitle: heroSubtitle.trim() });
@@ -291,8 +289,7 @@ const DiagnosticPanel: React.FC = () => {
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       const errorCode = (error as any)?.code || 'unknown';
       toast.error(`Ошибка сохранения: ${errorMessage} (код: ${errorCode})`, { duration: 5000 });
-      
-      // Дополнительная информация в консоль
+
       console.error('Full error details:', {
         error,
         errorCode,

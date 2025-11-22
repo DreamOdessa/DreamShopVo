@@ -4,6 +4,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence, inMemoryPersistence } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getPerformance } from 'firebase/performance';
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -39,6 +40,16 @@ console.log('✅ Firebase app initialized:', app.name);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+// Инициализация Performance Monitoring для отслеживания производительности
+let perf;
+try {
+  perf = getPerformance(app);
+  console.log('✅ Firebase Performance Monitoring enabled');
+} catch (error) {
+  console.warn('⚠️ Performance Monitoring не удалось инициализировать:', error);
+}
+export const performance = perf;
 
 // Провайдеры аутентификации
 export const googleProvider = new GoogleAuthProvider();

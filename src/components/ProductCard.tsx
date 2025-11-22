@@ -7,6 +7,7 @@ import { Product } from '../types';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useWishlist } from '../contexts/WishlistContext';
+import { getOptimizedImageUrl } from '../utils/imageOptimization';
 import toast from 'react-hot-toast';
 
 const Card = styled(motion.div)`
@@ -246,6 +247,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const mainImage = (product.images && product.images.length > 0) ? product.images[0] : product.image;
   const hoverImage = (product.images && product.images.length > 1) ? product.images[1] : null;
 
+  // Оптимизация: используем уменьшенные версии для каталога (400x400)
+  const optimizedMainImage = getOptimizedImageUrl(mainImage, 'small');
+  const optimizedHoverImage = hoverImage ? getOptimizedImageUrl(hoverImage, 'small') : null;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -282,13 +287,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <ImageContainer>
           <ImageWrapper>
             <MainImage 
-              src={mainImage} 
+              src={optimizedMainImage} 
               alt={product.name}
+              loading="lazy"
+              onError={(e) => {
+                // Fallback на оригинал если оптимизированная версия недоступна
+                e.currentTarget.src = mainImage;
+              }}
             />
-            {hoverImage && (
+            {optimizedHoverImage && (
               <HoverImage 
-                src={hoverImage} 
+                src={optimizedHoverImage} 
                 alt={product.name}
+                loading="lazy"
+                onError={(e) => {
+                  // Fallback на оригинал
+                  if (hoverImage) e.currentTarget.src = hoverImage;
+                }}
               />
             )}
           </ImageWrapper>

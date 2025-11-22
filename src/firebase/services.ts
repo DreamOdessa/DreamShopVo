@@ -11,8 +11,10 @@ import {
   where, 
   orderBy,
   limit,
+  startAfter,
   serverTimestamp,
-  increment
+  increment,
+  DocumentSnapshot
 } from 'firebase/firestore';
 import { db } from './config';
 import { sendNotificationToAdmins } from '../utils/notificationUtils';
@@ -92,6 +94,64 @@ export const productService = {
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
     })) as Product[];
+  },
+
+  // Получить товары с пагинацией (для каталога)
+  async getPaginated(limitCount: number = 20, lastDoc?: DocumentSnapshot): Promise<{ products: Product[]; lastDoc: DocumentSnapshot | null }> {
+    let q = query(
+      collection(db, PRODUCTS_COLLECTION),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+
+    if (lastDoc) {
+      q = query(
+        collection(db, PRODUCTS_COLLECTION),
+        orderBy('createdAt', 'desc'),
+        startAfter(lastDoc),
+        limit(limitCount)
+      );
+    }
+
+    const snapshot = await getDocs(q);
+    const products = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
+    })) as Product[];
+
+    const newLastDoc = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+    return { products, lastDoc: newLastDoc };
+  },
+
+  // Получить товары по категории с пагинацией
+  async getByCategoryPaginated(category: string, limitCount: number = 20, lastDoc?: DocumentSnapshot): Promise<{ products: Product[]; lastDoc: DocumentSnapshot | null }> {
+    let q = query(
+      collection(db, PRODUCTS_COLLECTION),
+      where('category', '==', category),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+
+    if (lastDoc) {
+      q = query(
+        collection(db, PRODUCTS_COLLECTION),
+        where('category', '==', category),
+        orderBy('createdAt', 'desc'),
+        startAfter(lastDoc),
+        limit(limitCount)
+      );
+    }
+
+    const snapshot = await getDocs(q);
+    const products = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
+    })) as Product[];
+
+    const newLastDoc = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
+    return { products, lastDoc: newLastDoc };
   }
 };
 

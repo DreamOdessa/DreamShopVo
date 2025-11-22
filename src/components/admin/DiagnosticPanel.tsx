@@ -255,13 +255,24 @@ const DiagnosticPanel: React.FC = () => {
   };
 
   const handleSaveHero = async () => {
+    console.log('🔘 Save button clicked!');
+    console.log('Current heroSubtitle:', heroSubtitle);
+    
     // Проверка авторизации
     const auth = getAuth();
     const currentUser = auth.currentUser;
     
+    console.log('Current user:', currentUser?.email || 'not logged in');
+    
     if (!currentUser) {
       toast.error('Необходимо войти в систему для сохранения настроек');
       console.error('User not authenticated');
+      return;
+    }
+    
+    if (!heroSubtitle.trim()) {
+      toast.error('Текст не может быть пустым');
+      console.error('Empty hero subtitle');
       return;
     }
     
@@ -400,7 +411,7 @@ const DiagnosticPanel: React.FC = () => {
             />
             <ActionButton 
               onClick={handleSaveHero} 
-              disabled={savingHero || !heroSubtitle.trim()}
+              disabled={savingHero}
               style={{ marginTop: '1rem' }}
             >
               <FiEdit />

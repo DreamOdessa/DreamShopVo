@@ -42,6 +42,21 @@ export const productService = {
     })) as Product[];
   },
 
+  // Получить ограниченное число товаров (для быстрой публичной загрузки)
+  async getLimited(limitCount: number = 60): Promise<Product[]> {
+    const q = query(
+      collection(db, PRODUCTS_COLLECTION),
+      orderBy('createdAt', 'desc'),
+      limit(limitCount)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
+    })) as Product[];
+  },
+
   // Получить товар по ID
   async getById(id: string): Promise<Product | null> {
     const docRef = doc(db, PRODUCTS_COLLECTION, id);

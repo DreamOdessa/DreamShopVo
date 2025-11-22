@@ -48,37 +48,44 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   const loadData = async () => {
     try {
       setLoading(true);
-      // Загружаем только публичные данные (товары и категории)
-      // Users и Orders загрузятся только в AdminPanel при необходимости
+      const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+
+      // Для публичных страниц сразу используем ограниченный запрос к Firestore (без getAll + slice)
+      const productsPromise = isAdmin
+        ? productService.getAll()
+        : productService.getLimited(60);
+
+      const categoriesPromise = categoryService.getAll().catch(err => {
+        console.error('Ошибка загрузки категорий:', err);
+        return [] as Category[];
+      });
+
       const [productsData, categoriesData] = await Promise.all([
-        productService.getAll().catch(err => {
+        productsPromise.catch(err => {
           console.error('Ошибка загрузки товаров:', err);
-          return [];
+          return [] as Product[];
         }),
-        categoryService.getAll().catch(err => {
-          console.error('Ошибка загрузки категорий:', err);
-          return [];
-        })
+        categoriesPromise
       ]);
-      
+
       setProducts(productsData);
       setCategories(categoriesData);
-      
-      // Users и Orders загружаем только если нужно (не блокируем загрузку сайта)
-      try {
-        const [usersData, ordersData] = await Promise.all([
-          userService.getAll(),
-          orderService.getAll()
-        ]);
-        setUsers(usersData);
-        setOrders(ordersData);
-      } catch (error) {
-        // Если не авторизован или нет прав - не страшно, сайт работает
-        console.log('Пользователь не авторизован для загрузки users/orders');
+
+      // Загружаем пользователей и заказы только в админке
+      if (isAdmin) {
+        try {
+          const [usersData, ordersData] = await Promise.all([
+            userService.getAll(),
+            orderService.getAll()
+          ]);
+          setUsers(usersData);
+          setOrders(ordersData);
+        } catch (error) {
+          console.log('Не удалось загрузить users/orders (не авторизован или нет прав)');
+        }
       }
     } catch (error) {
       console.error('Помилка завантаження даних:', error);
-      // Убрали toast.error - не пугаем пользователя при первой загрузке
     } finally {
       setLoading(false);
     }

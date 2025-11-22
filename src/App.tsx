@@ -15,12 +15,14 @@ import Checkout from './pages/Checkout';
 import Profile from './pages/Profile';
 import Wishlist from './pages/Wishlist';
 import Orders from './pages/Orders';
-import AdminPanel from './pages/AdminPanel';
-import AdminProductsPage from './pages/admin/AdminProductsPage';
-import AdminUsersPage from './pages/admin/AdminUsersPage';
-import AdminOrdersPage from './pages/admin/AdminOrdersPage';
-import AdminCategoriesPage from './pages/admin/AdminCategoriesPage';
-import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+// Ленивые загрузки админских страниц для уменьшения бандла публичных страниц
+import React, { Suspense } from 'react';
+const AdminPanel = React.lazy(() => import('./pages/AdminPanel'));
+const AdminProductsPage = React.lazy(() => import('./pages/admin/AdminProductsPage'));
+const AdminUsersPage = React.lazy(() => import('./pages/admin/AdminUsersPage'));
+const AdminOrdersPage = React.lazy(() => import('./pages/admin/AdminOrdersPage'));
+const AdminCategoriesPage = React.lazy(() => import('./pages/admin/AdminCategoriesPage'));
+const AdminSettingsPage = React.lazy(() => import('./pages/admin/AdminSettingsPage'));
 import { visitorService } from './firebase/services';
 import LoadingSpinner from './components/LoadingSpinner';
 import './utils/adminUtils'; // Импортируем утилиты для консоли
@@ -53,12 +55,12 @@ const App: React.FC = () => {
             <Route path="/profile" element={<Profile />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/orders" element={<Orders />} />
-            <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/admin/products" element={<AdminProductsPage />} />
-            <Route path="/admin/users" element={<AdminUsersPage />} />
-            <Route path="/admin/orders" element={<AdminOrdersPage />} />
-            <Route path="/admin/categories" element={<AdminCategoriesPage />} />
-            <Route path="/admin/settings" element={<AdminSettingsPage />} />
+            <Route path="/admin" element={<Suspense fallback={<LoadingSpinner />}><AdminPanel /></Suspense>} />
+            <Route path="/admin/products" element={<Suspense fallback={<LoadingSpinner />}><AdminProductsPage /></Suspense>} />
+            <Route path="/admin/users" element={<Suspense fallback={<LoadingSpinner />}><AdminUsersPage /></Suspense>} />
+            <Route path="/admin/orders" element={<Suspense fallback={<LoadingSpinner />}><AdminOrdersPage /></Suspense>} />
+            <Route path="/admin/categories" element={<Suspense fallback={<LoadingSpinner />}><AdminCategoriesPage /></Suspense>} />
+            <Route path="/admin/settings" element={<Suspense fallback={<LoadingSpinner />}><AdminSettingsPage /></Suspense>} />
           </Routes>
         </main>
         <Footer />

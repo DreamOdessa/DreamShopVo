@@ -73,7 +73,7 @@ export function getOptimizedImageUrl(originalUrl: string, size: ImageSize = 'sma
   
   // Извлекаем путь к файлу и расширение
   // URL вида: https://firebasestorage.googleapis.com/.../products%2Fimage.jpg?alt=media&token=...
-  const pathMatch = originalUrl.match(/\/([^\/]+\.(jpg|jpeg|png|webp|gif))/i);
+  const pathMatch = originalUrl.match(/\/([^/]+\.(jpg|jpeg|png|webp|gif))/i);
   if (!pathMatch) {
     console.warn('Could not parse image path from URL:', originalUrl);
     return originalUrl;

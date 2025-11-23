@@ -12,9 +12,12 @@ let messaging: ReturnType<typeof getMessaging> | null = null;
 try {
   if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     messaging = getMessaging(app);
+    console.log('✅ Firebase Messaging инициализирован');
+  } else {
+    console.warn('⚠️ Service Worker не поддерживается в этом браузере');
   }
 } catch (error) {
-  console.warn('FCM не поддерживается в этом браузере:', error);
+  console.error('❌ Ошибка инициализации FCM:', error);
 }
 
 // Запрос разрешения на уведомления и получение FCM токена
@@ -41,22 +44,22 @@ export const requestNotificationPermission = async (userId: string): Promise<str
       const token = await getToken(messaging, { vapidKey: VAPID_KEY });
       
       if (token) {
-        console.log('🔑 FCM Token:', token);
+        console.log('🔑 FCM Token получен:', token.substring(0, 20) + '...');
         
         // Сохраняем токен в Firestore для пользователя
         await saveFCMToken(userId, token);
         
         return token;
       } else {
-        console.warn('Не удалось получить FCM токен');
+        console.error('❌ Не удалось получить FCM токен');
         throw new Error('Не удалось получить FCM токен');
       }
     } else {
-      console.warn('Разрешение на уведомления отклонено');
+      console.warn('⚠️ Разрешение на уведомления отклонено');
       throw new Error('Разрешение на уведомления отклонено пользователем');
     }
   } catch (error) {
-    console.error('Ошибка при запросе разрешения на уведомления:', error);
+    console.error('❌ Ошибка при запросе разрешения на уведомления:', error);
     throw error;
   }
 };
@@ -101,15 +104,18 @@ export const getUserFCMTokens = async (userId: string): Promise<string[]> => {
 };
 
 // Слушатель входящих уведомлений (когда приложение открыто)
-export const onMessageListener = (): Promise<MessagePayload> => {
-  return new Promise((resolve) => {
-    if (messaging) {
-      onMessage(messaging, (payload) => {
-        console.log('📩 Получено уведомление:', payload);
-        resolve(payload);
-      });
-    }
+export const onMessageListener = (callback: (payload: MessagePayload) => void): (() => void) => {
+  if (!messaging) {
+    return () => {};
+  }
+  
+  // onMessage возвращает функцию отписки
+  const unsubscribe = onMessage(messaging, (payload) => {
+    console.log('📩 Получено FCM уведомление (foreground):', payload);
+    callback(payload);
   });
+  
+  return unsubscribe;
 };
 
 // Типы уведомлений

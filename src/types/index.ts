@@ -94,3 +94,23 @@ export interface Category {
   subcategories?: string[]; // (legacy) список подкатегорий, будет заменено отдельными документами
 }
 
+// Типы событий уведомлений
+export type NotificationEventType =
+  | 'new_product'           // Новый товар (для админа или пользователей если нужно)
+  | 'new_order'             // Новый заказ (для админа)
+  | 'order_status_update'   // Обновление статуса заказа (для клиента)
+  | 'promo'                 // Промо/акция
+  | 'system';               // Системное сообщение
+
+export interface Notification {
+  id: string;               // Уникальный ID уведомления (local or Firestore)
+  type: NotificationEventType;
+  title: string;
+  body: string;
+  createdAt: string;        // ISO строка
+  read: boolean;            // Прочитано или нет
+  data?: Record<string, any>; // Дополнительные данные (generic payload)
+  orderId?: string;         // Ссылка на заказ (если релевантно)
+  productId?: string;       // Ссылка на товар (если релевантно)
+}
+

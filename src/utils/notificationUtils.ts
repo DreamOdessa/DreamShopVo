@@ -1,5 +1,7 @@
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import app from '../firebase/config';
 
 // Интерфейс для отправки уведомления
 export interface SendNotificationPayload {
@@ -43,24 +45,20 @@ export const sendNotificationToAdmins = async (payload: SendNotificationPayload)
       console.warn('Нет FCM токенов для админов');
       return;
     }
-
-    // В реальном проекте здесь должен быть вызов Cloud Function
-    // Пример:
-    // const sendNotificationFunction = httpsCallable(functions, 'sendNotification');
-    // await sendNotificationFunction({ tokens, ...payload });
-    
-    console.log('📤 Уведомление для отправки админам:', {
-      tokens,
-      payload
-    });
-    
-    // Временное решение: показываем локальное уведомление для тестирования
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(payload.title, {
-        body: payload.body,
-        icon: payload.icon || '/logo192.png',
-        badge: '/favicon.ico'
-      });
+    try {
+      const functions = getFunctions(app);
+      const cf = httpsCallable(functions, 'sendNotification');
+      await cf({ tokens, ...payload });
+      console.log('✅ Push отправлен через Cloud Function (admins)');
+    } catch (cfError) {
+      console.warn('⚠️ Cloud Function sendNotification не доступна, fallback локально:', cfError);
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(payload.title, {
+          body: payload.body,
+          icon: payload.icon || '/logo192.png',
+          badge: '/favicon.ico'
+        });
+      }
     }
   } catch (error) {
     console.error('Ошибка при отправке уведомления админам:', error);
@@ -74,7 +72,7 @@ export const sendNotificationToUser = async (userId: string, payload: SendNotifi
     const userDoc = await getDocs(query(collection(db, 'users'), where('__name__', '==', userId)));
     
     if (userDoc.empty) {
-      console.warn('Пользователь не найден:', userId);
+      console.warn('⚠️ Пользователь не найден:', userId);
       return;
     }
 
@@ -82,27 +80,29 @@ export const sendNotificationToUser = async (userId: string, payload: SendNotifi
     const tokens = userData.fcmTokens || [];
     
     if (tokens.length === 0) {
-      console.warn('У пользователя нет FCM токенов:', userId);
+      console.warn('⚠️ У пользователя нет FCM токенов:', userId);
       return;
     }
 
-    // В реальном проекте здесь должен быть вызов Cloud Function
-    console.log('📤 Уведомление для отправки пользователю:', {
-      userId,
-      tokens,
-      payload
-    });
-    
-    // Временное решение: показываем локальное уведомление для тестирования
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(payload.title, {
-        body: payload.body,
-        icon: payload.icon || '/logo192.png',
-        badge: '/favicon.ico'
-      });
+    console.log('📤 Отправка уведомления пользователю:', { userId, tokens: tokens.length, payload });
+
+    try {
+      const functions = getFunctions(app);
+      const cf = httpsCallable(functions, 'sendNotification');
+      const result = await cf({ tokens, ...payload });
+      console.log('✅ Push отправлен через Cloud Function:', result);
+    } catch (cfError) {
+      console.warn('⚠️ Cloud Function sendNotification не доступна, fallback локально:', cfError);
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(payload.title, {
+          body: payload.body,
+          icon: payload.icon || '/logo192.png',
+          badge: '/favicon.ico'
+        });
+      }
     }
   } catch (error) {
-    console.error('Ошибка при отправке уведомления пользователю:', error);
+    console.error('❌ Ошибка при отправке уведомления пользователю:', error);
   }
 };
 

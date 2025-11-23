@@ -290,8 +290,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               src={optimizedMainImage} 
               alt={product.name}
               loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              width={400}
+              height={400}
+              style={{ backgroundColor: '#f5f5f5' }}
               onError={(e) => {
-                // Fallback на оригинал если оптимизированная версия недоступна
                 e.currentTarget.src = mainImage;
               }}
             />
@@ -300,8 +304,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 src={optimizedHoverImage} 
                 alt={product.name}
                 loading="lazy"
+                decoding="async"
+                fetchPriority="low"
+                width={400}
+                height={400}
+                style={{ backgroundColor: '#f5f5f5' }}
                 onError={(e) => {
-                  // Fallback на оригинал
                   if (hoverImage) e.currentTarget.src = hoverImage;
                 }}
               />

@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 // import { getAnalytics } from "firebase/analytics"; // Отключено для избежания неиспользуемого импорта
 import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence, inMemoryPersistence } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getPerformance } from 'firebase/performance';
 
@@ -57,5 +57,16 @@ export const googleProvider = new GoogleAuthProvider();
 // Настройка устойчивости с безопасным фолбэком для мобильных браузеров
 // Если постоянное хранилище недоступно (например, iOS Private Mode), используем in-memory
 setPersistence(auth, browserLocalPersistence).catch(() => setPersistence(auth, inMemoryPersistence));
+
+// Включаем офлайн-персистентность (кэш запросов) для ускорения повторных посещений
+try {
+  enableIndexedDbPersistence(db).then(() => {
+    console.log('✅ Firestore offline persistence enabled');
+  }).catch(err => {
+    console.warn('⚠️ Persistence not enabled:', err.code);
+  });
+} catch (e) {
+  console.warn('⚠️ Persistence init failed:', e);
+}
 
 export default app;

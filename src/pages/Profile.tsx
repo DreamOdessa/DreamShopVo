@@ -385,17 +385,8 @@ const Profile: React.FC = () => {
       setNotificationsEnabled(Notification.permission === 'granted');
     }
 
-    // Подписка на входящие уведомления
-    onMessageListener().then((payload) => {
-      if (payload.notification) {
-        showLocalNotification({
-          title: payload.notification.title || 'DreamShop',
-          body: payload.notification.body || '',
-          icon: payload.notification.icon,
-          data: payload.data
-        });
-      }
-    }).catch(() => {});
+    // Подписка на входящие уведомления (уже обрабатывается в NotificationContext)
+    // Удалено дублирование, т.к. NotificationContext уже слушает FCM
   }, []);
 
   // Сохраняем данные профиля в localStorage при изменении

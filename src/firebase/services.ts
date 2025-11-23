@@ -17,8 +17,6 @@ import {
   DocumentSnapshot
 } from 'firebase/firestore';
 import { db } from './config';
-import { sendNotificationToAdmins } from '../utils/notificationUtils';
-import { sendNotificationToUser } from '../utils/notificationUtils';
 import { Product, User, Order, Category } from '../types';
 
 // Коллекции
@@ -331,21 +329,11 @@ export const orderService = {
       createdAt: serverTimestamp()
     });
 
-    // Отправляем уведомление админам о новом заказе (после успешного создания)
-    try {
-      await sendNotificationToAdmins({
-        title: '🛒 Новый заказ!',
-        body: `Заказ #${docRef.id.substring(0, 8)} на сумму ${order.total} ₴`,
-        icon: '/logo192.png',
-        clickAction: '/admin',
-        data: {
-          orderId: docRef.id,
-          type: 'new_order'
-        }
-      });
-    } catch (error) {
-      console.error('Ошибка отправки уведомления админам:', error);
-    }
+    // ✅ Уведомление отправляется автоматически Cloud Function: onOrderCreated
+    // Серверная функция следит за новыми документами в orders/ и отправляет push админам
+    // Это предотвращает дублирование и гарантирует доставку даже если клиент отвалится
+    console.log('✅ Заказ создан. Cloud Function onOrderCreated отправит уведомление админам:', docRef.id);
+    
     return docRef.id;
   },
 
@@ -359,32 +347,10 @@ export const orderService = {
     
     await updateDoc(docRef, { status });
     
-    // Отправляем уведомление пользователю об изменении статуса
-    if (orderData && orderData.userId) {
-      const statusMessages: Record<Order['status'], string> = {
-        pending: 'Ваш заказ ожидает обработки',
-        processing: 'Ваш заказ обрабатывается',
-        shipped: 'Ваш заказ отправлен',
-        delivered: 'Ваш заказ доставлен!',
-        cancelled: 'Ваш заказ отменен'
-      };
-      
-      try {
-        await sendNotificationToUser(orderData.userId, {
-          title: '📦 Статус заказа изменен',
-          body: statusMessages[status] || `Статус: ${status}`,
-          icon: '/logo192.png',
-          clickAction: '/orders',
-          data: {
-            orderId: id,
-            status,
-            type: 'order_status_update'
-          }
-        });
-      } catch (error) {
-        console.error('Ошибка отправки уведомления пользователю:', error);
-      }
-    }
+    // ✅ Уведомление отправляется автоматически Cloud Function: onOrderStatusUpdated
+    // Серверная функция следит за изменениями в orders/{orderId} и отправляет push пользователю
+    // Это предотвращает дублирование и гарантирует доставку даже если админ оффлайн
+    console.log('✅ Статус обновлен. Cloud Function onOrderStatusUpdated отправит уведомление пользователю:', orderData.userId);
   }
 };
 

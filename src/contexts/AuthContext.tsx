@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User } from '../types';
 import { signInWithGoogle, signOutUser, onAuthStateChange } from '../firebase/auth';
+import { requestNotificationPermission } from '../firebase/messaging';
 import { userService } from '../firebase/services';
 
 interface AuthContextType {
@@ -73,6 +74,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             };
             localStorage.setItem('dreamshop_profile', JSON.stringify(profileData));
             setUser(fullUserData);
+            // Запрашиваем разрешение на уведомления (однократно, если еще не запрошено)
+            try {
+              if (Notification.permission !== 'granted') {
+                await requestNotificationPermission(fullUserData.id);
+              }
+            } catch (e) {
+              console.warn('Не удалось получить разрешение на уведомления при auth state change');
+            }
           } else {
             setUser(user);
           }
@@ -123,6 +132,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           };
           localStorage.setItem('dreamshop_profile', JSON.stringify(profileData));
           setUser(fullUserData);
+          try {
+            if (Notification.permission !== 'granted') {
+              await requestNotificationPermission(fullUserData.id);
+            }
+          } catch (e) {
+            console.warn('Не удалось получить разрешение на уведомления при login');
+          }
         } else {
           setUser(userData);
         }

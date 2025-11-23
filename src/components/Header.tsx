@@ -6,6 +6,8 @@ import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { FiShoppingCart, FiUser, FiMenu, FiX, FiHeart, FiGrid, FiLogOut, FiChevronDown } from 'react-icons/fi';
+import NotificationBell from './NotificationBell';
+import NotificationsDrawer from './NotificationsDrawer';
 import GoogleLogin from './GoogleLogin';
 import CategorySidebar from './CategorySidebar';
 import { useCategorySidebar } from '../contexts/CategorySidebarContext';
@@ -507,6 +509,7 @@ const Header: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileProfileDropdownOpen, setIsMobileProfileDropdownOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number>(0);
   const [touchEndX, setTouchEndX] = useState<number>(0);
   const { openSidebar, closeSidebar, isOpen: isCategorySidebarOpen } = useCategorySidebar();
@@ -648,6 +651,7 @@ const Header: React.FC = () => {
           )}
 
           <UserActions>
+            <NotificationBell onClick={() => setNotificationsOpen(true)} />
             {user && (
               <WishlistButton onClick={() => navigate('/wishlist')} aria-label="Обране">
                 <FiHeart />
@@ -844,6 +848,7 @@ const Header: React.FC = () => {
 
       {/* Бокова корзина */}
       <SideCartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <NotificationsDrawer open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </>
   );
 };

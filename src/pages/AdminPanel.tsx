@@ -891,23 +891,8 @@ const AdminPanel: React.FC = () => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [openSubcategoryDropdown]);
 
-  // Слушатель входящих уведомлений
-  useEffect(() => {
-    if (user?.isAdmin) {
-      onMessageListener().then((payload) => {
-        console.log('Получено уведомление:', payload);
-        if (payload.notification) {
-          showLocalNotification({
-            title: payload.notification.title || 'DreamShop',
-            body: payload.notification.body || '',
-            icon: payload.notification.icon,
-            data: payload.data
-          });
-          toast.success(`📬 ${payload.notification.title}: ${payload.notification.body}`);
-        }
-      }).catch(err => console.log('Ошибка слушателя уведомлений:', err));
-    }
-  }, [user]);
+  // Слушатель входящих уведомлений (уже обрабатывается в NotificationContext)
+  // Удалено дублирование
 
   // Проверка статуса разрешения уведомлений
   useEffect(() => {

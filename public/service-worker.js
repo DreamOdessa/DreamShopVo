@@ -45,6 +45,14 @@ self.addEventListener('activate', (event) => {
 
 // Стратегия: Network First, падаем на Cache
 self.addEventListener('fetch', (event) => {
+  // Игнорируем POST запросы и запросы к Firebase/FCM
+  if (event.request.method !== 'GET' || 
+      event.request.url.includes('firebaseinstallations.googleapis.com') ||
+      event.request.url.includes('fcmtoken.googleapis.com') ||
+      event.request.url.includes('fcm.googleapis.com')) {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {

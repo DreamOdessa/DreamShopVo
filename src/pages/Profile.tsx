@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { novaPoshtaApi } from '../services/novaPoshtaApi';
 import { geocodingApi } from '../services/geocodingApi';
 import toast from 'react-hot-toast';
-import { requestNotificationPermission, onMessageListener, showLocalNotification } from '../firebase/messaging';
+import { requestNotificationPermission } from '../firebase/messaging';
 
 const ProfileContainer = styled.div`
   padding: 2rem 0;

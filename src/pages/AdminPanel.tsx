@@ -15,7 +15,7 @@ import { Product, Order, User } from '../types';
 import OrderDetails from '../components/OrderDetails';
 import toast from 'react-hot-toast';
 import { storageService, STORAGE_PATHS } from '../firebase/storageService';
-import { requestNotificationPermission, onMessageListener, showLocalNotification } from '../firebase/messaging';
+import { requestNotificationPermission } from '../firebase/messaging';
 import { FiBell } from 'react-icons/fi';
 
 const AdminContainer = styled.div<{ isSidebarHidden: boolean }>`

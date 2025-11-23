@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { WishlistProvider } from './contexts/WishlistContext';
@@ -16,7 +16,6 @@ import Profile from './pages/Profile';
 import Wishlist from './pages/Wishlist';
 import Orders from './pages/Orders';
 // Ленивые загрузки админских страниц для уменьшения бандла публичных страниц
-import React, { Suspense } from 'react';
 const AdminPanel = React.lazy(() => import('./pages/AdminPanel'));
 const AdminProductsPage = React.lazy(() => import('./pages/admin/AdminProductsPage'));
 const AdminUsersPage = React.lazy(() => import('./pages/admin/AdminUsersPage'));

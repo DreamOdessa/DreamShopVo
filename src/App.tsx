@@ -15,6 +15,10 @@ import Checkout from './pages/Checkout';
 import Profile from './pages/Profile';
 import Wishlist from './pages/Wishlist';
 import Orders from './pages/Orders';
+import { visitorService } from './firebase/services';
+import LoadingSpinner from './components/LoadingSpinner';
+import './utils/adminUtils'; // Импортируем утилиты для консоли
+
 // Ленивые загрузки админских страниц для уменьшения бандла публичных страниц
 const AdminPanel = React.lazy(() => import('./pages/AdminPanel'));
 const AdminProductsPage = React.lazy(() => import('./pages/admin/AdminProductsPage'));
@@ -22,9 +26,6 @@ const AdminUsersPage = React.lazy(() => import('./pages/admin/AdminUsersPage'));
 const AdminOrdersPage = React.lazy(() => import('./pages/admin/AdminOrdersPage'));
 const AdminCategoriesPage = React.lazy(() => import('./pages/admin/AdminCategoriesPage'));
 const AdminSettingsPage = React.lazy(() => import('./pages/admin/AdminSettingsPage'));
-import { visitorService } from './firebase/services';
-import LoadingSpinner from './components/LoadingSpinner';
-import './utils/adminUtils'; // Импортируем утилиты для консоли
 
 const App: React.FC = () => {
   const { loading } = useAuth();

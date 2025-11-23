@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions';
 import { initializeApp, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging, MulticastMessage } from 'firebase-admin/messaging';
+import fetch from 'node-fetch';
 
 // Initialize admin SDK once (ESM-safe)
 if (!getApps().length) {
@@ -11,11 +12,36 @@ if (!getApps().length) {
 const db = getFirestore();
 const messaging = getMessaging();
 
+// Telegram Bot Configuration
+const TELEGRAM_BOT_TOKEN = '8201620010:AAHs-9LmntL4PdIsUyJYCJXhL6FCmrjODtY';
+const ADMIN_CHAT_IDS = ['8471136015', '275072930']; // @DreamOdessaShop, @SenonKray
+
 interface NotificationPayload {
   title: string;
   body: string;
   icon?: string;
   data?: Record<string, string>;
+}
+
+// Send Telegram notification
+async function sendTelegramNotification(message: string): Promise<void> {
+  for (const chatId of ADMIN_CHAT_IDS) {
+    try {
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: message,
+          parse_mode: 'HTML',
+          disable_web_page_preview: true
+        })
+      });
+      functions.logger.info(`✅ Telegram sent to ${chatId}`);
+    } catch (error) {
+      functions.logger.error(`❌ Telegram error for ${chatId}:`, error);
+    }
+  }
 }
 
 async function getAdminTokens(): Promise<string[]> {
@@ -69,11 +95,29 @@ export const onOrderCreated = functions.firestore
     const data = snap.data();
     const total = data.total || 0;
     const orderId = context.params.orderId.substring(0, 8);
+    const fullOrderId = context.params.orderId;
+    const customerName = data.customerName || data.name || 'Не указан';
+    const customerPhone = data.phone || 'Не указан';
+    const itemsCount = data.items?.length || 0;
+    
+    // Send Telegram notification to admins
+    const telegramMessage = 
+      `🛒 <b>Новый заказ!</b>\n\n` +
+      `📋 Заказ: <code>#${orderId}</code>\n` +
+      `💰 Сумма: <b>${total} ₴</b>\n` +
+      `👤 Клиент: ${customerName}\n` +
+      `📞 Телефон: ${customerPhone}\n` +
+      `📦 Товаров: ${itemsCount}\n\n` +
+      `🔗 <a href="https://www.dream-odessa.com/admin">Открыть админку</a>`;
+    
+    await sendTelegramNotification(telegramMessage);
+    
+    // Send push notification to admins (if they have FCM tokens)
     const tokens = await getAdminTokens();
     await sendToTokens(tokens, {
       title: '🛒 Новый заказ',
       body: `Заказ #${orderId} на сумму ${total} ₴`,
-      data: { type: 'new_order', orderId: context.params.orderId }
+      data: { type: 'new_order', orderId: fullOrderId }
     });
   });
 
@@ -88,7 +132,9 @@ export const onOrderStatusUpdated = functions.firestore
     const userId = after.userId;
     if (!userId) return;
     const status = after.status;
-    const tokens = await getUserTokens(userId);
+    const orderId = context.params.orderId.substring(0, 8);
+    const customerName = after.customerName || after.name || 'Клиент';
+    
     const statusMessages: Record<string, string> = {
       pending: 'Ваш заказ ожидает обработки',
       processing: 'Ваш заказ обрабатывается',
@@ -96,6 +142,27 @@ export const onOrderStatusUpdated = functions.firestore
       delivered: 'Ваш заказ доставлен!',
       cancelled: 'Ваш заказ отменен'
     };
+    
+    const statusEmojis: Record<string, string> = {
+      pending: '⏳',
+      processing: '⚙️',
+      shipped: '🚚',
+      delivered: '✅',
+      cancelled: '❌'
+    };
+    
+    // Send Telegram notification to admins about status change
+    const telegramMessage = 
+      `${statusEmojis[status] || '📦'} <b>Статус заказа изменен</b>\n\n` +
+      `📋 Заказ: <code>#${orderId}</code>\n` +
+      `👤 Клиент: ${customerName}\n` +
+      `📊 Новый статус: <b>${statusMessages[status] || status}</b>\n\n` +
+      `🔗 <a href="https://www.dream-odessa.com/admin">Открыть админку</a>`;
+    
+    await sendTelegramNotification(telegramMessage);
+    
+    // Send push notification to user
+    const tokens = await getUserTokens(userId);
     await sendToTokens(tokens, {
       title: '📦 Статус заказа',
       body: statusMessages[status] || `Статус: ${status}`,

@@ -37,9 +37,39 @@ const SpicerProductsPage: React.FC = () => {
   }, [location.search]);
 
   // Применение фильтров
+  const applyFilters = React.useCallback(() => {
+    let filtered = [...products];
+
+    // Фильтр по категории
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(p => p.category === selectedCategory);
+    }
+
+    // Фильтр по объему
+    if (selectedVolume !== 'all') {
+      filtered = filtered.filter(p => p.volume === selectedVolume);
+    }
+
+    // Фильтр по цене
+    filtered = filtered.filter(
+      p => p.price >= priceRange[0] && p.price <= priceRange[1]
+    );
+
+    // Поиск
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(query) ||
+        p.description?.toLowerCase().includes(query)
+      );
+    }
+
+    setFilteredProducts(filtered);
+  }, [products, selectedCategory, selectedVolume, priceRange, searchQuery]);
+
   useEffect(() => {
     applyFilters();
-  }, [products, selectedCategory, selectedVolume, priceRange, searchQuery]);
+  }, [applyFilters]);
 
   const loadSpicerProducts = async () => {
     try {
@@ -84,36 +114,6 @@ const SpicerProductsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const applyFilters = () => {
-    let filtered = [...products];
-
-    // Фильтр по категории
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(p => p.category === selectedCategory);
-    }
-
-    // Фильтр по объему
-    if (selectedVolume !== 'all') {
-      filtered = filtered.filter(p => p.volume === selectedVolume);
-    }
-
-    // Фильтр по цене
-    filtered = filtered.filter(
-      p => p.price >= priceRange[0] && p.price <= priceRange[1]
-    );
-
-    // Поиск
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(query) ||
-        p.description?.toLowerCase().includes(query)
-      );
-    }
-
-    setFilteredProducts(filtered);
   };
 
   // Получение уникальных значений для фильтров

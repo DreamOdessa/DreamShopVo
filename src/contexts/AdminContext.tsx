@@ -53,7 +53,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       // Для публичных страниц сразу используем ограниченный запрос к Firestore (без getAll + slice)
       const productsPromise = isAdmin
         ? productService.getAll()
-        : productService.getLimited(60);
+        : productService.getLimitedWithoutSpicer(60);
 
       const categoriesPromise = categoryService.getAll().catch(err => {
         console.error('Ошибка загрузки категорий:', err);

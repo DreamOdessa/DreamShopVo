@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Импорт товаров Spicer в Firebase</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .info {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 4px solid #2196f3;
+    }
+    button {
+      background: linear-gradient(135deg, #f4d03f 0%, #f39c12 100%);
+      color: #000;
+      border: none;
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 10px 5px;
+      transition: transform 0.2s;
+    }
+    button:hover {
+      transform: scale(1.05);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .log {
+      background: #263238;
+      color: #aed581;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 20px;
+      white-space: pre-wrap;
+    }
+    .error { color: #ff5252; }
+    .success { color: #69f0ae; }
+    .warning { color: #ffd740; }
+    .progress {
+      background: #e0e0e0;
+      height: 30px;
+      border-radius: 15px;
+      overflow: hidden;
+      margin: 20px 0;
+      display: none;
+    }
+    .progress-bar {
+      background: linear-gradient(90deg, #4dd0e1, #26c6da);
+      height: 100%;
+      transition: width 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔥 Импорт товаров Spicer</h1>
+    <div class="info">
+      <strong>Инструкция:</strong>
+      <ol>
+        <li>Убедитесь, что вы авторизованы в Firebase (admin права)</li>
+        <li>Нажмите кнопку "Начать импорт"</li>
+        <li>Дождитесь завершения (может занять несколько минут)</li>
+      </ol>
+    </div>
+
+    <div>
+      <button id="startBtn" onclick="startImport()">🚀 Начать импорт</button>
+      <button id="clearBtn" onclick="clearSpicerProducts()" style="background:#ff5252">🗑️ Удалить все товары Spicer</button>
+      <button onclick="checkProducts()">📊 Проверить товары</button>
+    </div>
+
+    <div class="progress" id="progress">
+      <div class="progress-bar" id="progressBar">0%</div>
+    </div>
+
+    <div class="log" id="log">Лог появится здесь...</div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getFirestore, collection, addDoc, getDocs, query, where, writeBatch, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAxCHgP-eF_xp1kPan6HtcYUCYCJBZc7VE",
+      authDomain: "dreamshop-odessa.firebaseapp.com",
+      projectId: "dreamshop-odessa",
+      storageBucket: "dreamshop-odessa.firebasestorage.app",
+      messagingSenderId: "941215601569",
+      appId: "1:941215601569:web:a4e5c1bb2892892bbc31e0",
+      measurementId: "G-KZHPZJXTS1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.db = db;
+    window.collection = collection;
+    window.addDoc = addDoc;
+    window.getDocs = getDocs;
+    window.query = query;
+    window.where = where;
+    window.writeBatch = writeBatch;
+    window.serverTimestamp = serverTimestamp;
+
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('log');
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : '';
+      logEl.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(message);
+    }
+
+    function updateProgress(current, total) {
+      const percent = Math.round((current / total) * 100);
+      const progressEl = document.getElementById('progress');
+      const progressBar = document.getElementById('progressBar');
+      progressEl.style.display = 'block';
+      progressBar.style.width = percent + '%';
+      progressBar.textContent = `${current} / ${total} (${percent}%)`;
+    }
+
+    window.startImport = async function() {
+      const startBtn = document.getElementById('startBtn');
+      startBtn.disabled = true;
+      document.getElementById('log').innerHTML = '';
+      
+      log('🚀 Начало импорта товаров Spicer...', 'info');
+      
+      try {
+        // Загружаем JSON
+        log('📥 Загрузка данных из /data/spicer-products.json...', 'info');
+        const response = await fetch('/data/spicer-products.json');
+        const products = await response.json();
+        
+        log(`✅ Загружено ${products.length} товаров`, 'success');
+        
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (let i = 0; i < products.length; i++) {
+          const product = products[i];
+          
+          try {
+            // Извлекаем категорию из URL
+            let category = product.category || '';
+            if (!category && product.link) {
+              const match = product.link.match(/product-category\/([^\/]+)/);
+              if (match) category = match[1];
+            }
+
+            const productData = {
+              name: product.title,
+              title: product.title,
+              description: product.description || '',
+              fullDescription: product.fullDescription || '',
+              price: parseFloat(product.price) || 0,
+              image: product.imageUrl,
+              imageUrl: product.imageUrl,
+              volume: product.volume || '',
+              category: category || 'spicer',
+              ingredients: product.ingredients ? product.ingredients.split(',').map(s => s.trim()).filter(Boolean) : [],
+              alcoholContent: product.alcoholContent || '',
+              brand: 'spicer',
+              isSpicer: true,
+              isPopular: false,
+              organic: false,
+              inStock: true,
+              createdAt: serverTimestamp(),
+              sourceLink: product.link || ''
+            };
+
+            await addDoc(collection(db, 'products'), productData);
+            successCount++;
+            
+            if (successCount % 50 === 0) {
+              log(`✅ Импортировано ${successCount} товаров...`, 'info');
+            }
+            
+            updateProgress(i + 1, products.length);
+            
+          } catch (error) {
+            errorCount++;
+            log(`❌ Ошибка при импорте "${product.title}": ${error.message}`, 'error');
+          }
+        }
+
+        log(`\n✨ ИМПОРТ ЗАВЕРШЕН!`, 'success');
+        log(`✅ Успешно: ${successCount}`, 'success');
+        log(`❌ Ошибок: ${errorCount}`, errorCount > 0 ? 'error' : 'info');
+        log(`📊 Всего обработано: ${products.length}`, 'info');
+
+      } catch (error) {
+        log(`💥 Критическая ошибка: ${error.message}`, 'error');
+        console.error(error);
+      } finally {
+        startBtn.disabled = false;
+      }
+    };
+
+    window.clearSpicerProducts = async function() {
+      if (!confirm('⚠️ Вы уверены? Это удалит ВСЕ товары Spicer из базы!')) return;
+      
+      const clearBtn = document.getElementById('clearBtn');
+      clearBtn.disabled = true;
+      
+      try {
+        log('🗑️ Удаление товаров Spicer...', 'warning');
+        
+        const q = query(collection(db, 'products'), where('brand', '==', 'spicer'));
+        const snapshot = await getDocs(q);
+        
+        log(`Найдено ${snapshot.size} товаров Spicer`, 'info');
+        
+        const batch = writeBatch(db);
+        snapshot.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+        
+        log(`✅ Удалено ${snapshot.size} товаров`, 'success');
+      } catch (error) {
+        log(`❌ Ошибка удаления: ${error.message}`, 'error');
+      } finally {
+        clearBtn.disabled = false;
+      }
+    };
+
+    window.checkProducts = async function() {
+      try {
+        log('📊 Проверка товаров в базе...', 'info');
+        
+        const allSnapshot = await getDocs(collection(db, 'products'));
+        const spicerQuery = query(collection(db, 'products'), where('brand', '==', 'spicer'));
+        const spicerSnapshot = await getDocs(spicerQuery);
+        
+        log(`Всего товаров: ${allSnapshot.size}`, 'info');
+        log(`Товаров Spicer: ${spicerSnapshot.size}`, 'success');
+        log(`Других товаров: ${allSnapshot.size - spicerSnapshot.size}`, 'info');
+      } catch (error) {
+        log(`❌ Ошибка: ${error.message}`, 'error');
+      }
+    };
+
+    log('✅ Firebase подключен. Готов к импорту!', 'success');
+  </script>
+</body>
+</html>

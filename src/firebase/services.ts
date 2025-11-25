@@ -55,6 +55,41 @@ export const productService = {
     })) as Product[];
   },
 
+  // Получить товары БЕЗ Spicer (для основного магазина)
+  async getWithoutSpicer(): Promise<Product[]> {
+    const snapshot = await getDocs(collection(db, PRODUCTS_COLLECTION));
+    return snapshot.docs
+      .filter(doc => {
+        const data = doc.data();
+        return !data.brand || data.brand !== 'spicer';
+      })
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
+      })) as Product[];
+  },
+
+  // Получить ограниченное число товаров БЕЗ Spicer
+  async getLimitedWithoutSpicer(limitCount: number = 60): Promise<Product[]> {
+    const q = query(
+      collection(db, PRODUCTS_COLLECTION),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs
+      .filter(doc => {
+        const data = doc.data();
+        return !data.brand || data.brand !== 'spicer';
+      })
+      .slice(0, limitCount)
+      .map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
+      })) as Product[];
+  },
+
   // Получить товар по ID
   async getById(id: string): Promise<Product | null> {
     const docRef = doc(db, PRODUCTS_COLLECTION, id);

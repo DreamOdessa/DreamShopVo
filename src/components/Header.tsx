@@ -156,6 +156,19 @@ const NavLink = styled(Link)<{ isActive: boolean }>`
   }
 `;
 
+// Spicer icon (from provided SVG simplified)
+const SpicerIcon = styled.span`
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-right:8px;
+  svg { width:20px; height:20px; display:block; }
+  @media (max-width:768px){
+    margin-right:6px;
+    svg { width:18px; height:18px; }
+  }
+`;
+
 const UserActions = styled.div`
   display: flex;
   align-items: center;
@@ -628,6 +641,19 @@ const Header: React.FC = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Головна
+              </NavLink>
+              <NavLink
+                to="/about-brand"
+                isActive={location.pathname === '/about-brand'}
+                onClick={() => setIsMenuOpen(false)}
+                aria-label="Spicer бренд"
+              >
+                <SpicerIcon>
+                  <svg viewBox="0 0 92.833 92.833" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <path fill="currentColor" d="M89.834 1.75H3c-1.654 0-3 1.346-3 3v13.334c0 1.654 1.346 3 3 3h86.833c1.653 0 3-1.346 3-3V4.75c0-1.654-1.346-3-3-3zm0 35H3c-1.654 0-3 1.346-3 3v13.334c0 1.654 1.346 3 3 3h86.833c1.653 0 3-1.346 3-3V39.75c0-1.654-1.346-3-3-3zm0 35H3c-1.654 0-3 1.346-3 3v13.334c0 1.654 1.346 3 3 3h86.833c1.653 0 3-1.346 3-3V74.75c0-1.654-1.346-3-3-3z" />
+                  </svg>
+                </SpicerIcon>
+                Spicer
               </NavLink>
               
               <NavLink 

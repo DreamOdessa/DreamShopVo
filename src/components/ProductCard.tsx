@@ -244,7 +244,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   // Получаем изображения: [главное фото, доп фото при hover, ...галерея]
   // Обработка старых товаров (без массива images) и новых товаров
-  const mainImage = (product.images && product.images.length > 0) ? product.images[0] : product.image;
+  const mainImageBase = product.image || (product as any).imageUrl || '';
+  const mainImage = (product.images && product.images.length > 0) ? product.images[0] : mainImageBase;
   const hoverImage = (product.images && product.images.length > 1) ? product.images[1] : null;
 
   // Оптимизация: используем уменьшенные версии для каталога (400x400)

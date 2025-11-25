@@ -1,0 +1,62 @@
+[
+  {
+    "id": "cat_____",
+    "name": "Інше",
+    "slug": "----",
+    "description": "Категорія Інше",
+    "imageUrl": "",
+    "productsCount": 58,
+    "order": 0,
+    "active": true
+  },
+  {
+    "id": "cat______",
+    "name": "Акції",
+    "slug": "-----",
+    "description": "Категорія Акції",
+    "imageUrl": "",
+    "productsCount": 4,
+    "order": 0,
+    "active": true
+  },
+  {
+    "id": "cat___________________",
+    "name": "Подарункові набори",
+    "slug": "------------------",
+    "description": "Категорія Подарункові набори",
+    "imageUrl": "",
+    "productsCount": 15,
+    "order": 0,
+    "active": true
+  },
+  {
+    "id": "cat_cocktail_ingredients",
+    "name": "cocktail_ingredients",
+    "slug": "cocktail_ingredients",
+    "description": "Категорія cocktail_ingredients",
+    "imageUrl": "",
+    "productsCount": 1,
+    "order": 0,
+    "active": true
+  },
+  {
+    "id": "cat_distill",
+    "name": "Distill",
+    "slug": "distill",
+    "description": "Категорія Distill",
+    "imageUrl": "",
+    "productsCount": 3,
+    "order": 0,
+    "active": true
+  },
+  {
+    "id": "cat_______",
+    "name": "Лікери",
+    "slug": "------",
+    "description": "Категорія Лікери",
+    "imageUrl": "",
+    "productsCount": 6,
+    "order": 0,
+    "active": true
+  }
+]

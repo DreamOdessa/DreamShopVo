@@ -1,0 +1,16 @@
+{
+  "name": "spicer-parser",
+  "version": "1.0.0",
+  "description": "Парсер товаров с spicer.ua",
+  "main": "spicer-parser.js",
+  "scripts": {
+    "parse": "node spicer-parser.js",
+    "parse:fast": "node spicer-parser-fast.js",
+    "convert": "node convert-to-firebase.js"
+  },
+  "dependencies": {
+    "firebase": "^12.6.0",
+    "firebase-admin": "^13.6.0",
+    "puppeteer": "^22.0.0"
+  }
+}

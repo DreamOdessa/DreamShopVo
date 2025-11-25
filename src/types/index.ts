@@ -23,7 +23,7 @@ export interface Product {
   originalPrice?: number; // для отображения зачеркнутой цены
   image: string; // основное изображение (для совместимости)
   images?: string[]; // массив изображений (до 5): [главное, hover, галерея1, галерея2, галерея3]
-  category: 'chips' | 'decorations' | 'syrups' | 'purees' | 'dried_flowers';
+  category: string; // расширено для поддержки брендов (spicer и др.)
   subcategory?: string; // подкатегория внутри выбранной категории
   organic: boolean;
   inStock: boolean;
@@ -32,6 +32,11 @@ export interface Product {
   weight?: string;
   ingredients?: string[];
   createdAt: string;
+  // Расширенные поля для мультибрендовой поддержки
+  brand?: string; // например 'spicer'
+  isSpicer?: boolean; // дублирующий флаг удобства фильтрации
+  volume?: string; // объем для алкогольных напитков
+  imageUrl?: string; // альтернативное поле изображения (Spicer импорт)
 }
 
 export interface CartItem {

@@ -1,0 +1,74 @@
+/* AboutBrand Page Styles */
+:root {
+  --brand-font: 'Mulish', sans-serif;
+  --brand-black: #000;
+  --brand-white: #fff;
+  --brand-gray-light: #f4f4f4;
+  --brand-spacing-section: 100px;
+}
+
+.brand-page-wrapper { font-family: var(--brand-font); color: var(--brand-black); background:#fff; }
+
+/* HERO */
+.brand-hero { display:flex; min-height:100vh; width:100%; }
+.brand-hero__left, .brand-hero__right { flex:1 1 50%; position:relative; }
+.brand-hero__left { display:flex; align-items:center; justify-content:center; padding:0 5%; }
+.brand-hero__content { width:100%; max-width:600px; text-align:center; }
+.brand-logo { width:100%; max-width:600px; height:auto; display:block; margin:0 auto; }
+.brand-title { margin-top:20px; text-transform:uppercase; font-size:1.5rem; font-weight:800; letter-spacing:1px; line-height:1.25; }
+.brand-hero__right img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+
+/* INTRO */
+.brand-intro { padding:80px 20px; }
+.container-small { max-width:900px; margin:0 auto; }
+.brand-intro p { font-size:1.4rem; line-height:1.4; font-weight:400; }
+
+/* VALUES */
+.brand-values { padding:80px 20px; }
+.container { max-width:1200px; margin:0 auto; }
+.values-list { display:grid; grid-template-columns:repeat(3,1fr); gap:40px; list-style:none; padding:0; margin:0; }
+.values-item { display:flex; flex-direction:column; }
+.values-item h2 { font-size:24px; margin:0 0 20px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; }
+.values-item p { font-size:16px; line-height:1.6; font-weight:400; margin:0 0 20px; }
+.values-img-wrapper { width:100%; aspect-ratio:1 / 1; overflow:hidden; }
+.values-img-wrapper img { width:100%; height:100%; object-fit:cover; display:block; }
+
+/* PHILOSOPHY & MISSION SHARED ROW */
+.brand-philosophy, .brand-mission { background:#fff; }
+.brand-mission { background: var(--brand-gray-light); }
+.philosophy-row { display:flex; align-items:stretch; justify-content:space-between; width:100%; max-width:1200px; margin:0 auto; }
+.philosophy-row.reversed { flex-direction:row-reverse; }
+.philosophy-content { flex:1 1 50%; padding:60px; display:flex; flex-direction:column; justify-content:center; }
+.philosophy-content h2 { font-size:24px; font-weight:800; margin:0 0 34px; text-transform:uppercase; letter-spacing:.8px; }
+.philosophy-content p { font-size:16px; line-height:1.6; margin:0 0 20px; font-weight:400; }
+.philosophy-content .brand-accent { font-weight:700; text-transform:uppercase; }
+.philosophy-image { flex:1 1 50%; position:relative; display:flex; align-items:center; justify-content:center; padding:60px; }
+.philosophy-image img { width:100%; height:auto; object-fit:contain; max-width:520px; }
+
+/* CTA */
+.brand-cta { background:#000; color:#fff; padding: var(--brand-spacing-section) 20px; }
+.brand-cta .container { max-width:1200px; margin:0 auto; }
+.brand-cta h2 { font-size:36px; margin:0 0 40px; text-transform:uppercase; font-weight:800; letter-spacing:1px; line-height:1.2; }
+.btn-primary { display:inline-flex; align-items:center; justify-content:center; padding:12px 32px; font-size:14px; font-weight:700; text-transform:uppercase; text-decoration:none; color:#fff; border:1px solid #fff; background:transparent; transition:.3s ease; }
+.btn-primary:hover { background:#fff; color:#000; }
+
+/* RESPONSIVE */
+@media (max-width: 1100px) {
+  .values-list { grid-template-columns:repeat(2,1fr); }
+}
+@media (max-width: 800px) {
+  .brand-hero { flex-direction:column; min-height:auto; }
+  .brand-hero__right img { position:relative; height:60vh; }
+  .values-list { grid-template-columns:1fr; }
+  .philosophy-row, .philosophy-row.reversed { flex-direction:column; }
+  .philosophy-content, .philosophy-image { padding:40px 20px; }
+  .philosophy-image img { max-width:100%; }
+  .brand-cta h2 { font-size:28px; }
+  .brand-intro p { font-size:1.2rem; }
+}
+@media (max-width: 500px) {
+  .brand-title { font-size:1.25rem; }
+  .philosophy-content h2 { font-size:20px; }
+  .philosophy-content p { font-size:15px; }
+  .btn-primary { padding:10px 24px; font-size:12px; }
+}

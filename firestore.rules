@@ -45,5 +45,27 @@ service cloud.firestore {
       allow read: if true;
       allow write: if true; // разрешено без авторизации для записи посещений
     }
+
+    // Bug Reports (Visual Feedback Tool)
+    match /bug_reports/{reportId} {
+      // Читання: тільки адміни та тестувальники
+      allow read: if request.auth != null && 
+                     (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
+                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isTester == true);
+      
+      // Створення: тільки авторизовані користувачі з роллю
+      allow create: if request.auth != null && 
+                       (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
+                        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isTester == true) &&
+                       request.resource.data.userId == request.auth.uid;
+      
+      // Оновлення: тільки адміни (для зміни статусу)
+      allow update: if request.auth != null && 
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      
+      // Видалення: тільки адміни
+      allow delete: if request.auth != null && 
+                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
   }
 }

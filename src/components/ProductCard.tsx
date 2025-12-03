@@ -235,9 +235,10 @@ const getCategoryName = (category: string) => {
 
 interface ProductCardProps {
   product: Product;
+  customLink?: string; // Опциональная кастомная ссылка (например, для Spicer)
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, customLink }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -279,8 +280,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     ? Math.round(product.price * (1 - (user?.discount || 0) / 100))
     : product.price;
 
+  // Определяем ссылку: если есть customLink - используем его, иначе стандартную ссылку на товар
+  const linkTo = customLink || `/products/${product.id}`;
+
   return (
-    <Link to={`/products/${product.id}`} style={{ textDecoration: 'none', height: '100%' }}>
+    <Link to={linkTo} style={{ textDecoration: 'none', height: '100%' }}>
       <Card
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}

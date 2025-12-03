@@ -618,7 +618,8 @@ const ProductSlider: React.FC<{
   categoryDescription: string;
   layout: 'left' | 'right';
   categorySlug: string; // Добавляем slug для ссылки
-}> = ({ products, categoryName, categoryDescription, layout, categorySlug }) => {
+  isSpicer?: boolean; // Флаг для определения категории Spicer
+}> = ({ products, categoryName, categoryDescription, layout, categorySlug, isSpicer }) => {
   // Функция для определения количества видимых карточек в зависимости от ширины экрана
   const getItemsPerView = () => {
     if (typeof window === 'undefined') return 5.5;
@@ -689,7 +690,10 @@ const ProductSlider: React.FC<{
         >
           {products.map((product, idx) => (
             <ItemWrapper key={`${product.id}-${idx}`} itemsPerView={itemsPerView}>
-              <ProductCard product={product} />
+              <ProductCard 
+                product={product} 
+                customLink={isSpicer ? '/spicer' : undefined}
+              />
             </ItemWrapper>
           ))}
         </SliderTrack>
@@ -750,6 +754,8 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, layout }) => {
           layout={layout}
           // 'categorySlug' - id категории для ссылки на страницу категории (Products.tsx фильтрует по id)
           categorySlug={category.id}
+          // Проверяем, является ли это категорией Spicer по slug или id
+          isSpicer={category.slug === 'spicer' || category.id === 'spicer' || category.name.toLowerCase().includes('spicer')}
         />
       </CarouselContainer>
       

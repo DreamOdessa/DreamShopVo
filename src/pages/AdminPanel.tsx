@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye, FiUpload, FiEyeOff, FiStar, FiTag, FiChevronDown, FiSettings } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye, FiUpload, FiEyeOff, FiStar, FiTag, FiChevronDown, FiSettings, FiAlertCircle } from 'react-icons/fi';
 import CategoryManager from '../components/CategoryManager';
 import CategoryShowcaseManager from '../components/CategoryShowcaseManager';
 import AdminSidebar from '../components/admin/AdminSidebar';
@@ -9,6 +9,7 @@ import AdminNavbar from '../components/admin/AdminNavbar';
 import AdminDashboard from '../components/admin/AdminDashboard';
 import UserProfileModal from '../components/admin/UserProfileModal';
 import DiagnosticPanel from '../components/admin/DiagnosticPanel';
+import BugReportsPanel from '../components/admin/BugReportsPanel';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { Product, Order, User } from '../types';
@@ -1358,6 +1359,10 @@ const AdminPanel: React.FC = () => {
             <FiShoppingBag />
             Замовлення
           </Tab>
+          <Tab isActive={activeTab === 'bugs'} onClick={() => setActiveTab('bugs')}>
+            <FiAlertCircle />
+            Звіти про баги
+          </Tab>
         </Tabs>
 
         <Content>
@@ -1821,6 +1826,16 @@ const AdminPanel: React.FC = () => {
               </SectionHeader>
 
               <DiagnosticPanel />
+            </motion.div>
+          )}
+
+          {activeTab === 'bugs' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <BugReportsPanel />
             </motion.div>
           )}
 

@@ -366,6 +366,7 @@ const EmptyState = styled.div`
 
 const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClose, onUpdateUser }) => {
   const [isAdmin, setIsAdmin] = useState(user?.isAdmin || false);
+  const [isTester, setIsTester] = useState(user?.isTester || false);
   const [discount, setDiscount] = useState(user?.discount || 0);
   const [userOrders, setUserOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -389,6 +390,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClose, onUp
   useEffect(() => {
     if (user) {
       setIsAdmin(user.isAdmin || false);
+      setIsTester(user.isTester || false);
       setDiscount(user.discount || 0);
       loadUserOrders();
     }
@@ -397,16 +399,17 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClose, onUp
   useEffect(() => {
     if (user) {
       const adminChanged = isAdmin !== (user.isAdmin || false);
+      const testerChanged = isTester !== (user.isTester || false);
       const discountChanged = discount !== (user.discount || 0);
-      setHasChanges(adminChanged || discountChanged);
+      setHasChanges(adminChanged || testerChanged || discountChanged);
     }
-  }, [isAdmin, discount, user]);
+  }, [isAdmin, isTester, discount, user]);
 
   const handleSave = async () => {
     if (!user?.id || !hasChanges) return;
 
     try {
-      await onUpdateUser(user.id, { isAdmin, discount });
+      await onUpdateUser(user.id, { isAdmin, isTester, discount });
       onClose();
     } catch (error) {
       console.error('Error updating user:', error);
@@ -488,6 +491,22 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ user, onClose, onUp
                       type="checkbox"
                       checked={isAdmin}
                       onChange={(e) => setIsAdmin(e.target.checked)}
+                    />
+                    <span></span>
+                  </ToggleSwitch>
+                </Control>
+
+                <Control>
+                  <ControlLabel htmlFor="tester-toggle">
+                    <FiShield />
+                    Тестувальник (Bug Report Tool)
+                  </ControlLabel>
+                  <ToggleSwitch>
+                    <input
+                      id="tester-toggle"
+                      type="checkbox"
+                      checked={isTester}
+                      onChange={(e) => setIsTester(e.target.checked)}
                     />
                     <span></span>
                   </ToggleSwitch>

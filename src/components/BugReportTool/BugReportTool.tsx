@@ -251,6 +251,13 @@ const BugReportTool: React.FC<BugReportToolProps> = () => {
 
   // Handle click on any element in feedback mode
   const handleElementClick = useCallback((e: MouseEvent) => {
+    // Check if click is on the floating button itself
+    const target = e.target as HTMLElement;
+    if (target.closest('button[title*="режим"]')) {
+      // This is a click on toggle button, don't intercept
+      return;
+    }
+
     // Prevent default action and stop propagation
     e.preventDefault();
     e.stopPropagation();
@@ -305,8 +312,16 @@ const BugReportTool: React.FC<BugReportToolProps> = () => {
         innerText: modalData.element.innerText?.substring(0, 100) || ''
       } : undefined;
 
+      console.log('📝 Submitting bug report:', {
+        url: window.location.href,
+        xPos: modalData.xPercent,
+        yPos: modalData.yPercent,
+        userId: user.id,
+        userEmail: user.email
+      });
+
       // Submit bug report
-      await bugReportService.create({
+      const bugId = await bugReportService.create({
         url: window.location.href,
         xPos: modalData.xPercent,
         yPos: modalData.yPercent,
@@ -320,14 +335,20 @@ const BugReportTool: React.FC<BugReportToolProps> = () => {
         elementInfo
       });
 
+      console.log('✅ Bug report created with ID:', bugId);
       toast.success('Звіт про баг відправлено!');
       
       // Close modal and exit feedback mode
       handleCloseModal();
       setFeedbackMode(false);
     } catch (error) {
-      console.error('Error submitting bug report:', error);
-      toast.error('Помилка відправки звіту');
+      console.error('❌ Error submitting bug report:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        code: (error as any)?.code,
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      toast.error(`Помилка відправки звіту: ${error instanceof Error ? error.message : 'Невідома помилка'}`);
     } finally {
       setSubmitting(false);
     }

@@ -836,10 +836,16 @@ const CategoryShowcase: React.FC = () => {
           // 'products: ...' - *главное*: добавляем отфильтрованные товары
           // 'allProducts.filter(...)' - ищем в *общем* списке продуктов
           products: allProducts
-            // .filter((p: Product) => p.category === (c.slug || c.id) && ...)
-            // Оставляем *только* те 'p' (продукты), у которых 'p.category'
-            // совпадает с 'c.slug' (или 'c.id') *и* которые 'isActive'
-            .filter((p: Product) => p.category === (c.slug || c.id) && p.isActive !== false)
+            .filter((p: Product) => {
+              // Специальная логика для категории Spicer - фильтруем по полю brand
+              const isSpicer = c.slug === 'spicer' || c.id === 'spicer' || (c.name || '').toLowerCase().includes('spicer');
+              if (isSpicer) {
+                // Для категории Spicer показываем все товары с brand='spicer'
+                return p.brand === 'spicer' && p.isActive !== false;
+              }
+              // Для обычных категорий фильтруем по category
+              return p.category === (c.slug || c.id) && p.isActive !== false;
+            })
             // .slice(0, 8) - берем только первые 8 найденных товаров
             .slice(0, 8)
         }));

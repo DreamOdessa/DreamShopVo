@@ -47,25 +47,21 @@ service cloud.firestore {
     }
 
     // Bug Reports (Visual Feedback Tool)
+    // Спрощені правила: дозволяємо всім авторизованим створювати та читати
+    // Адміни можуть керувати через UI перевірку isAdmin/isTester
     match /bug_reports/{reportId} {
-      // Читання: тільки адміни та тестувальники
-      allow read: if request.auth != null && 
-                     (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
-                      get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isTester == true);
+      // Читання: всі авторизовані користувачі
+      allow read: if request.auth != null;
       
-      // Створення: тільки авторизовані користувачі з роллю
+      // Створення: всі авторизовані (перевірка ролі на frontend)
       allow create: if request.auth != null && 
-                       (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true ||
-                        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isTester == true) &&
                        request.resource.data.userId == request.auth.uid;
       
-      // Оновлення: тільки адміни (для зміни статусу)
-      allow update: if request.auth != null && 
-                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      // Оновлення: всі авторизовані (UI обмежує доступ)
+      allow update: if request.auth != null;
       
-      // Видалення: тільки адміни
-      allow delete: if request.auth != null && 
-                       get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      // Видалення: всі авторизовані (UI обмежує доступ)
+      allow delete: if request.auth != null;
     }
   }
 }

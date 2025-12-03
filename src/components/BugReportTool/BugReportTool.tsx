@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
-import { FiBug, FiX, FiSend } from 'react-icons/fi';
+import { FiAlertCircle, FiX, FiSend } from 'react-icons/fi';
 import { bugReportService } from '../../firebase/services';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -344,13 +344,13 @@ const BugReportTool: React.FC<BugReportToolProps> = () => {
         onClick={toggleFeedbackMode}
         title={feedbackMode ? 'Вимкнути режим звітування' : 'Повідомити про баг'}
       >
-        {feedbackMode ? <FiX /> : <FiBug />}
+        {feedbackMode ? <FiX /> : <FiAlertCircle />}
       </FloatingButton>
 
       {/* Feedback Mode Indicator */}
       {feedbackMode && !modalData && (
         <ModeIndicator>
-          <FiBug />
+          <FiAlertCircle />
           Натисніть на елемент для звіту про баг
         </ModeIndicator>
       )}
@@ -365,7 +365,7 @@ const BugReportTool: React.FC<BugReportToolProps> = () => {
           <Modal $x={modalData.x} $y={modalData.y}>
             <ModalHeader>
               <ModalTitle>
-                <FiBug />
+                <FiAlertCircle />
                 Звіт про баг
               </ModalTitle>
               <CloseButton onClick={handleCloseModal}>

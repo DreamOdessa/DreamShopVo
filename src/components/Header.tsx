@@ -27,11 +27,15 @@ const Nav = styled.nav`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 75rem;
   width: 100%;
   margin: 0 auto;
-  padding: 0 clamp(0.5rem, 2.5vw, 1.5rem);
+  padding: 0 clamp(0.5rem, 2.5vw, 2rem);
   position: relative;
+  
+  /* На десктопе растягиваем элементы с равномерными промежутками */
+  @media (min-width: 769px) {
+    gap: clamp(1rem, 3vw, 3rem);
+  }
   
   /* ИЗМЕНЕНО: Убрали justify-content: center для мобильных */
 `;
@@ -46,6 +50,12 @@ const Logo = styled(Link)`
   align-items: center;
   /* ИЗМЕНЕНО: Отступ стал крупнее на минимуме */
   gap: clamp(0.25rem, 1vw, 0.5rem);
+  
+  /* На десктопе логотип занимает фиксированное место слева */
+  @media (min-width: 769px) {
+    flex-shrink: 0;
+    min-width: fit-content;
+  }
 
   /* ИЗМЕНЕНО: Логотип теперь (order: 2) на мобильных, чтобы быть в центре */
   @media (max-width: 768px) {
@@ -87,6 +97,13 @@ const NavLinks = styled.div<{ isOpen: boolean }>`
   align-items: center;
   /* ИЗМЕНЕНО: Отступ стал плавным */
   gap: clamp(0.5rem, 2vw, 2rem);
+  
+  /* На десктопе растягиваем навигацию */
+  @media (min-width: 769px) {
+    flex: 1;
+    justify-content: center;
+    max-width: 60%;
+  }
 
   @media (max-width: 768px) {
     position: fixed;
@@ -173,7 +190,13 @@ const UserActions = styled.div`
   display: flex;
   align-items: center;
   /* ИЗМЕНЕНО: Отступ стал плавным */
-  gap: clamp(0.5rem, 1.5vw, 1rem);
+  gap: clamp(0.5rem, 1.5vw, 1.5rem);
+  
+  /* На десктопе выравниваем элементы справа */
+  @media (min-width: 769px) {
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
 
   /* ИЗМЕНЕНО: Удалены @media запросы для gap */
 `;

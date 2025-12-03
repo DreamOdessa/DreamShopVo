@@ -50,10 +50,9 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       setLoading(true);
       const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
 
-      // Для публичных страниц загружаем все товары без Spicer
-      const productsPromise = isAdmin
-        ? productService.getAll()
-        : productService.getWithoutSpicer();
+      // Загружаем ВСЕ товары (включая Spicer) для витрины на главной странице
+      // Фильтрация Spicer будет происходить на странице Products
+      const productsPromise = productService.getAll();
 
       const categoriesPromise = categoryService.getAll().catch(err => {
         console.error('Ошибка загрузки категорий:', err);

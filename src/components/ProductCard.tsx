@@ -53,12 +53,12 @@ const ProductImage = styled.img`
   transition: opacity 0.3s ease, transform 0.3s ease;
 `;
 
-const MainImage = styled(ProductImage)`
+const MainImage = styled(ProductImage)<{ $disableHover?: boolean }>`
   opacity: 1;
   z-index: 1;
 
   ${Card}:hover & {
-    opacity: 0;
+    opacity: ${props => props.$disableHover ? '1' : '0'};
   }
 `;
 
@@ -236,9 +236,11 @@ const getCategoryName = (category: string) => {
 interface ProductCardProps {
   product: Product;
   customLink?: string; // Опциональная кастомная ссылка (например, для Spicer)
+  disableLink?: boolean; // Отключить ссылку на детальную страницу
+  disableHoverImage?: boolean; // Отключить смену изображения при наведении
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, customLink }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableLink, disableHoverImage }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -261,8 +263,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink }) => {
   };
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
     e.stopPropagation();
+    // Не вызываем preventDefault, чтобы кнопка работала в режиме без ссылки
+    if (!disableLink) {
+      e.preventDefault();
+    }
     if (!user) {
       toast.error('Увійдіть в систему, щоб зберігати обране');
       return;
@@ -283,16 +288,31 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink }) => {
   // Определяем ссылку: если есть customLink - используем его, иначе стандартную ссылку на товар
   const linkTo = customLink || `/products/${product.id}`;
 
-  return (
-    <Link to={linkTo} style={{ textDecoration: 'none', height: '100%' }}>
-      <Card
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-      >
-        <ImageContainer>
-          <ImageWrapper>
-            <MainImage 
-              src={optimizedMainImage} 
+  // Контент карточки
+  const cardContent = (
+    <Card
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <ImageContainer>
+        <ImageWrapper>
+          <MainImage 
+            src={optimizedMainImage} 
+            alt={product.name}
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
+            width={400}
+            height={400}
+            style={{ backgroundColor: '#f5f5f5' }}
+            $disableHover={disableHoverImage}
+            onError={(e) => {
+              e.currentTarget.src = mainImage;
+            }}
+          />
+          {!disableHoverImage && optimizedHoverImage && (
+            <HoverImage 
+              src={optimizedHoverImage} 
               alt={product.name}
               loading="lazy"
               decoding="async"
@@ -301,66 +321,62 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink }) => {
               height={400}
               style={{ backgroundColor: '#f5f5f5' }}
               onError={(e) => {
-                e.currentTarget.src = mainImage;
+                if (hoverImage) e.currentTarget.src = hoverImage;
               }}
             />
-            {optimizedHoverImage && (
-              <HoverImage 
-                src={optimizedHoverImage} 
-                alt={product.name}
-                loading="lazy"
-                decoding="async"
-                fetchPriority="low"
-                width={400}
-                height={400}
-                style={{ backgroundColor: '#f5f5f5' }}
-                onError={(e) => {
-                  if (hoverImage) e.currentTarget.src = hoverImage;
-                }}
-              />
-            )}
-          </ImageWrapper>
-          {product.organic && (
-            <OrganicBadge>
-              <FiZap />
-              Органічний
-            </OrganicBadge>
           )}
-          <ActionButtons>
-            <ActionButton 
-              onClick={handleToggleWishlist} 
-              title={isInWishlist(product.id) ? "Видалити з обраного" : "Додати до обраного"}
-              style={{ color: isInWishlist(product.id) ? '#e74c3c' : undefined }}
-            >
-              <FiHeart />
-            </ActionButton>
-          </ActionButtons>
-        </ImageContainer>
+        </ImageWrapper>
+        {product.organic && (
+          <OrganicBadge>
+            <FiZap />
+            Органічний
+          </OrganicBadge>
+        )}
+        <ActionButtons>
+          <ActionButton 
+            onClick={handleToggleWishlist} 
+            title={isInWishlist(product.id) ? "Видалити з обраного" : "Додати до обраного"}
+            style={{ color: isInWishlist(product.id) ? '#e74c3c' : undefined }}
+          >
+            <FiHeart />
+          </ActionButton>
+        </ActionButtons>
+      </ImageContainer>
 
-        <CardContent>
-          <Category>{getCategoryName(product.category)}</Category>
-          <ProductName>{product.name}</ProductName>
-          <ProductDescription>{product.description}</ProductDescription>
+      <CardContent>
+        <Category>{getCategoryName(product.category)}</Category>
+        <ProductName>{product.name}</ProductName>
+        <ProductDescription>{product.description}</ProductDescription>
 
-          <ProductFooter>
-            <PriceContainer>
-              {hasDiscount ? (
-                <>
-                  <Price isDiscounted>{product.price} ₴</Price>
-                  <OriginalPrice>{discountedPrice} ₴</OriginalPrice>
-                </>
-              ) : (
-                <Price>{product.price} ₴</Price>
-              )}
-            </PriceContainer>
+        <ProductFooter>
+          <PriceContainer>
+            {hasDiscount ? (
+              <>
+                <Price isDiscounted>{product.price} ₴</Price>
+                <OriginalPrice>{discountedPrice} ₴</OriginalPrice>
+              </>
+            ) : (
+              <Price>{product.price} ₴</Price>
+            )}
+          </PriceContainer>
 
-            <AddToCartButton onClick={handleAddToCart}>
-              <FiShoppingCart />
-              В кошик
-            </AddToCartButton>
-          </ProductFooter>
-        </CardContent>
-      </Card>
+          <AddToCartButton onClick={handleAddToCart}>
+            <FiShoppingCart />
+            В кошик
+          </AddToCartButton>
+        </ProductFooter>
+      </CardContent>
+    </Card>
+  );
+
+  // Если отключена ссылка - возвращаем без обёртки Link
+  if (disableLink) {
+    return <div style={{ height: '100%' }}>{cardContent}</div>;
+  }
+
+  return (
+    <Link to={linkTo} style={{ textDecoration: 'none', height: '100%' }}>
+      {cardContent}
     </Link>
   );
 };

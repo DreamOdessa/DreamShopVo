@@ -247,7 +247,12 @@ const SpicerProductsPage: React.FC = () => {
               </NoResults>
             ) : (
               filteredProducts.map(product => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard 
+                  key={product.id} 
+                  product={product} 
+                  disableLink={true}
+                  disableHoverImage={true}
+                />
               ))
             )}
           </ProductsGrid>
@@ -260,14 +265,14 @@ const SpicerProductsPage: React.FC = () => {
 // Styled Components
 const PageContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 50%, #0f0f0f 100%);
+  background: linear-gradient(135deg, #ffffffff 0%, #ffffffff 50%, #ffffffff 100%);
   padding-top: 80px;
 `;
 
 const Header = styled.header`
   padding: 60px 20px 40px;
   text-align: center;
-  background: linear-gradient(180deg, rgba(244, 208, 63, 0.1) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(250, 250, 250, 0.07) 0%, transparent 100%);
 `;
 
 const LogoSection = styled.div`
@@ -279,7 +284,7 @@ const SpicerLogo = styled.h1`
   font-size: 4rem;
   font-weight: 900;
   letter-spacing: 15px;
-  background: linear-gradient(135deg, #f4d03f 0%, #f39c12 100%);
+  background: linear-gradient(135deg, #474743ff 0%, #050505ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 10px;
@@ -292,7 +297,7 @@ const SpicerLogo = styled.h1`
 
 const Tagline = styled.p`
   font-size: 1.2rem;
-  color: #cccccc;
+  color: #535353ff;
   font-weight: 300;
 `;
 
@@ -332,7 +337,7 @@ const FilterSection = styled.div`
 
 const FilterTitle = styled.h2`
   font-size: 1.8rem;
-  color: #f4d03f;
+  color: #4d4e4eff;
   margin-bottom: 25px;
   font-weight: 700;
 `;
@@ -347,17 +352,17 @@ const SearchInput = styled.input`
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 10px;
-  color: #ffffff;
+  color: #535151ff;
   font-size: 1rem;
   transition: all 0.3s;
   
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(0, 0, 0, 0.9);
   }
   
   &:focus {
     outline: none;
-    border-color: #f4d03f;
+    border-color: #3feef4ff;
     background: rgba(255, 255, 255, 0.15);
   }
 `;
@@ -368,7 +373,7 @@ const FilterGroup = styled.div`
 
 const FilterLabel = styled.h3`
   font-size: 1.1rem;
-  color: #ffffff;
+  color: #5c5a5aff;
   margin-bottom: 15px;
   font-weight: 600;
 `;
@@ -382,10 +387,10 @@ const FilterList = styled.div`
 const FilterItem = styled.button<{ active: boolean }>`
   padding: 10px 15px;
   background: ${props => props.active 
-    ? 'linear-gradient(135deg, #f4d03f 0%, #f39c12 100%)' 
+    ? 'linear-gradient(135deg, #8ff8f8bb 0%, #12d9f3ff 100%)' 
     : 'rgba(255, 255, 255, 0.05)'};
-  color: ${props => props.active ? '#000000' : '#ffffff'};
-  border: 1px solid ${props => props.active ? '#f4d03f' : 'rgba(255, 255, 255, 0.1)'};
+  color: ${props => props.active ? '#000000' : '#000000ff'};
+  border: 1px solid ${props => props.active ? '#a63eecb4' : 'rgba(255, 255, 255, 0.1)'};
   border-radius: 8px;
   text-align: left;
   cursor: pointer;
@@ -394,9 +399,9 @@ const FilterItem = styled.button<{ active: boolean }>`
   
   &:hover {
     background: ${props => props.active 
-      ? 'linear-gradient(135deg, #f4d03f 0%, #f39c12 100%)' 
+      ? 'linear-gradient(135deg, #12d9f3ff 0%, #8ff8f8bb 100%)' 
       : 'rgba(255, 255, 255, 0.1)'};
-    border-color: #f4d03f;
+    border-color: #a63eecb4;
   }
 `;
 
@@ -408,7 +413,7 @@ const PriceRangeContainer = styled.div`
 
 const PriceInput = styled.input`
   width: 100%;
-  accent-color: #f4d03f;
+  accent-color: #4f8684ff;
   cursor: pointer;
 `;
 
@@ -439,10 +444,10 @@ const ResultsHeader = styled.div`
 
 const ResultCount = styled.h2`
   font-size: 1.4rem;
-  color: #cccccc;
+  color: #747474ff;
   
   span {
-    color: #f4d03f;
+    color: #0a6470ff;
     font-weight: 700;
   }
 `;

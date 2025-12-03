@@ -50,10 +50,10 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       setLoading(true);
       const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
 
-      // Для публичных страниц сразу используем ограниченный запрос к Firestore (без getAll + slice)
+      // Для публичных страниц загружаем все товары без Spicer
       const productsPromise = isAdmin
         ? productService.getAll()
-        : productService.getLimitedWithoutSpicer(60);
+        : productService.getWithoutSpicer();
 
       const categoriesPromise = categoryService.getAll().catch(err => {
         console.error('Ошибка загрузки категорий:', err);

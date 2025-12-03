@@ -618,7 +618,7 @@ const ProductSlider: React.FC<{
   categoryDescription: string;
   layout: 'left' | 'right';
   categorySlug: string; // Добавляем slug для ссылки
-  isSpicer?: boolean; // Флаг для определения категории Spicer
+  isSpicer?: boolean; // Флаг для категории Spicer
 }> = ({ products, categoryName, categoryDescription, layout, categorySlug, isSpicer }) => {
   // Функция для определения количества видимых карточек в зависимости от ширины экрана
   const getItemsPerView = () => {
@@ -691,8 +691,8 @@ const ProductSlider: React.FC<{
           {products.map((product, idx) => (
             <ItemWrapper key={`${product.id}-${idx}`} itemsPerView={itemsPerView}>
               <ProductCard 
-                product={product} 
-                customLink={isSpicer ? '/spicer' : undefined}
+                product={product}
+                customLink={isSpicer ? '/about-brand' : undefined}
               />
             </ItemWrapper>
           ))}

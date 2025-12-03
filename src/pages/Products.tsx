@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
@@ -25,6 +25,12 @@ const Header = styled.div`
   background-blend-mode: overlay;
   position: relative;
   margin-top: clamp(-4rem, -9vw, -7rem);
+  pointer-events: none; /* ⭐ НЕ БЛОКИРУЕМ КЛИКИ */
+
+  /* Дочерние элементы кликабельны */
+  > * {
+    pointer-events: auto;
+  }
 
   &::before {
     content: '';
@@ -64,7 +70,8 @@ const FiltersSection = styled.div`
   border-radius: clamp(1rem, 2.5vw, 1.5rem);
   margin-top: clamp(-1rem, -2.5vw, -2rem);
   position: relative;
-  z-index: 1;
+  z-index: 10; /* ⭐ ПОВЫШАЕМ с 1 до 10 */
+  pointer-events: auto; /* ⭐ ЯВНО РАЗРЕШАЕМ КЛИКИ */
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 `;
 
@@ -333,16 +340,74 @@ const SubcategoryToggle = styled.button<{ isActive: boolean }>`
   }
 `;
 
+/* ⭐ СТИЛИ ПАГИНАЦИИ */
+const PaginationContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 3rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+`;
+
+const PaginationButton = styled.button<{ disabled?: boolean; active?: boolean }>`
+  padding: 0.75rem 1.25rem;
+  border: 2px solid ${props => props.active ? '#00acc1' : '#e9ecef'};
+  border-radius: 12px;
+  background: ${props => props.active ? '#00acc1' : 'white'};
+  color: ${props => props.active ? 'white' : props.disabled ? '#c0c0c0' : '#495057'};
+  font-weight: ${props => props.active ? '700' : '600'};
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.3s ease;
+  min-width: 45px;
+  opacity: ${props => props.disabled ? 0.5 : 1};
+
+  &:hover:not(:disabled) {
+    border-color: #00acc1;
+    background: ${props => props.active ? '#0097a7' : '#e8f8f9'};
+    color: ${props => props.active ? 'white' : '#00acc1'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 172, 193, 0.2);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.6rem 1rem;
+    min-width: 40px;
+    font-size: 0.9rem;
+  }
+`;
+
+const PaginationInfo = styled.div`
+  color: #6c757d;
+  font-size: 0.95rem;
+  margin: 0 1rem;
+  text-align: center;
+
+  @media (max-width: 480px) {
+    width: 100%;
+    margin: 0.5rem 0;
+  }
+`;
+
 const Products: React.FC = () => {
   const { products, categories } = useAdmin();
   const { closeSidebar, isOpen: isCategorySidebarOpen } = useCategorySidebar();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null); // Новое состояние для подкатегории
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [showOrganicOnly, setShowOrganicOnly] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [lastSubcategoryClickTime, setLastSubcategoryClickTime] = useState<{ [key: string]: number }>({});
+  
+  // ⭐ ПАГИНАЦИЯ
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 24; // 24 товара на странице
 
   // Фильтруем только активные категории (родительские) и сортируем их
   // Исключаем категорию Spicer - она показывается только на витрине
@@ -451,9 +516,40 @@ const Products: React.FC = () => {
     setSelectedSubcategory(null);
     setShowOrganicOnly(false);
     setIsDropdownOpen(false);
+    setCurrentPage(1); // ⭐ Сбрасываем страницу
     // Очищаем URL от параметров фильтрации
     setSearchParams({});
   };
+
+  // ⭐ При изменении фильтров возвращаемся на первую страницу
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedCategory, selectedSubcategory, showOrganicOnly]);
+
+  // ⭐ ПАГИНИРОВАННЫЕ ТОВАРЫ (только для текущей страницы)
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredProducts.slice(startIndex, endIndex);
+  }, [filteredProducts, currentPage, ITEMS_PER_PAGE]);
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+
+  // ⭐ Функции пагинации с useCallback для оптимизации
+  const handlePrevPage = useCallback(() => {
+    setCurrentPage(prev => Math.max(1, prev - 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const handleNextPage = useCallback(() => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [totalPages]);
+
+  const handlePageClick = useCallback((page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   const handleSubcategoryClick = (subcategoryName: string) => {
     const now = Date.now();
@@ -600,21 +696,79 @@ const Products: React.FC = () => {
             <p>Спробуйте змінити параметри пошуку або фільтри</p>
           </NoProducts>
         ) : (
-          <ProductsGrid>
-            {filteredProducts.map((product, index) => (
-              // --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
-              // Обернули <ProductCard> в <ProductWrapper>
-              <ProductWrapper
-                key={product.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <ProductCard product={product} />
-              </ProductWrapper>
-              // --- КОНЕЦ ИЗМЕНЕНИЯ ---
-            ))}
-          </ProductsGrid>
+          <>
+            {/* ⭐ Показываем информацию о пагинации */}
+            <PaginationInfo>
+              Показано {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)} з {filteredProducts.length} товарів
+            </PaginationInfo>
+            
+            <ProductsGrid>
+              {paginatedProducts.map((product, index) => (
+                <ProductWrapper
+                  key={product.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ 
+                    duration: 0.3,
+                    delay: index < 12 ? index * 0.03 : 0
+                  }}
+                >
+                  <ProductCard product={product} />
+                </ProductWrapper>
+              ))}
+            </ProductsGrid>
+
+            {/* ⭐ ПАГИНАЦИЯ */}
+            {totalPages > 1 && (
+              <PaginationContainer>
+                <PaginationButton 
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 1}
+                >
+                  ‹ Назад
+                </PaginationButton>
+                
+                {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 7) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 4) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 3) {
+                    pageNum = totalPages - 6 + i;
+                  } else {
+                    pageNum = currentPage - 3 + i;
+                  }
+                  
+                  return (
+                    <PaginationButton
+                      key={pageNum}
+                      active={pageNum === currentPage}
+                      onClick={() => handlePageClick(pageNum)}
+                    >
+                      {pageNum}
+                    </PaginationButton>
+                  );
+                })}
+                
+                {totalPages > 7 && currentPage < totalPages - 3 && (
+                  <>
+                    <span style={{ color: '#6c757d', padding: '0 0.5rem' }}>...</span>
+                    <PaginationButton onClick={() => handlePageClick(totalPages)}>
+                      {totalPages}
+                    </PaginationButton>
+                  </>
+                )}
+                
+                <PaginationButton 
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                >
+                  Вперед ›
+                </PaginationButton>
+              </PaginationContainer>
+            )}
+          </>
         )}
       </FiltersSection>
       </ProductsContainer>

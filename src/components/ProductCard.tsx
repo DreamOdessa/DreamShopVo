@@ -244,6 +244,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  
+  // ⭐ LAZY LOAD для hover изображения
+  const [hoverImageLoaded, setHoverImageLoaded] = React.useState(false);
 
   // Получаем изображения: [главное фото, доп фото при hover, ...галерея]
   // Обработка старых товаров (без массива images) и новых товаров
@@ -254,6 +257,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
   // Оптимизация: используем уменьшенные версии для каталога (400x400)
   const optimizedMainImage = getOptimizedImageUrl(mainImage, 'small');
   const optimizedHoverImage = hoverImage ? getOptimizedImageUrl(hoverImage, 'small') : null;
+  
+  // ⭐ Загружаем hover изображение только при наведении
+  const handleMouseEnter = () => {
+    if (hoverImage && !hoverImageLoaded && !disableHoverImage) {
+      setHoverImageLoaded(true);
+    }
+  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -295,7 +305,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
       whileTap={{ scale: 0.98 }}
     >
       <ImageContainer>
-        <ImageWrapper>
+        <ImageWrapper onMouseEnter={handleMouseEnter}>
           <MainImage 
             src={optimizedMainImage} 
             alt={product.name}
@@ -310,7 +320,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
               e.currentTarget.src = mainImage;
             }}
           />
-          {!disableHoverImage && optimizedHoverImage && (
+          {!disableHoverImage && hoverImageLoaded && optimizedHoverImage && (
             <HoverImage 
               src={optimizedHoverImage} 
               alt={product.name}
@@ -381,4 +391,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
   );
 };
 
-export default ProductCard;
+// ⭐ МЕМОИЗАЦИЯ для оптимизации - компонент не будет ре-рендериться если props не изменились
+export default React.memo(ProductCard, (prevProps, nextProps) => {
+  return (
+    prevProps.product.id === nextProps.product.id &&
+    prevProps.customLink === nextProps.customLink &&
+    prevProps.disableLink === nextProps.disableLink &&
+    prevProps.disableHoverImage === nextProps.disableHoverImage
+  );
+});

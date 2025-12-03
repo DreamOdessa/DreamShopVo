@@ -345,10 +345,19 @@ const Products: React.FC = () => {
   const [lastSubcategoryClickTime, setLastSubcategoryClickTime] = useState<{ [key: string]: number }>({});
 
   // Фильтруем только активные категории (родительские) и сортируем их
+  // Исключаем категорию Spicer - она показывается только на витрине
   const activeParentCategories = useMemo(() => {
     if (!categories || !Array.isArray(categories)) return [];
     return categories
-      .filter(cat => cat && cat.isActive !== false && !cat.parentSlug) // Только родительские категории
+      .filter(cat => {
+        if (!cat || cat.isActive === false || cat.parentSlug) return false;
+        // Исключаем категорию Spicer по slug, id или имени
+        const isSpicer = cat.slug === 'spicer' || 
+                        cat.id === 'spicer' || 
+                        cat.name?.toLowerCase().includes('spicer') ||
+                        cat.slug?.toLowerCase().includes('spicer');
+        return !isSpicer;
+      })
       .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   }, [categories]);
 

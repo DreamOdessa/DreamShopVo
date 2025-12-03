@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { siteSettingsService } from '../../firebase/services';
+import BugReportsPanel from '../../components/admin/BugReportsPanel';
 
 const AdminSettingsPage: React.FC = () => {
   const [heroSubtitle, setHeroSubtitle] = useState('');
@@ -61,6 +62,9 @@ const AdminSettingsPage: React.FC = () => {
           cursor:'pointer'
         }}
       >{saving? 'Сохранение...' : 'Сохранить'}</button>
+      
+      {/* Bug Reports Management Panel */}
+      <BugReportsPanel />
     </div>
   );
 };

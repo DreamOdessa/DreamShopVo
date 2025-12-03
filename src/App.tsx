@@ -19,6 +19,8 @@ import SpicerProductsPage from './pages/SpicerProductsPage';
 import AboutBrand from './pages/AboutBrand';
 import { visitorService } from './firebase/services';
 import LoadingSpinner from './components/LoadingSpinner';
+import BugReportToolWrapper from './components/BugReportTool';
+import BugMarker from './components/BugReportTool/BugMarker';
 import './utils/adminUtils'; // Импортируем утилиты для консоли
 
 // Ленивые загрузки админских страниц для уменьшения бандла публичных страниц
@@ -69,6 +71,13 @@ const App: React.FC = () => {
         </main>
         <Footer />
         <ScrollToTopButton />
+        
+        {/* Bug Report Tool - Lazy loaded only for admins/testers */}
+        <BugReportToolWrapper />
+        
+        {/* Bug Marker - Shows bug location when ?bug_id=123 in URL */}
+        <BugMarker />
+        
         {loading && (
           <div style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(255,255,255,0.6)',backdropFilter:'blur(2px)',zIndex:9999}}>
             <LoadingSpinner />

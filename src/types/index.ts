@@ -6,6 +6,7 @@ export interface User {
   avatar?: string;
   discount?: number; // процент скидки
   isAdmin?: boolean;
+  isTester?: boolean; // access to bug report tool (future feature)
   // Новые поля для профиля
   phone?: string;
   city?: string;

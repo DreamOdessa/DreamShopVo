@@ -18,6 +18,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './config';
 import { Product, User, Order, Category } from '../types';
+import { BugReport } from '../types/bugReport';
 
 // Коллекции
 const PRODUCTS_COLLECTION = 'products';
@@ -27,6 +28,7 @@ const CATEGORIES_COLLECTION = 'categories';
 const PRODUCT_VIEWS_COLLECTION = 'product_views'; // doc(productId) { viewCount }
 const VISITORS_COLLECTION = 'visitors'; // daily visitor logs { visitorId, date, month, createdAt }
 const SITE_SETTINGS_COLLECTION = 'site_settings'; // single doc 'main' { heroSubtitle }
+const BUG_REPORTS_COLLECTION = 'bug_reports'; // bug reports from testers/admins
 
 // === ТОВАРЫ ===
 export const productService = {
@@ -455,3 +457,58 @@ export const siteSettingsService = {
   }
 };
 
+// === BUG REPORTS (Feedback Tool) ===
+export const bugReportService = {
+  // Create a new bug report
+  async create(data: Omit<BugReport, 'id' | 'createdAt' | 'status'>): Promise<string> {
+    const docRef = await addDoc(collection(db, BUG_REPORTS_COLLECTION), {
+      ...data,
+      status: 'new',
+      createdAt: serverTimestamp()
+    });
+    return docRef.id;
+  },
+
+  // Get all bug reports (for admin panel)
+  async getAll(): Promise<BugReport[]> {
+    const q = query(
+      collection(db, BUG_REPORTS_COLLECTION),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString(),
+      updatedAt: doc.data().updatedAt?.toDate().toISOString()
+    })) as BugReport[];
+  },
+
+  // Get a single bug report by ID
+  async getById(id: string): Promise<BugReport | null> {
+    const docRef = doc(db, BUG_REPORTS_COLLECTION, id);
+    const snapshot = await getDoc(docRef);
+    if (!snapshot.exists()) return null;
+    
+    return {
+      id: snapshot.id,
+      ...snapshot.data(),
+      createdAt: snapshot.data().createdAt?.toDate().toISOString() || new Date().toISOString(),
+      updatedAt: snapshot.data().updatedAt?.toDate().toISOString()
+    } as BugReport;
+  },
+
+  // Update bug report status
+  async updateStatus(id: string, status: BugReport['status']): Promise<void> {
+    const docRef = doc(db, BUG_REPORTS_COLLECTION, id);
+    await updateDoc(docRef, { 
+      status, 
+      updatedAt: serverTimestamp() 
+    });
+  },
+
+  // Delete bug report
+  async delete(id: string): Promise<void> {
+    await deleteDoc(doc(db, BUG_REPORTS_COLLECTION, id));
+  }
+};

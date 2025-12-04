@@ -461,12 +461,28 @@ export const siteSettingsService = {
 export const bugReportService = {
   // Create a new bug report
   async create(data: Omit<BugReport, 'id' | 'createdAt' | 'status'>): Promise<string> {
-    const docRef = await addDoc(collection(db, BUG_REPORTS_COLLECTION), {
-      ...data,
-      status: 'new',
-      createdAt: serverTimestamp()
-    });
-    return docRef.id;
+    try {
+      // Спроба 1: Використовуємо serverTimestamp()
+      const docRef = await addDoc(collection(db, BUG_REPORTS_COLLECTION), {
+        ...data,
+        status: 'new',
+        createdAt: serverTimestamp()
+      });
+      return docRef.id;
+    } catch (error: any) {
+      // Якщо помилка транзакції (INTERNAL ASSERTION FAILED) - fallback на клієнтську дату
+      if (error?.code === 'internal' || error?.message?.includes('INTERNAL ASSERTION')) {
+        console.warn('⚠️ serverTimestamp() failed, using client timestamp:', error.message);
+        const docRef = await addDoc(collection(db, BUG_REPORTS_COLLECTION), {
+          ...data,
+          status: 'new',
+          createdAt: new Date() // Клієнтський timestamp замість серверного
+        });
+        return docRef.id;
+      }
+      // Інші помилки пробрасываем
+      throw error;
+    }
   },
 
   // Get all bug reports (for admin panel)

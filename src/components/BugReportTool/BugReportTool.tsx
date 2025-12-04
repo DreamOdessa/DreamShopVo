@@ -343,12 +343,33 @@ const BugReportTool: React.FC<BugReportToolProps> = () => {
       setFeedbackMode(false);
     } catch (error) {
       console.error('❌ Error submitting bug report:', error);
-      console.error('Error details:', {
+      
+      // Детальна діагностика помилки
+      const errorDetails = {
         message: error instanceof Error ? error.message : 'Unknown error',
         code: (error as any)?.code,
-        stack: error instanceof Error ? error.stack : undefined
-      });
-      toast.error(`Помилка відправки звіту: ${error instanceof Error ? error.message : 'Невідома помилка'}`);
+        name: error instanceof Error ? error.name : undefined,
+        stack: error instanceof Error ? error.stack : undefined,
+        fullError: error
+      };
+      
+      console.error('Error details:', errorDetails);
+      
+      // Специфічна обробка для помилок Firestore
+      let errorMessage = 'Невідома помилка';
+      if (error instanceof Error) {
+        if (error.message.includes('INTERNAL ASSERTION')) {
+          errorMessage = 'Помилка синхронізації з сервером. Спробуйте закрити інші вкладки сайту і повторити.';
+        } else if (error.message.includes('Missing or insufficient permissions')) {
+          errorMessage = 'Недостатньо прав доступу. Зверніться до адміністратора.';
+        } else if (error.message.includes('offline')) {
+          errorMessage = 'Немає з\'єднання з інтернетом. Перевірте підключення.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast.error(`Помилка відправки звіту: ${errorMessage}`);
     } finally {
       setSubmitting(false);
     }

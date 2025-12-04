@@ -58,15 +58,29 @@ export const googleProvider = new GoogleAuthProvider();
 // Если постоянное хранилище недоступно (например, iOS Private Mode), используем in-memory
 setPersistence(auth, browserLocalPersistence).catch(() => setPersistence(auth, inMemoryPersistence));
 
-// Включаем офлайн-персистентность (кэш запросов) для ускорения повторных посещений
-try {
-  enableIndexedDbPersistence(db).then(() => {
-    console.log('✅ Firestore offline persistence enabled');
-  }).catch(err => {
-    console.warn('⚠️ Persistence not enabled:', err.code);
-  });
-} catch (e) {
-  console.warn('⚠️ Persistence init failed:', e);
+// Включаем офлайн-персистентність (кэш запросов) для ускорения повторных посещений
+// ВАЖЛИВО: Офлайн кеш може конфліктувати з операціями запису в деяких браузерах
+// Якщо виникають помилки типу "INTERNAL ASSERTION FAILED", розгляньте вимкнення persistence
+const ENABLE_OFFLINE_PERSISTENCE = true; // Встановіть false для відладки помилок транзакцій
+
+if (ENABLE_OFFLINE_PERSISTENCE) {
+  try {
+    enableIndexedDbPersistence(db).then(() => {
+      console.log('✅ Firestore offline persistence enabled');
+    }).catch(err => {
+      if (err.code === 'failed-precondition') {
+        console.warn('⚠️ Persistence: Multiple tabs open, persistence enabled in first tab only');
+      } else if (err.code === 'unimplemented') {
+        console.warn('⚠️ Persistence: Browser doesn\'t support IndexedDB');
+      } else {
+        console.warn('⚠️ Persistence not enabled:', err.code, err.message);
+      }
+    });
+  } catch (e) {
+    console.warn('⚠️ Persistence init failed:', e);
+  }
+} else {
+  console.log('ℹ️ Firestore offline persistence disabled (debug mode)');
 }
 
 export default app;

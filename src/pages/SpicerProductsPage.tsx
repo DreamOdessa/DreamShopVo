@@ -150,7 +150,9 @@ const SpicerProductsPage: React.FC = () => {
 
   // Получение уникальных значений для фильтров - ТІЛЬКИ з реальних даних
   const categories = React.useMemo(() => {
-    const allCategories = products.map(p => p.subcategory).filter(Boolean);
+    const allCategories = products
+      .map(p => p.subcategory)
+      .filter((cat): cat is string => Boolean(cat)); // Фільтруємо undefined і приводимо тип
     const uniqueCategories = Array.from(new Set(allCategories));
     return ['all', ...uniqueCategories];
   }, [products]);

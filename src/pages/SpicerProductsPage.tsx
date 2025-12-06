@@ -152,7 +152,10 @@ const SpicerProductsPage: React.FC = () => {
     <PageContainer>
       <Header>
         <LogoSection>
-          <SpicerLogo>SPICER</SpicerLogo>
+          <SpicerLogoImage 
+            src="https://spicer.ua/wp-content/uploads/2022/10/logo-about.svg"
+            alt="Spicer Logo"
+          />
           <Tagline>Преміальні алкогольні напої</Tagline>
         </LogoSection>
       </Header>
@@ -287,6 +290,18 @@ const Header = styled.header`
 const LogoSection = styled.div`
   max-width: 1400px;
   margin: 0 auto;
+`;
+
+const SpicerLogoImage = styled.img`
+  max-width: 300px;
+  width: 100%;
+  height: auto;
+  margin: 0 auto 20px;
+  display: block;
+  
+  @media (max-width: 768px) {
+    max-width: 200px;
+  }
 `;
 
 const SpicerLogo = styled.h1`

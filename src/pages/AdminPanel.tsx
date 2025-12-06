@@ -827,7 +827,8 @@ const AdminPanel: React.FC = () => {
     isActive: true,
     isPopular: false,
     weight: '',
-    ingredients: ''
+    ingredients: '',
+    brand: ''
   });
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [mainImagePreview, setMainImagePreview] = useState<string>('');
@@ -956,7 +957,8 @@ const AdminPanel: React.FC = () => {
       isActive: true,
       isPopular: false,
       weight: '',
-      ingredients: ''
+      ingredients: '',
+      brand: ''
     });
     setImagePreviewUrls([]);
     setMainImagePreview('');
@@ -986,7 +988,8 @@ const AdminPanel: React.FC = () => {
       isActive: product.isActive ?? true,
       isPopular: product.isPopular ?? false,
       weight: product.weight || '',
-      ingredients: product.ingredients?.join(', ') || ''
+      ingredients: product.ingredients?.join(', ') || '',
+      brand: product.brand || ''
     });
     setImagePreviewUrls(galleryImages);
     setMainImagePreview(mainImage);

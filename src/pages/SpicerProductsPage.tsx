@@ -304,21 +304,6 @@ const SpicerLogoImage = styled.img`
   }
 `;
 
-const SpicerLogo = styled.h1`
-  font-size: 4rem;
-  font-weight: 900;
-  letter-spacing: 15px;
-  background: linear-gradient(135deg, #474743ff 0%, #050505ff 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 10px;
-  
-  @media (max-width: 768px) {
-    font-size: 2.5rem;
-    letter-spacing: 8px;
-  }
-`;
-
 const Tagline = styled.p`
   font-size: 1.2rem;
   color: #535353ff;

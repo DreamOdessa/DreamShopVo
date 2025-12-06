@@ -10,6 +10,7 @@ import AdminDashboard from '../components/admin/AdminDashboard';
 import UserProfileModal from '../components/admin/UserProfileModal';
 import DiagnosticPanel from '../components/admin/DiagnosticPanel';
 import BugReportsPanel from '../components/admin/BugReportsPanel';
+import CategorizeSpicer from '../components/CategorizeSpicer';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { Product, Order, User } from '../types';
@@ -1823,7 +1824,11 @@ const AdminPanel: React.FC = () => {
                 </SectionTitle>
               </SectionHeader>
 
-              <DiagnosticPanel />
+              <CategorizeSpicer />
+              
+              <div style={{ marginTop: '40px' }}>
+                <DiagnosticPanel />
+              </div>
             </motion.div>
           )}
 

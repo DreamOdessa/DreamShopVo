@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { Product } from '../types';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { FiFilter, FiX } from 'react-icons/fi';
 
 const SpicerProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -17,6 +18,7 @@ const SpicerProductsPage: React.FC = () => {
   const [selectedVolume, setSelectedVolume] = useState<string>('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [showFilters, setShowFilters] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -121,12 +123,16 @@ const SpicerProductsPage: React.FC = () => {
 
   // Получение уникальных значений для фильтров
   // Для Spicer товаров используем subcategory если есть, иначе category
-  const categories = ['all', ...Array.from(new Set(
-    products.map(p => {
-      // Если есть подкатегория - используем её, иначе категорию
-      return p.subcategory || p.category;
-    }).filter(Boolean)
-  ))];
+  // Определяем 5 основных категорий
+  const mainCategories = [
+    { key: 'all', label: 'Всі' },
+    { key: 'джин', label: 'Джин' },
+    { key: 'лікер', label: 'Лікери' },
+    { key: 'distill', label: 'Distill' },
+    { key: 'спайсери', label: 'Спайсери' },
+    { key: 'настоянки', label: 'Настоянки' }
+  ];
+  
   const volumes: string[] = ['all', ...Array.from(new Set(products.map(p => (p.volume || '')).filter(v => v)))];
 
   const handleCategoryChange = (category: string) => {
@@ -160,11 +166,27 @@ const SpicerProductsPage: React.FC = () => {
         </LogoSection>
       </Header>
 
+      {/* Мобильная кнопка фильтров */}
+      <MobileFilterButton onClick={() => setShowFilters(!showFilters)}>
+        <FiFilter />
+        Фільтри
+        {(selectedCategory !== 'all' || selectedVolume !== 'all' || searchQuery) && (
+          <ActiveFilterBadge>{
+            [selectedCategory !== 'all', selectedVolume !== 'all', searchQuery].filter(Boolean).length
+          }</ActiveFilterBadge>
+        )}
+      </MobileFilterButton>
+
       <MainContent>
         {/* Сайдбар с фильтрами */}
-        <Sidebar>
+        <Sidebar $isOpen={showFilters}>
           <FilterSection>
-            <FilterTitle>Фільтри</FilterTitle>
+            <FilterHeader>
+              <FilterTitle>Фільтри</FilterTitle>
+              <CloseButton onClick={() => setShowFilters(false)}>
+                <FiX />
+              </CloseButton>
+            </FilterHeader>
             
             {/* Поиск */}
             <SearchBox>
@@ -180,13 +202,13 @@ const SpicerProductsPage: React.FC = () => {
             <FilterGroup>
               <FilterLabel>Категорія</FilterLabel>
               <FilterList>
-                {categories.map(cat => (
+                {mainCategories.map(cat => (
                   <FilterItem
-                    key={cat}
-                    active={selectedCategory === cat}
-                    onClick={() => handleCategoryChange(cat)}
+                    key={cat.key}
+                    active={selectedCategory === cat.key}
+                    onClick={() => handleCategoryChange(cat.key)}
                   >
-                    {cat === 'all' ? 'Всі' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    {cat.label}
                   </FilterItem>
                 ))}
               </FilterList>
@@ -237,10 +259,16 @@ const SpicerProductsPage: React.FC = () => {
                 setPriceRange([0, 5000]);
                 setSearchQuery('');
                 navigate('/spicer-products');
+                setShowFilters(false);
               }}
             >
               Скинути фільтри
             </ResetButton>
+
+            {/* Кнопка применить (только на мобильных) */}
+            <ApplyButton onClick={() => setShowFilters(false)}>
+              Застосувати фільтри
+            </ApplyButton>
           </FilterSection>
         </Sidebar>
 
@@ -319,15 +347,73 @@ const MainContent = styled.div`
   
   @media (max-width: 968px) {
     flex-direction: column;
+    padding-top: 20px;
   }
 `;
 
-const Sidebar = styled.aside`
+const MobileFilterButton = styled.button`
+  display: none;
+  
+  @media (max-width: 968px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #8ff8f8bb 0%, #12d9f3ff 100%);
+    color: #000;
+    border: none;
+    border-radius: 50px;
+    padding: 15px 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(18, 217, 243, 0.4);
+    cursor: pointer;
+    z-index: 999;
+    transition: all 0.3s;
+
+    svg {
+      font-size: 1.2rem;
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+`;
+
+const ActiveFilterBadge = styled.span`
+  background: #ff3b30;
+  color: white;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+`;
+
+const Sidebar = styled.aside<{ $isOpen: boolean }>`
   width: 280px;
   flex-shrink: 0;
   
   @media (max-width: 968px) {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
+    height: 100vh;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    transform: ${props => props.$isOpen ? 'translateX(0)' : 'translateX(-100%)'};
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    padding: 0;
   }
 `;
 
@@ -340,15 +426,60 @@ const FilterSection = styled.div`
   top: 100px;
   
   @media (max-width: 968px) {
-    position: static;
+    position: relative;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    margin: auto 0 0;
+    min-height: 80vh;
+    max-width: 500px;
+    width: 90%;
+    margin-left: auto;
+  }
+`;
+
+const FilterHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+`;
+
+const CloseButton = styled.button`
+  display: none;
+  
+  @media (max-width: 968px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    svg {
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    &:active {
+      transform: scale(0.9);
+      background: rgba(0, 0, 0, 0.2);
+    }
   }
 `;
 
 const FilterTitle = styled.h2`
   font-size: 1.8rem;
   color: #4d4e4eff;
-  margin-bottom: 25px;
+  margin-bottom: 0;
   font-weight: 700;
+  
+  @media (max-width: 968px) {
+    margin-bottom: 0;
+  }
 `;
 
 const SearchBox = styled.div`
@@ -440,6 +571,29 @@ const ResetButton = styled.button`
   &:hover {
     background: rgba(255, 59, 48, 0.3);
     border-color: #ff3b30;
+  }
+`;
+
+const ApplyButton = styled.button`
+  display: none;
+  
+  @media (max-width: 968px) {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    margin-top: 15px;
+    background: linear-gradient(135deg, #8ff8f8bb 0%, #12d9f3ff 100%);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    
+    &:active {
+      transform: scale(0.98);
+    }
   }
 `;
 

@@ -116,27 +116,27 @@ const AnimatedSpicerCategories: React.FC = () => {
         <div id="DIV_2">
           <ul id="UL_3">
             <li id="LI_4">
-              <Link id="A_5" to="/spicer-products" />
+              <Link id="A_5" to="/spicer-products?category=джин" />
               <div id="DIV_6" />
               <h3 id="H3_7">ДЖИН</h3>
             </li>
             <li id="LI_8">
-              <Link id="A_9" to="/spicer-products" />
+              <Link id="A_9" to="/spicer-products?category=настоянки" />
               <div id="DIV_10" />
               <h3 id="H3_11">НАСТОЯНКИ</h3>
             </li>
             <li id="LI_12">
-              <Link id="A_13" to="/spicer-products" />
+              <Link id="A_13" to="/spicer-products?category=distill" />
               <div id="DIV_14" />
               <h3 id="H3_15">DISTILL</h3>
             </li>
             <li id="LI_16">
-              <Link id="A_17" to="/spicer-products" />
+              <Link id="A_17" to="/spicer-products?category=лікер" />
               <div id="DIV_18" />
               <h3 id="H3_19">ЛІКЕРИ</h3>
             </li>
             <li className="stripes-card">
-              <Link to="/spicer-products">
+              <Link to="/spicer-products?category=спайсери">
                 <div className="stripe stripe--top" style={{ backgroundImage: 'url(https://spicer.ua/wp-content/uploads/2024/02/oooo99-scaled.jpg)' }} />
                 <div className="stripe stripe--middle" style={{ backgroundImage: 'url(https://spicer.ua/wp-content/uploads/2024/02/oooo99-scaled.jpg)' }} />
                 <div className="stripe stripe--bottom" style={{ backgroundImage: 'url(https://spicer.ua/wp-content/uploads/2024/02/oooo99-scaled.jpg)' }} />

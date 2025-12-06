@@ -47,6 +47,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   // Загрузка данных
   const loadData = async () => {
     try {
+      console.log('Завантаження даних...');
       setLoading(true);
       const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
 
@@ -67,6 +68,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
         categoriesPromise
       ]);
 
+      console.log(`Завантажено ${productsData.length} товарів, ${categoriesData.length} категорій`);
       setProducts(productsData);
       setCategories(categoriesData);
 
@@ -96,12 +98,19 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
 
   const addProduct = async (productData: Omit<Product, 'id' | 'createdAt'>) => {
     try {
-      await productService.create(productData);
+      console.log('Додавання товару...', productData);
+      const newProductId = await productService.create(productData);
+      console.log('Товар створено з ID:', newProductId);
+      
+      // Небольшая задержка для eventual consistency Firestore
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       await loadData();
       toast.success('Товар додано!');
     } catch (error) {
       console.error('Помилка додавання товару:', error);
-      toast.error('Помилка додавання товару');
+      toast.error(`Помилка додавання товару: ${error instanceof Error ? error.message : 'Невідома помилка'}`);
+      throw error;
     }
   };
 

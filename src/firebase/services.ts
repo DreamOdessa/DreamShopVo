@@ -109,11 +109,19 @@ export const productService = {
 
   // Добавить товар
   async create(product: Omit<Product, 'id' | 'createdAt'>): Promise<string> {
-    const docRef = await addDoc(collection(db, PRODUCTS_COLLECTION), {
-      ...product,
-      createdAt: serverTimestamp()
-    });
-    return docRef.id;
+    try {
+      console.log('Creating product in Firestore...', product);
+      const docRef = await addDoc(collection(db, PRODUCTS_COLLECTION), {
+        ...product,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      console.log('Product created successfully with ID:', docRef.id);
+      return docRef.id;
+    } catch (error) {
+      console.error('Error creating product in Firestore:', error);
+      throw error;
+    }
   },
 
   // Обновить товар

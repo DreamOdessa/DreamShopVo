@@ -120,7 +120,7 @@ const LoadingSpinner = () => {
         
         <circle cx="50" cy="50" r="8" fill="#ffffff"/>
       </svg>
-      <div style={styles.loadingText}>Загрузка...</div>
+      <div style={styles.loadingText}>Хвилинку...</div>
     </div>
   );
 };

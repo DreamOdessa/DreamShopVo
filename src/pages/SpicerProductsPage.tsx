@@ -40,9 +40,12 @@ const SpicerProductsPage: React.FC = () => {
   const applyFilters = React.useCallback(() => {
     let filtered = [...products];
 
-    // Фильтр по категории
+    // Фильтр по категории (или подкатегории для Spicer)
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(p => p.category === selectedCategory);
+      filtered = filtered.filter(p => {
+        // Проверяем сначала подкатегорию, потом категорию
+        return (p.subcategory === selectedCategory) || (p.category === selectedCategory);
+      });
     }
 
     // Фильтр по объему
@@ -117,7 +120,13 @@ const SpicerProductsPage: React.FC = () => {
   };
 
   // Получение уникальных значений для фильтров
-  const categories = ['all', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))];
+  // Для Spicer товаров используем subcategory если есть, иначе category
+  const categories = ['all', ...Array.from(new Set(
+    products.map(p => {
+      // Если есть подкатегория - используем её, иначе категорию
+      return p.subcategory || p.category;
+    }).filter(Boolean)
+  ))];
   const volumes: string[] = ['all', ...Array.from(new Set(products.map(p => (p.volume || '')).filter(v => v)))];
 
   const handleCategoryChange = (category: string) => {

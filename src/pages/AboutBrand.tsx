@@ -100,7 +100,7 @@ const AboutBrand: React.FC = () => {
       <section className="brand-cta">
         <div className="container">
           <h2>КОЛИСЬ ТИ ПЕРЕСТАНЕШ ПИТИ ЗВИЧАЙНИЙ АЛКОГОЛЬ, БО СПРОБУЄШ SPICER</h2>
-          <a href="/shop" className="btn-primary">Перейти до магазину</a>
+          <a href="/spicer-products" className="btn-primary">Перейти до магазину</a>
         </div>
       </section>
     </div>

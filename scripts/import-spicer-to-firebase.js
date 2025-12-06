@@ -37,6 +37,15 @@ async function importSpicerProducts() {
           }
         }
 
+        // Определяем подкатегорию на основе ссылки или названия
+        let subcategory = '';
+        if (product.link) {
+          const urlMatch = product.link.match(/product-category\/([^\/]+)/);
+          if (urlMatch) {
+            subcategory = urlMatch[1]; // gin, tinctures, distill, liqueurs, spicers
+          }
+        }
+
         // Формируем объект товара с обязательным полем brand
         const productData = {
           name: product.title,
@@ -49,6 +58,7 @@ async function importSpicerProducts() {
           image: product.imageUrl,
           volume: product.volume || '',
           category: category || 'spicer',
+          subcategory: subcategory || undefined, // Подкатегория для фильтрации
           ingredients: product.ingredients ? product.ingredients.split(',').map(s=>s.trim()).filter(Boolean) : [],
           alcoholContent: product.alcoholContent || '',
           brand: 'spicer', // 🔥 КРИТИЧЕСКИ ВАЖНОЕ ПОЛЕ

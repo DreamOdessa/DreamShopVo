@@ -526,6 +526,18 @@ const Products: React.FC = () => {
     setCurrentPage(1);
   }, [searchTerm, selectedCategory, selectedSubcategory, showOrganicOnly]);
 
+  // Восстанавливаем позицию скролла при возврате с детальной страницы
+  useEffect(() => {
+    const savedPosition = sessionStorage.getItem('productsScrollPosition');
+    if (savedPosition) {
+      // Небольшая задержка для того, чтобы контент успел отрендериться
+      setTimeout(() => {
+        window.scrollTo(0, parseInt(savedPosition, 10));
+        sessionStorage.removeItem('productsScrollPosition');
+      }, 100);
+    }
+  }, [filteredProducts]);
+
   // ⭐ ПАГИНИРОВАННЫЕ ТОВАРЫ (только для текущей страницы)
   const paginatedProducts = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;

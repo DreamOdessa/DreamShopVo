@@ -365,9 +365,9 @@ const ProductDetail: React.FC = () => {
       <ProductDetailContainer>
         <div className="container">
           <h1>Товар не знайдено</h1>
-          <BackButton onClick={() => navigate('/products')}>
+          <BackButton onClick={() => navigate(-1)}>
             <FiArrowLeft />
-            Повернутися до каталогу
+            Повернутися назад
           </BackButton>
         </div>
       </ProductDetailContainer>
@@ -411,9 +411,9 @@ const ProductDetail: React.FC = () => {
   return (
     <ProductDetailContainer>
       <div className="container">
-        <BackButton onClick={() => navigate('/products')}>
+        <BackButton onClick={() => navigate(-1)}>
           <FiArrowLeft />
-          Повернутися до каталогу
+          Повернутися назад
         </BackButton>
 
         <ProductContainer>

@@ -2235,7 +2235,7 @@ const AdminPanel: React.FC = () => {
                   >
                     <option value=''>— вибрати —</option>
                     {subcats.sort((a,b)=>a.sortOrder-b.sortOrder).map(sc => (
-                      <option key={sc.id} value={sc.slug}>{sc.name}</option>
+                      <option key={sc.id} value={sc.name}>{sc.name}</option>
                     ))}
                   </Select>
                 </FormGroup>

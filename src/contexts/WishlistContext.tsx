@@ -51,12 +51,12 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
       const isAlreadyInWishlist = prevItems.some(item => item.id === product.id);
       
       if (isAlreadyInWishlist) {
-        toast.error('Товар уже в избранном');
+        toast.error('Товар вже в обраному');
         return prevItems;
       }
 
       const newItems = [...prevItems, product];
-      toast.success('Товар добавлен в избранное');
+      toast.success('Товар додано до обраного');
       return newItems;
     });
   };
@@ -64,7 +64,7 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
   const removeFromWishlist = (productId: string) => {
     setItems(prevItems => {
       const newItems = prevItems.filter(item => item.id !== productId);
-      toast.success('Товар удален из избранного');
+      toast.success('Товар видалено з обраного');
       return newItems;
     });
   };
@@ -75,7 +75,7 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
 
   const clearWishlist = () => {
     setItems([]);
-    toast.success('Избранное очищено');
+    toast.success('Обране очищено');
   };
 
   const getTotalItems = () => {

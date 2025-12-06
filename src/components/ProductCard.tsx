@@ -85,6 +85,7 @@ const OrganicBadge = styled.div`
   display: flex;
   align-items: center;
   gap: 0.3rem;
+  z-index: 10;
 `;
 
 const ActionButtons = styled.div`
@@ -96,6 +97,7 @@ const ActionButtons = styled.div`
   gap: 0.5rem;
   opacity: 0;
   transition: opacity 0.3s ease;
+  z-index: 10;
 
   ${Card}:hover & {
     opacity: 1;
@@ -247,6 +249,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
   
   // ⭐ LAZY LOAD для hover изображения
   const [hoverImageLoaded, setHoverImageLoaded] = React.useState(false);
+  const [preloadLink, setPreloadLink] = React.useState<HTMLLinkElement | null>(null);
 
   // Получаем изображения: [главное фото, доп фото при hover, ...галерея]
   // Обработка старых товаров (без массива images) и новых товаров
@@ -258,12 +261,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
   const optimizedMainImage = getOptimizedImageUrl(mainImage, 'small');
   const optimizedHoverImage = hoverImage ? getOptimizedImageUrl(hoverImage, 'small') : null;
   
-  // ⭐ Загружаем hover изображение только при наведении
+  // ⭐ Предзагрузка hover изображения при наведении с использованием preload
   const handleMouseEnter = () => {
-    if (hoverImage && !hoverImageLoaded && !disableHoverImage) {
+    if (optimizedHoverImage && !hoverImageLoaded && !disableHoverImage && !preloadLink) {
+      // Создаем link для preload только один раз
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = optimizedHoverImage;
+      document.head.appendChild(link);
+      setPreloadLink(link);
       setHoverImageLoaded(true);
     }
   };
+
+  // Очищаем preload link при размонтировании
+  React.useEffect(() => {
+    return () => {
+      if (preloadLink && preloadLink.parentNode) {
+        preloadLink.parentNode.removeChild(preloadLink);
+      }
+    };
+  }, [preloadLink]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -297,6 +316,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
 
   // Определяем ссылку: если есть customLink - используем его, иначе стандартную ссылку на товар
   const linkTo = customLink || `/products/${product.id}`;
+
+  // Сохраняем позицию скролла перед переходом
+  const handleCardClick = () => {
+    sessionStorage.setItem('productsScrollPosition', window.scrollY.toString());
+  };
 
   // Контент карточки
   const cardContent = (
@@ -385,7 +409,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
   }
 
   return (
-    <Link to={linkTo} style={{ textDecoration: 'none', height: '100%' }}>
+    <Link to={linkTo} style={{ textDecoration: 'none', height: '100%' }} onClick={handleCardClick}>
       {cardContent}
     </Link>
   );

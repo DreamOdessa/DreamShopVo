@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye, FiUpload, FiEyeOff, FiStar, FiTag, FiChevronDown, FiSettings, FiAlertCircle } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye, FiUpload, FiEyeOff, FiStar, FiTag, FiChevronDown, FiSettings, FiAlertCircle, FiDownload } from 'react-icons/fi';
 import CategoryManager from '../components/CategoryManager';
 import CategoryShowcaseManager from '../components/CategoryShowcaseManager';
 import AdminSidebar from '../components/admin/AdminSidebar';
@@ -966,6 +966,90 @@ const AdminPanel: React.FC = () => {
     setShowModal(true);
   };
 
+  const handleImportProducts = async () => {
+    try {
+      const toastId = toast.loading('⏳ Завантаження товарів...');
+      
+      // Завантажуємо базові товари
+      const basicResponse = await fetch('/data/basic-products.json');
+      const basicProducts = basicResponse.ok ? await basicResponse.json() : [];
+      
+      // Завантажуємо Spícer товари
+      const spicerResponse = await fetch('/data/firebase-products.json');
+      const spicerProducts = spicerResponse.ok ? await spicerResponse.json() : [];
+      
+      // Комбінуємо обидва масиви
+      const allProductsToImport = [
+        ...basicProducts,
+        ...spicerProducts.map((p: any) => ({
+          name: p.name || p.title,
+          description: p.description,
+          price: parseFloat(p.price) || 0,
+          imageUrl: p.imageUrl,
+          category: p.category === 'Інше' ? 'chips' : p.category,
+          subcategory: p.subcategory || '',
+          organic: p.organic || false,
+          inStock: p.inStock !== false,
+          isActive: p.isActive !== false,
+          isPopular: p.isPopular || false,
+          weight: p.weight || p.volume || '',
+          ingredients: p.ingredients ? (Array.isArray(p.ingredients) ? p.ingredients : [p.ingredients]) : [],
+          brand: p.brand || (p.isSpicer ? 'spicer' : '')
+        }))
+      ];
+
+      if (allProductsToImport.length === 0) {
+        toast.error('❌ Не знайдено товарів для імпорту', { id: toastId });
+        return;
+      }
+
+      let imported = 0;
+      let skipped = 0;
+      let errors = 0;
+
+      for (const product of allProductsToImport) {
+        try {
+          const productData = {
+            name: product.name || '',
+            description: product.description || '',
+            price: parseFloat(String(product.price)) || 0,
+            image: product.imageUrl || '',
+            hoverImage: '',
+            images: product.imageUrl ? [product.imageUrl] : [],
+            category: product.category || 'chips',
+            subcategory: product.subcategory || '',
+            organic: product.organic || false,
+            inStock: product.inStock !== false,
+            isActive: product.isActive !== false,
+            isPopular: product.isPopular || false,
+            weight: product.weight || '',
+            ingredients: Array.isArray(product.ingredients) ? product.ingredients : (product.ingredients ? [product.ingredients] : []),
+            brand: product.brand || ''
+          };
+
+          // Перевіряємо чи товар вже існує (за назвою)
+          const existingProduct = products.find(p => p.name.toLowerCase() === productData.name.toLowerCase());
+          if (!existingProduct) {
+            await addProduct(productData);
+            imported++;
+            toast.success(`✅ Додано: ${productData.name}`, { id: toastId });
+          } else {
+            skipped++;
+          }
+        } catch (error) {
+          console.error('Помилка при імпорті товару:', product.name, error);
+          errors++;
+        }
+      }
+
+      const message = `✅ Імпортовано ${imported} товарів${skipped > 0 ? `, пропущено ${skipped}` : ''}${errors > 0 ? `, помилок ${errors}` : ''}`;
+      toast.success(message, { id: toastId });
+    } catch (error) {
+      console.error('Помилка при завантаженні JSON:', error);
+      toast.error('❌ Не вдалося завантажити товари з файлу');
+    }
+  };
+
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     
@@ -1379,10 +1463,18 @@ const AdminPanel: React.FC = () => {
                   <FiPackage />
                   Управление товарами
                 </SectionTitle>
-                <AddButton onClick={handleAddProduct}>
-                  <FiPlus />
-                  Добавить товар
-                </AddButton>
+                <div style={{ display: 'flex', gap: '0.8rem' }}>
+                  <AddButton onClick={handleAddProduct}>
+                    <FiPlus />
+                    Добавить товар
+                  </AddButton>
+                  {products.length === 0 && (
+                    <AddButton onClick={handleImportProducts} style={{ background: 'linear-gradient(135deg, #f39c12 0%, #e67e22 50%, #d35400 100%)' }}>
+                      <FiDownload />
+                      Импортировать товары
+                    </AddButton>
+                  )}
+                </div>
               </SectionHeader>
 
               {/* Фильтр категорий (только родительские) */}

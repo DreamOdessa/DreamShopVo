@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { getDocs, collection } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
@@ -121,22 +121,42 @@ const SpicerProductsPage: React.FC = () => {
           });
         }
       });
-      setProducts(loadedProducts);
+      
+      // Дедуплікація: групуємо товари по базовій назві (без об'єму)
+      const uniqueProducts = Array.from(
+        loadedProducts.reduce((map, product) => {
+          // Базова назва без об'єму в дужках
+          const baseName = product.name.replace(/\s*\([^)]*\)\s*/g, '').trim();
+          
+          if (!map.has(baseName)) {
+            map.set(baseName, product);
+          } else {
+            // Якщо вже є - беремо товар з найбільшою ціною (більший об'єм)
+            const existing = map.get(baseName)!;
+            if (product.price > existing.price) {
+              map.set(baseName, product);
+            }
+          }
+          return map;
+        }, new Map<string, Product>()).values()
+      );
+      
+      setProducts(uniqueProducts);
       
       console.log('=== ЗАВАНТАЖЕНІ ТОВАРИ SPICER ===');
-      console.log('Всього товарів:', loadedProducts.length);
-      if (loadedProducts.length > 0) {
+      console.log('Всього товарів:', uniqueProducts.length);
+      if (uniqueProducts.length > 0) {
         console.log('Приклад першого товару:', {
-          name: loadedProducts[0].name,
-          category: loadedProducts[0].category,
-          subcategory: loadedProducts[0].subcategory,
-          brand: loadedProducts[0].brand,
-          volume: loadedProducts[0].volume
+          name: uniqueProducts[0].name,
+          category: uniqueProducts[0].category,
+          subcategory: uniqueProducts[0].subcategory,
+          brand: uniqueProducts[0].brand,
+          volume: uniqueProducts[0].volume
         });
         
         // Показати всі унікальні категорії та підкатегорії
-        const cats = new Set(loadedProducts.map(p => p.category));
-        const subcats = new Set(loadedProducts.map(p => p.subcategory).filter(Boolean));
+        const cats = new Set(uniqueProducts.map(p => p.category));
+        const subcats = new Set(uniqueProducts.map(p => p.subcategory).filter(Boolean));
         console.log('Унікальні категорії:', Array.from(cats));
         console.log('Унікальні підкатегорії:', Array.from(subcats));
       }

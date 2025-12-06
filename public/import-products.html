@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Імпорт товарів в Firestore</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .button {
+            background: #00acc1;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .button:hover {
+            background: #00838f;
+        }
+        .button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .log-entry {
+            margin: 5px 0;
+        }
+        .success {
+            color: #27ae60;
+        }
+        .error {
+            color: #e74c3c;
+        }
+        .info {
+            color: #3498db;
+        }
+        .warning {
+            color: #f39c12;
+        }
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #00acc1;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Імпорт товарів Spicer в Firestore</h1>
+        
+        <p>Ця сторінка імпортує 58 товарів з файлу <code>firebase-products.json</code> в базу даних Firestore.</p>
+        
+        <button class="button" id="importBtn" onclick="startImport()">Почати імпорт</button>
+        <button class="button" id="clearBtn" onclick="clearLog()" style="background: #95a5a6;">Очистити лог</button>
+        
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div style="text-align: center; margin-top: 5px;">
+            <span id="progressText">0%</span>
+        </div>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, doc, setDoc, writeBatch } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAxCHgP-eF_xp1kPan6HtcYUCYCJBZc7VE",
+            authDomain: "dreamshop-odessa.firebaseapp.com",
+            projectId: "dreamshop-odessa",
+            storageBucket: "dreamshop-odessa.firebasestorage.app",
+            messagingSenderId: "941215601569",
+            appId: "1:941215601569:web:a4e5c1bb2892892bbc31e0",
+            measurementId: "G-KZHPZJXTS1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.startImport = async function() {
+            const importBtn = document.getElementById('importBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            
+            importBtn.disabled = true;
+            addLog('🚀 Починаємо імпорт товарів...', 'info');
+
+            try {
+                // Завантажуємо JSON
+                addLog('📥 Завантажуємо файл firebase-products.json...', 'info');
+                const response = await fetch('/data/firebase-products.json');
+                if (!response.ok) throw new Error('Не удалось загрузить файл');
+                
+                const products = await response.json();
+                addLog(`📦 Знайдено ${products.length} товарів`, 'info');
+
+                let imported = 0;
+                const batchSize = 100;
+                
+                // Імпортуємо батчами
+                for (let i = 0; i < products.length; i += batchSize) {
+                    const batch = writeBatch(db);
+                    const endIdx = Math.min(i + batchSize, products.length);
+                    
+                    for (let j = i; j < endIdx; j++) {
+                        const product = products[j];
+                        
+                        const firestoreProduct = {
+                            name: product.name || product.title || '',
+                            description: product.description || '',
+                            price: Number(product.price) || 0,
+                            originalPrice: product.originalPrice ? Number(product.originalPrice) : undefined,
+                            image: product.imageUrl || product.image || '',
+                            images: [
+                                product.imageUrl || product.image || '',
+                                product.hoverImageUrl || ''
+                            ].filter(Boolean),
+                            category: product.category || 'Інше',
+                            subcategory: product.subcategory || undefined,
+                            organic: Boolean(product.organic),
+                            inStock: product.inStock !== false,
+                            isActive: true,
+                            isPopular: Boolean(product.featured),
+                            weight: product.weight || undefined,
+                            volume: product.volume || undefined,
+                            ingredients: product.ingredients ? 
+                                (Array.isArray(product.ingredients) ? product.ingredients : [product.ingredients]) 
+                                : undefined,
+                            brand: 'spicer',
+                            isSpicer: true,
+                            createdAt: product.createdAt || new Date().toISOString(),
+                            updatedAt: new Date().toISOString()
+                        };
+                        
+                        const docRef = doc(collection(db, 'products'), product.id);
+                        batch.set(docRef, firestoreProduct);
+                    }
+                    
+                    await batch.commit();
+                    imported = endIdx;
+                    const progress = Math.round((imported / products.length) * 100);
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = progress + '%';
+                    addLog(`✅ Завантажено ${imported}/${products.length}...`, 'success');
+                }
+
+                addLog(`\n🎉 Успішно імпортовано ${products.length} товарів!`, 'success');
+                addLog('Сторінка поновиться за 2 секунди...', 'info');
+                setTimeout(() => window.location.reload(), 2000);
+            } catch (error) {
+                addLog(`❌ Помилка: ${error.message}`, 'error');
+                importBtn.disabled = false;
+            }
+        };
+
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+        };
+
+        function addLog(message, type = 'info') {
+            const logEl = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = message;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+    </script>
+</body>
+</html>

@@ -458,9 +458,6 @@ const Products: React.FC = () => {
     return products.filter(product => {
       if (!product) return false;
       
-      // Исключаем товары Spicer из страницы Products (они показываются только на витрине и на странице /spicer-products)
-      if (product.brand === 'spicer') return false;
-      
       // Проверка активности товара
       const isActive = product.isActive !== false;
       if (!isActive) return false;

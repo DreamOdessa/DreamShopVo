@@ -995,68 +995,66 @@ const AdminPanel: React.FC = () => {
 
   const handleSaveProduct = async () => {
     if (!productForm.name || !productForm.description || !productForm.price || !productForm.image) {
-      toast.error('Заполните все обязательные поля');
+      toast.error('Заповніть всі обов\'язкові поля');
       return;
     }
 
-    // Собираем все изображения в правильном порядке:
-    // [главное фото, доп фото при hover, ...галерея]
-    const allImages = [
-      productForm.image,
-      ...(productForm.hoverImage ? [productForm.hoverImage] : []),
-      ...productForm.images
-    ].filter(img => img && img.trim() !== ''); // Фильтруем пустые строки
+    try {
+      // Собираем все изображения в правильном порядке:
+      // [главное фото, доп фото при hover, ...галерея]
+      const allImages = [
+        productForm.image,
+        ...(productForm.hoverImage ? [productForm.hoverImage] : []),
+        ...productForm.images
+      ].filter(img => img && img.trim() !== ''); // Фільтруем пустые строки
 
-    const productData = {
-      ...productForm,
-      image: productForm.image, // главное фото
-      images: allImages.length > 0 ? allImages : [productForm.image], // Всегда массив с хотя бы одним изображением
-      price: parseFloat(productForm.price),
-      category: productForm.category as 'chips' | 'decorations' | 'syrups' | 'purees' | 'dried_flowers',
-      subcategory: productForm.subcategory || undefined,
-      isActive: productForm.isActive,
-      isPopular: productForm.isPopular,
-      ingredients: productForm.ingredients ? productForm.ingredients.split(',').map(i => i.trim()) : []
-    };
+      const productData = {
+        ...productForm,
+        image: productForm.image, // главное фото
+        images: allImages.length > 0 ? allImages : [productForm.image], // Всегда массив с хотя бы одним изображением
+        price: parseFloat(productForm.price),
+        category: productForm.category as 'chips' | 'decorations' | 'syrups' | 'purees' | 'dried_flowers',
+        subcategory: productForm.subcategory || undefined,
+        isActive: productForm.isActive,
+        isPopular: productForm.isPopular,
+        ingredients: productForm.ingredients ? productForm.ingredients.split(',').map(i => i.trim()) : []
+      };
 
-    if (editingProduct) {
-      updateProduct(editingProduct.id, productData);
-      toast.success('Товар обновлен!');
-    } else {
-      addProduct(productData);
-      toast.success('Товар добавлен!');
-    }
+      if (editingProduct) {
+        await updateProduct(editingProduct.id, productData);
+      } else {
+        await addProduct(productData);
+      }
 
-    setShowModal(false);
-    setEditingProduct(null);
-  };
-
-  const handleDeleteProduct = (id: string) => {
-    if (window.confirm('Вы уверены, что хотите удалить этот товар?')) {
-      deleteProduct(id);
-      toast.success('Товар удален!');
+      setShowModal(false);
+      setEditingProduct(null);
+    } catch (error) {
+      console.error('Помилка збереження товару:', error);
     }
   };
 
-  const handleToggleActive = (product: Product) => {
+  const handleDeleteProduct = async (id: string) => {
+    if (window.confirm('Ви впевнені, що хочете видалити цей товар?')) {
+      await deleteProduct(id);
+    }
+  };
+
+  const handleToggleActive = async (product: Product) => {
     const newActiveState = !product.isActive;
-    updateProduct(product.id, { isActive: newActiveState });
-    toast.success(newActiveState ? '✅ Товар активирован' : '👁️ Товар скрыт');
+    await updateProduct(product.id, { isActive: newActiveState });
   };
 
-  const handleTogglePopular = (product: Product) => {
+  const handleTogglePopular = async (product: Product) => {
     const newPopularState = !product.isPopular;
-    updateProduct(product.id, { isPopular: newPopularState });
-    toast.success(newPopularState ? '⭐ Товар добавлен в популярные' : '⭐ Товар убран из популярных');
+    await updateProduct(product.id, { isPopular: newPopularState });
   };
 
   const handleQuickSubcategoryChange = async (productId: string, newSubcategory: string | null) => {
     try {
       await updateProduct(productId, { subcategory: newSubcategory || undefined });
-      toast.success(newSubcategory ? `📂 Подкатегория "${newSubcategory}" назначена` : '📂 Подкатегория удалена');
       setOpenSubcategoryDropdown(null);
     } catch (error) {
-      toast.error('Ошибка при обновлении подкатегории');
+      toast.error('Помилка при оновленні підкатегорії');
       console.error(error);
     }
   };

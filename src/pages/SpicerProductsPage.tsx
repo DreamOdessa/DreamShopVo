@@ -45,17 +45,10 @@ const SpicerProductsPage: React.FC = () => {
     console.log('Обраний об\'єм:', selectedVolume);
     console.log('Всього товарів:', products.length);
 
-    // Фильтр по категории (или подкатегории для Spicer)
+    // Фильтр по категории
     if (selectedCategory !== 'all') {
       const before = filtered.length;
-      filtered = filtered.filter(p => {
-        // Перевіряємо subcategory або category
-        const matches = (p.subcategory === selectedCategory) || (p.category === selectedCategory);
-        if (matches) {
-          console.log(`✓ Товар "${p.name}" відповідає (subcategory: ${p.subcategory}, category: ${p.category})`);
-        }
-        return matches;
-      });
+      filtered = filtered.filter(p => p.subcategory === selectedCategory);
       console.log(`Після фільтра категорії: ${before} → ${filtered.length} товарів`);
     }
 
@@ -155,24 +148,11 @@ const SpicerProductsPage: React.FC = () => {
     }
   };
 
-  // Получение уникальных значений для фильтров
-  // Для Spicer товаров используем subcategory если есть, иначе category
+  // Получение уникальных значений для фильтров - ТІЛЬКИ з реальних даних
   const categories = React.useMemo(() => {
-    // Фіксовані категорії для Spicer
-    const fixedCategories = ['all', 'Подарункові набори', 'Спешл'];
-    
-    // Додаємо динамічні категорії з товарів
-    const allCategories = products.map(p => {
-      return p.subcategory || p.category;
-    }).filter(Boolean);
-    
+    const allCategories = products.map(p => p.subcategory).filter(Boolean);
     const uniqueCategories = Array.from(new Set(allCategories));
-    console.log('Доступні категорії Spicer:', uniqueCategories);
-    console.log('Всього товарів Spicer:', products.length);
-    
-    // Об'єднуємо фіксовані та динамічні категорії, видаляємо дублікати
-    const allCats = [...fixedCategories, ...uniqueCategories];
-    return Array.from(new Set(allCats));
+    return ['all', ...uniqueCategories];
   }, [products]);
   
   const volumes: string[] = ['all', ...Array.from(new Set(products.map(p => (p.volume || '')).filter(v => v)))];

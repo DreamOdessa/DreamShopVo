@@ -47,7 +47,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
   // Загрузка данных
   const loadData = async () => {
     try {
-      console.log('Завантаження даних...');
+      console.log('🔄 Завантаження даних...');
       setLoading(true);
       const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
 
@@ -56,19 +56,27 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       const productsPromise = productService.getAll();
 
       const categoriesPromise = categoryService.getAll().catch(err => {
-        console.error('Ошибка загрузки категорий:', err);
+        console.error('❌ Ошибка загрузки категорий:', err);
         return [] as Category[];
       });
 
       const [productsData, categoriesData] = await Promise.all([
         productsPromise.catch(err => {
-          console.error('Ошибка загрузки товаров:', err);
+          console.error('❌ Ошибка загрузки товаров:', err);
           return [] as Product[];
         }),
         categoriesPromise
       ]);
 
-      console.log(`Завантажено ${productsData.length} товарів, ${categoriesData.length} категорій`);
+      console.log(`✅ Завантажено товарів: ${productsData.length}`);
+      console.log(`✅ Завантажено категорій: ${categoriesData.length}`);
+      
+      if (productsData.length > 0) {
+        console.log('📝 Перші товари:', productsData.slice(0, 2).map(p => ({ name: p.name, category: p.category, isActive: p.isActive })));
+      } else {
+        console.warn('⚠️ ТОВАРИ НЕ ЗАВАНТАЖЕНІ! Натисніть на адмін-панелі кнопку "Импортировать товары"');
+      }
+      
       setProducts(productsData);
       setCategories(categoriesData);
 
@@ -82,11 +90,11 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
           setUsers(usersData);
           setOrders(ordersData);
         } catch (error) {
-          console.log('Не удалось загрузить users/orders (не авторизован или нет прав)');
+          console.log('ℹ️ Не удалось загрузить users/orders (не авторизован или нет прав)');
         }
       }
     } catch (error) {
-      console.error('Помилка завантаження даних:', error);
+      console.error('❌ КРИТИЧНА ПОМИЛКА при завантаженні даних:', error);
     } finally {
       setLoading(false);
     }

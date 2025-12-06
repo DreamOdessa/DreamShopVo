@@ -49,29 +49,12 @@ const SpicerProductsPage: React.FC = () => {
     if (selectedCategory !== 'all') {
       const before = filtered.length;
       filtered = filtered.filter(p => {
-        const productName = p.name.toLowerCase();
-        
-        // Визначаємо категорію товару
-        if (selectedCategory === 'Подарункові набори') {
-          // Товари з словами "набір", "набор", "set" в назві
-          return productName.includes('набір') || 
-                 productName.includes('набор') || 
-                 productName.includes('set');
-        } else if (selectedCategory === 'Спешл') {
-          // Товари з словами "special", "спешл", "спеціал" в назві або підкатегорії
-          return productName.includes('special') || 
-                 productName.includes('спешл') || 
-                 productName.includes('спеціал') ||
-                 p.subcategory?.toLowerCase().includes('special') ||
-                 p.subcategory?.toLowerCase().includes('спешл');
-        } else {
-          // Інші категорії - звичайна перевірка по subcategory або category
-          const matches = (p.subcategory === selectedCategory) || (p.category === selectedCategory);
-          if (matches) {
-            console.log(`✓ Товар "${p.name}" відповідає (subcategory: ${p.subcategory}, category: ${p.category})`);
-          }
-          return matches;
+        // Перевіряємо subcategory або category
+        const matches = (p.subcategory === selectedCategory) || (p.category === selectedCategory);
+        if (matches) {
+          console.log(`✓ Товар "${p.name}" відповідає (subcategory: ${p.subcategory}, category: ${p.category})`);
         }
+        return matches;
       });
       console.log(`Після фільтра категорії: ${before} → ${filtered.length} товарів`);
     }

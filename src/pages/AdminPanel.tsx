@@ -809,6 +809,11 @@ const AdminPanel: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all'); // Фільтр по категории (slug)
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | 'none' | null>(null); // Фильтр по подкатегории
+  
+  // Spicer категорії для ручного призначення
+  const spicerCategories = ['Подарункові набори', 'Спешл'];
+  const [selectedSpicerCategory, setSelectedSpicerCategory] = useState<string>('');
+  const [spicerProductsToUpdate, setSpicerProductsToUpdate] = useState<Set<string>>(new Set());
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -1272,6 +1277,60 @@ const AdminPanel: React.FC = () => {
   //   }
   // }; // Отключено для избежания неиспользуемой функции
 
+  // Функція для масового оновлення Spicer категорій
+  const handleUpdateSpicerCategories = async () => {
+    if (!selectedSpicerCategory) {
+      toast.error('Виберіть категорію Spicer');
+      return;
+    }
+    
+    if (spicerProductsToUpdate.size === 0) {
+      toast.error('Виберіть товари для оновлення');
+      return;
+    }
+
+    try {
+      const updatePromises = Array.from(spicerProductsToUpdate).map(async (productId) => {
+        const product = products.find(p => p.id === productId);
+        if (product) {
+          await updateProduct(productId, {
+            ...product,
+            subcategory: selectedSpicerCategory
+          });
+        }
+      });
+
+      await Promise.all(updatePromises);
+      toast.success(`Оновлено ${spicerProductsToUpdate.size} товарів`);
+      setSpicerProductsToUpdate(new Set());
+      setSelectedSpicerCategory('');
+    } catch (error) {
+      console.error('Помилка оновлення категорій:', error);
+      toast.error('Помилка при оновленні категорій');
+    }
+  };
+
+  const toggleSpicerProduct = (productId: string) => {
+    setSpicerProductsToUpdate(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(productId)) {
+        newSet.delete(productId);
+      } else {
+        newSet.add(productId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllSpicerProducts = () => {
+    const spicerProducts = products.filter(p => p.brand === 'spicer');
+    setSpicerProductsToUpdate(new Set(spicerProducts.map(p => p.id)));
+  };
+
+  const deselectAllSpicerProducts = () => {
+    setSpicerProductsToUpdate(new Set());
+  };
+
   return (
     <>
       <AdminSidebar 
@@ -1361,6 +1420,10 @@ const AdminPanel: React.FC = () => {
           <Tab isActive={activeTab === 'bugs'} onClick={() => setActiveTab('bugs')}>
             <FiAlertCircle />
             Звіти про баги
+          </Tab>
+          <Tab isActive={activeTab === 'spicer'} onClick={() => setActiveTab('spicer')}>
+            <FiPackage />
+            Spicer категорії
           </Tab>
         </Tabs>
 
@@ -1839,6 +1902,131 @@ const AdminPanel: React.FC = () => {
               transition={{ duration: 0.3 }}
             >
               <BugReportsPanel />
+            </motion.div>
+          )}
+
+          {activeTab === 'spicer' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <SectionHeader>
+                <SectionTitle>
+                  <FiPackage />
+                  Управління Spicer категоріями
+                </SectionTitle>
+              </SectionHeader>
+
+              <div style={{ marginBottom: '2rem', padding: '1.5rem', background: '#f8f9fa', borderRadius: '12px' }}>
+                <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Масове призначення категорій</h3>
+                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                  <Select
+                    value={selectedSpicerCategory}
+                    onChange={(e) => setSelectedSpicerCategory(e.target.value)}
+                    style={{ flex: '1', minWidth: '200px' }}
+                  >
+                    <option value="">Виберіть категорію Spicer</option>
+                    {spicerCategories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </Select>
+                  <AddButton onClick={handleUpdateSpicerCategories} disabled={!selectedSpicerCategory || spicerProductsToUpdate.size === 0}>
+                    Оновити ({spicerProductsToUpdate.size})
+                  </AddButton>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={selectAllSpicerProducts}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      background: '#00acc1',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    Вибрати всі
+                  </button>
+                  <button
+                    onClick={deselectAllSpicerProducts}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      background: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem'
+                    }}
+                  >
+                    Скасувати вибір
+                  </button>
+                </div>
+              </div>
+
+              <Table>
+                <thead>
+                  <tr>
+                    <TableHeader style={{ width: '50px' }}>
+                      <input
+                        type="checkbox"
+                        checked={spicerProductsToUpdate.size === products.filter(p => p.brand === 'spicer').length && products.filter(p => p.brand === 'spicer').length > 0}
+                        onChange={(e) => e.target.checked ? selectAllSpicerProducts() : deselectAllSpicerProducts()}
+                      />
+                    </TableHeader>
+                    <TableHeader>Зображення</TableHeader>
+                    <TableHeader>Назва</TableHeader>
+                    <TableHeader>Категорія</TableHeader>
+                    <TableHeader>Поточна Spicer категорія</TableHeader>
+                    <TableHeader>Об'єм</TableHeader>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.filter(p => p.brand === 'spicer').map(product => (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          checked={spicerProductsToUpdate.has(product.id)}
+                          onChange={() => toggleSpicerProduct(product.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }}
+                        />
+                      </TableCell>
+                      <TableCell>{product.name}</TableCell>
+                      <TableCell>{product.category}</TableCell>
+                      <TableCell>
+                        <span style={{
+                          padding: '0.3rem 0.8rem',
+                          background: product.subcategory ? '#00acc1' : '#e9ecef',
+                          color: product.subcategory ? 'white' : '#6c757d',
+                          borderRadius: '20px',
+                          fontSize: '0.85rem',
+                          fontWeight: '500'
+                        }}>
+                          {product.subcategory || 'Не призначено'}
+                        </span>
+                      </TableCell>
+                      <TableCell>{product.volume || '—'}</TableCell>
+                    </TableRow>
+                  ))}
+                </tbody>
+              </Table>
+
+              {products.filter(p => p.brand === 'spicer').length === 0 && (
+                <EmptyState>
+                  <h3>Немає товарів Spicer</h3>
+                  <p>Товари бренду Spicer будуть відображатися тут</p>
+                </EmptyState>
+              )}
             </motion.div>
           )}
 

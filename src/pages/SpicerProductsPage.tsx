@@ -87,38 +87,39 @@ const SpicerProductsPage: React.FC = () => {
     try {
       setLoading(true);
       
-      // Запрос только товаров Spicer
-      const q = query(
-        collection(db, 'products'),
-        where('brand', '==', 'spicer')
-      );
-      
-      const querySnapshot = await getDocs(q);
+      // Запрос ВСЕХ товаров, фильтруем на клиенте по brand или isSpicer
+      const productsCollection = collection(db, 'products');
+      const querySnapshot = await getDocs(productsCollection);
       const loadedProducts: Product[] = [];
+      
       querySnapshot.forEach((docSnap) => {
         const data: any = docSnap.data();
-        loadedProducts.push({
-          id: docSnap.id,
-          name: data.name || data.title || '',
-          description: data.description || '',
-          price: Number(data.price) || 0,
-          originalPrice: data.originalPrice ? Number(data.originalPrice) : undefined,
-          image: data.image || data.imageUrl || '',
-          images: data.images || undefined,
-          category: data.category || 'chips', // fallback чтобы удовлетворить тип
-          subcategory: data.subcategory || undefined,
-          organic: Boolean(data.organic) || false,
-          inStock: data.inStock !== undefined ? Boolean(data.inStock) : true,
-          isActive: data.isActive !== false,
-          isPopular: Boolean(data.isPopular),
-          weight: data.weight || undefined,
-          ingredients: Array.isArray(data.ingredients) ? data.ingredients : undefined,
-          createdAt: data.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
-          brand: data.brand || 'spicer',
-          isSpicer: true,
-          volume: data.volume || '',
-          imageUrl: data.imageUrl || data.image || ''
-        });
+        
+        // Фільтруємо тільки Spicer товари
+        if (data.brand === 'spicer' || data.isSpicer === true) {
+          loadedProducts.push({
+            id: docSnap.id,
+            name: data.name || data.title || '',
+            description: data.description || '',
+            price: Number(data.price) || 0,
+            originalPrice: data.originalPrice ? Number(data.originalPrice) : undefined,
+            image: data.image || data.imageUrl || '',
+            images: data.images || undefined,
+            category: data.category || 'chips',
+            subcategory: data.subcategory || undefined,
+            organic: Boolean(data.organic) || false,
+            inStock: data.inStock !== undefined ? Boolean(data.inStock) : true,
+            isActive: data.isActive !== false,
+            isPopular: Boolean(data.isPopular),
+            weight: data.weight || undefined,
+            ingredients: Array.isArray(data.ingredients) ? data.ingredients : undefined,
+            createdAt: data.createdAt?.toDate?.()?.toISOString?.() || new Date().toISOString(),
+            brand: data.brand || 'spicer',
+            isSpicer: true,
+            volume: data.volume || '',
+            imageUrl: data.imageUrl || data.image || ''
+          });
+        }
       });
       setProducts(loadedProducts);
       

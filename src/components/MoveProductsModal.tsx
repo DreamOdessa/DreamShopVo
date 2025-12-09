@@ -291,7 +291,7 @@ const MoveProductsModal: React.FC<MoveProductsModalProps> = ({
     const filtered = categories || [];
     // Исключаем текущую категорию (если задана)
     return filtered.filter(c => c.id !== sourceCategory?.id);
-  }, [categories, sourceCategory, isForSpicer]);
+  }, [categories, sourceCategory]);
 
   // Подкатегории для выбранной целевой категории
   const targetSubcategories = useMemo(() => {

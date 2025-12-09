@@ -6,6 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { Product } from '../types';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useAdmin } from '../contexts/AdminContext';
 
 const SpicerProductsPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -20,6 +21,7 @@ const SpicerProductsPage: React.FC = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const { categories: allCategories } = useAdmin();
 
   // Загрузка товаров Spicer из Firebase
   useEffect(() => {
@@ -45,11 +47,11 @@ const SpicerProductsPage: React.FC = () => {
     console.log('Обраний об\'єм:', selectedVolume);
     console.log('Всього товарів:', products.length);
 
-    // Фильтр по категории
+    // Фильтр по категории - використовуємо назву категорії для фільтрації по field 'category'
     if (selectedCategory !== 'all') {
       const before = filtered.length;
-      filtered = filtered.filter(p => p.subcategory === selectedCategory);
-      console.log(`Після фільтра категорії: ${before} → ${filtered.length} товарів`);
+      filtered = filtered.filter(p => p.category === selectedCategory);
+      console.log(`Після фільтра категорії "${selectedCategory}": ${before} → ${filtered.length} товарів`);
     }
 
     // Фильтр по объему
@@ -170,25 +172,27 @@ const SpicerProductsPage: React.FC = () => {
   };
 
   // Получение уникальных значений для фильтров - ТІЛЬКИ з реальних даних
+  const spicerCategories = React.useMemo(() => {
+    // Берем категории с parentSlug = 'spicer-root' (основные категории Spícer)
+    return allCategories.filter(cat => cat.parentSlug === 'spicer-root');
+  }, [allCategories]);
+
   const categories = React.useMemo(() => {
-    const allCategories = products
-      .map(p => p.subcategory)
-      .filter((cat): cat is string => Boolean(cat)); // Фільтруємо undefined і приводимо тип
-    const uniqueCategories = Array.from(new Set(allCategories));
-    return ['all', ...uniqueCategories];
-  }, [products]);
+    const categoryNames = spicerCategories.map(c => c.name);
+    return ['all', ...categoryNames];
+  }, [spicerCategories]);
   
   const volumes: string[] = ['all', ...Array.from(new Set(products.map(p => (p.volume || '')).filter(v => v)))];
 
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
+  const handleCategoryChange = (categoryName: string) => {
+    setSelectedCategory(categoryName);
     
-    // Обновление URL
+    // Обновление URL - использую категорию по названию
     const params = new URLSearchParams(location.search);
-    if (category === 'all') {
+    if (categoryName === 'all') {
       params.delete('category');
     } else {
-      params.set('category', category);
+      params.set('category', categoryName);
     }
     
     const newSearch = params.toString();

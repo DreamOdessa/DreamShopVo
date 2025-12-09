@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye, FiUpload, FiEyeOff, FiStar, FiTag, FiChevronDown, FiSettings, FiAlertCircle, FiDownload } from 'react-icons/fi';
 import CategoryManager from '../components/CategoryManager';
+import SpicerCategoryManager from '../components/SpicerCategoryManager';
 import CategoryShowcaseManager from '../components/CategoryShowcaseManager';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminNavbar from '../components/admin/AdminNavbar';
@@ -805,6 +806,7 @@ const AdminPanel: React.FC = () => {
   const { user } = useAuth();
   const { products, users, orders, categories, addProduct, updateProduct, deleteProduct, updateUser, updateUserDiscount, updateOrderStatus, deleteOrder } = useAdmin();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [categoriesSubTab, setCategoriesSubTab] = useState('dreamshop'); // 'dreamshop' или 'spicer'
   const [isSidebarHidden, setIsSidebarHidden] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all'); // Фільтр по категории (slug)
@@ -1802,7 +1804,45 @@ const AdminPanel: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <CategoryManager />
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setCategoriesSubTab('dreamshop')}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    background: categoriesSubTab === 'dreamshop' 
+                      ? 'linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%)'
+                      : '#e9ecef',
+                    color: categoriesSubTab === 'dreamshop' ? 'white' : '#333'
+                  }}
+                >
+                  🛍️ Категорії DreamShop
+                </button>
+                <button
+                  onClick={() => setCategoriesSubTab('spicer')}
+                  style={{
+                    padding: '0.75rem 1.5rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    background: categoriesSubTab === 'spicer'
+                      ? 'linear-gradient(135deg, #ff6b35 0%, #ff8c42 50%, #ffa500 100%)'
+                      : '#e9ecef',
+                    color: categoriesSubTab === 'spicer' ? 'white' : '#333'
+                  }}
+                >
+                  🌶️ Категорії Spícer
+                </button>
+              </div>
+
+              {categoriesSubTab === 'dreamshop' && <CategoryManager />}
+              {categoriesSubTab === 'spicer' && <SpicerCategoryManager />}
             </motion.div>
           )}
 

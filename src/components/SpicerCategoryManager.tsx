@@ -2,9 +2,10 @@ import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { useAdmin } from '../contexts/AdminContext';
 import { Category } from '../types';
-import { FiEdit, FiTrash2, FiPlus, FiX, FiUpload } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiX, FiUpload, FiArrowRight } from 'react-icons/fi';
 import { storageService, STORAGE_PATHS } from '../firebase/storageService';
 import toast from 'react-hot-toast';
+import MoveProductsModal from './MoveProductsModal';
 
 const ManagerContainer = styled.div`
   background: white;
@@ -284,8 +285,10 @@ interface FormData {
 }
 
 const SpicerCategoryManager: React.FC = () => {
-  const { categories, products, addCategory, updateCategory, deleteCategory, loading } = useAdmin();
+  const { categories, products, addCategory, updateCategory, deleteCategory, updateProduct, loading } = useAdmin();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+  const [selectedCategoryForMove, setSelectedCategoryForMove] = useState<Category | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -454,6 +457,21 @@ const SpicerCategoryManager: React.FC = () => {
     }
   };
 
+  const handleMoveProducts = async (
+    productIds: string[],
+    targetCategorySlug: string,
+    targetSubcategorySlug: string
+  ) => {
+    const updatePromises = productIds.map(productId => {
+      return updateProduct(productId, {
+        category: targetCategorySlug,
+        subcategory: targetSubcategorySlug || ''
+      });
+    });
+
+    await Promise.all(updatePromises);
+  };
+
   if (loading) {
     return (
       <ManagerContainer>
@@ -556,7 +574,8 @@ const SpicerCategoryManager: React.FC = () => {
                 <div style={{
                   marginTop: '1rem',
                   display: 'flex',
-                  gap: '0.5rem'
+                  gap: '0.5rem',
+                  flexDirection: 'column'
                 }}>
                   <Button 
                     onClick={() => handleOpenModal()}
@@ -564,6 +583,41 @@ const SpicerCategoryManager: React.FC = () => {
                   >
                     + Підкатегорія
                   </Button>
+
+                  {linkedProducts.length > 0 && (
+                    <button
+                      onClick={() => {
+                        setSelectedCategoryForMove(category);
+                        setIsMoveModalOpen(true);
+                      }}
+                      style={{
+                        padding: '0.6rem',
+                        background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 50%, #e65100 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '0.85rem',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem',
+                        transition: 'all 0.3s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.target as HTMLButtonElement).style.transform = 'translateY(-2px)';
+                        (e.target as HTMLButtonElement).style.boxShadow = '0 4px 12px rgba(255, 152, 0, 0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.target as HTMLButtonElement).style.transform = 'translateY(0)';
+                        (e.target as HTMLButtonElement).style.boxShadow = 'none';
+                      }}
+                    >
+                      <FiArrowRight size={16} />
+                      Переместить товары
+                    </button>
+                  )}
                 </div>
               </CategoryCard>
             );
@@ -726,6 +780,16 @@ const SpicerCategoryManager: React.FC = () => {
           </Form>
         </ModalContent>
       </Modal>
+
+      <MoveProductsModal
+        isOpen={isMoveModalOpen}
+        onClose={() => setIsMoveModalOpen(false)}
+        products={products}
+        categories={categories}
+        sourceCategory={selectedCategoryForMove}
+        onMove={handleMoveProducts}
+        isForSpicer={true}
+      />
     </ManagerContainer>
   );
 };

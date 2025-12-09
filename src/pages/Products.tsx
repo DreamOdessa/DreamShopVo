@@ -471,6 +471,12 @@ const Products: React.FC = () => {
     const filtered = products.filter(product => {
       if (!product) return false;
       
+      // Исключаем товары Spícer из основного каталога
+      const isSpicer = product.brand === 'spicer' || product.isSpicer === true;
+      if (isSpicer) {
+        return false;
+      }
+      
       // Проверка активности товара
       const isActive = product.isActive !== false;
       if (!isActive) {

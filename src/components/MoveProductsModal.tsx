@@ -287,34 +287,19 @@ const MoveProductsModal: React.FC<MoveProductsModalProps> = ({
 
   // Фильтруем доступные категории для перемещения
   const availableCategories = useMemo(() => {
-    if (!sourceCategory) return [];
-    
-    let filtered = categories;
-    
-    // Если это Spícer, показываем только Spícer категории
-    if (isForSpicer) {
-      filtered = filtered.filter(c => 
-        c.parentSlug === 'spicer-root' || (c.parentSlug && c.parentSlug.startsWith('spicer-'))
-      );
-    } else {
-      // Для DreamShop, исключаем Spícer категории
-      filtered = filtered.filter(c =>
-        !c.parentSlug?.startsWith('spicer-') && c.parentSlug !== 'spicer-root'
-      );
-    }
-    
-    // Исключаем текущую категорию
-    return filtered.filter(c => c.id !== sourceCategory.id);
+    // Показываем ВСЕ категории (корневые и підкатегорії) незалежно від сторінки
+    const filtered = categories || [];
+    // Исключаем текущую категорию (если задана)
+    return filtered.filter(c => c.id !== sourceCategory?.id);
   }, [categories, sourceCategory, isForSpicer]);
 
   // Подкатегории для выбранной целевой категории
   const targetSubcategories = useMemo(() => {
     if (!targetCategory) return [];
-    
-    return availableCategories
+    return (categories || [])
       .filter(c => c.parentSlug === targetCategory)
       .sort((a, b) => a.sortOrder - b.sortOrder);
-  }, [targetCategory, availableCategories]);
+  }, [targetCategory, categories]);
 
   const handleSelectProduct = (productId: string, checked: boolean) => {
     setSelectedProducts(prev => 

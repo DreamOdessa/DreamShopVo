@@ -94,6 +94,9 @@ export interface Category {
   albumImages?: string[]; // images used for CategoryShowcase album
   albumVideos?: string[]; // short silent videos for CategoryShowcase album (mp4/webm)
   showInShowcase?: boolean; // whether this category should appear in the homepage showcase
+  // page: where this category is used in the storefront
+  // 'dreamshop' - main site categories, 'spicer' - Spícer product page
+  page?: 'dreamshop' | 'spicer';
   isActive: boolean;
   sortOrder: number;
   parentSlug?: string; // slug родительской категории (если это подкатегория)

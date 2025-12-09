@@ -282,6 +282,7 @@ interface FormData {
   isActive: boolean;
   sortOrder: number;
   parentSlug: string;
+  page?: 'dreamshop' | 'spicer';
 }
 
 const SpicerCategoryManager: React.FC = () => {
@@ -298,7 +299,8 @@ const SpicerCategoryManager: React.FC = () => {
     image: '',
     isActive: true,
     sortOrder: 0,
-    parentSlug: ''
+    parentSlug: '',
+    page: 'spicer'
   });
   const [slugTouched, setSlugTouched] = useState(false);
   const [imagePreview, setImagePreview] = useState('');
@@ -339,7 +341,8 @@ const SpicerCategoryManager: React.FC = () => {
         image: category.image || '',
         isActive: category.isActive,
         sortOrder: category.sortOrder,
-        parentSlug: category.parentSlug || ''
+        parentSlug: category.parentSlug || '',
+        page: category.page || (category.parentSlug === 'spicer-root' ? 'spicer' : 'dreamshop')
       });
       setSlugTouched(true);
       setImagePreview(category.image || '');
@@ -353,7 +356,8 @@ const SpicerCategoryManager: React.FC = () => {
         image: '',
         isActive: true,
         sortOrder: 0,
-        parentSlug: 'spicer-root'
+        parentSlug: 'spicer-root',
+        page: 'spicer'
       });
       setSlugTouched(false);
       setImagePreview('');
@@ -386,8 +390,15 @@ const SpicerCategoryManager: React.FC = () => {
     const finalSlug = formData.slug && formData.slug.trim().length > 0
       ? formData.slug
       : slugify(formData.name);
-    const payload = { ...formData, slug: finalSlug };
-    
+    const payload = { ...formData, slug: finalSlug } as any;
+    // enforce page and normalize parentSlug
+    payload.page = formData.page || 'spicer';
+    if (payload.page === 'spicer') {
+      if (!payload.parentSlug || payload.parentSlug === '') payload.parentSlug = 'spicer-root';
+    } else {
+      if (payload.parentSlug === 'spicer-root') payload.parentSlug = '';
+    }
+
     if (editingCategory) {
       await updateCategory(editingCategory.id, payload);
     } else {
@@ -747,6 +758,24 @@ const SpicerCategoryManager: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
+              <Label>Для сторінки</Label>
+              <select
+                style={{ padding: '0.75rem', border: '2px solid #e9ecef', borderRadius: '8px', marginBottom: '0.75rem' }}
+                value={formData.page}
+                onChange={(e) => {
+                  const page = e.target.value as 'dreamshop' | 'spicer';
+                  setFormData(prev => ({ ...prev, page }));
+                  if (page === 'spicer') {
+                    setFormData(prev => ({ ...prev, parentSlug: prev.parentSlug || 'spicer-root' }));
+                  } else {
+                    setFormData(prev => ({ ...prev, parentSlug: prev.parentSlug === 'spicer-root' ? '' : prev.parentSlug }));
+                  }
+                }}
+              >
+                <option value="spicer">Категорії Spícer</option>
+                <option value="dreamshop">Категорії основного магазину</option>
+              </select>
+
               <Label>Батьківська категорія</Label>
               <select
                 style={{ padding: '0.75rem', border: '2px solid #e9ecef', borderRadius: '8px' }}

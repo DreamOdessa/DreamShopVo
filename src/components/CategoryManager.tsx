@@ -282,7 +282,8 @@ const CategoryManager: React.FC = () => {
     image: '',
     isActive: true,
     sortOrder: 0,
-    parentSlug: '' as string | ''
+    parentSlug: '' as string | '',
+    page: 'dreamshop' as 'dreamshop' | 'spicer'
   });
   const [slugTouched, setSlugTouched] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -303,7 +304,8 @@ const CategoryManager: React.FC = () => {
         image: category.image || '',
         isActive: category.isActive,
         sortOrder: category.sortOrder,
-        parentSlug: category.parentSlug || ''
+        parentSlug: category.parentSlug || '',
+        page: category.page || (category.parentSlug === 'spicer-root' ? 'spicer' : 'dreamshop')
       });
       setSlugTouched(true); // existing category slug stays manual
       setImagePreview(category.image || '');
@@ -317,7 +319,8 @@ const CategoryManager: React.FC = () => {
         image: '',
         isActive: true,
         sortOrder: 0,
-        parentSlug: ''
+        parentSlug: '',
+        page: 'dreamshop'
       });
       setSlugTouched(false);
       setImagePreview('');
@@ -352,7 +355,15 @@ const CategoryManager: React.FC = () => {
     const finalSlug = formData.slug && formData.slug.trim().length > 0
       ? formData.slug
       : slugify(formData.name);
-    const payload = { ...formData, slug: finalSlug };
+    const payload = { ...formData, slug: finalSlug } as any;
+    // Normalize parentSlug by selected page
+    if (payload.page === 'spicer') {
+      // if creating a root spicer category, mark parentSlug as 'spicer-root'
+      if (!payload.parentSlug || payload.parentSlug === '') payload.parentSlug = 'spicer-root';
+    } else {
+      // ensure dreamshop categories don't have spicer-root parent
+      if (payload.parentSlug === 'spicer-root') payload.parentSlug = '';
+    }
     
     if (editingCategory) {
       await updateCategory(editingCategory.id, payload);
@@ -812,6 +823,25 @@ const CategoryManager: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
+              <Label>Для сторінки</Label>
+              <select
+                style={{ padding: '0.75rem', border: '2px solid #e9ecef', borderRadius: '8px', marginBottom: '0.75rem' }}
+                value={formData.page}
+                onChange={(e) => {
+                  const page = e.target.value as 'dreamshop' | 'spicer';
+                  setFormData(prev => ({ ...prev, page }));
+                  // adjust parentSlug default when switching to spicer
+                  if (page === 'spicer') {
+                    setFormData(prev => ({ ...prev, parentSlug: prev.parentSlug || 'spicer-root' }));
+                  } else {
+                    setFormData(prev => ({ ...prev, parentSlug: prev.parentSlug === 'spicer-root' ? '' : prev.parentSlug }));
+                  }
+                }}
+              >
+                <option value="dreamshop">Категорії основного магазину</option>
+                <option value="spicer">Категорії Spícer</option>
+              </select>
+
               <Label>Батьківська категорія (залишити порожнім для основної)</Label>
               <select
                 style={{ padding: '0.75rem', border: '2px solid #e9ecef', borderRadius: '8px' }}
@@ -819,9 +849,17 @@ const CategoryManager: React.FC = () => {
                 onChange={(e) => setFormData(prev => ({ ...prev, parentSlug: e.target.value }))}
               >
                 <option value=''>— основна категорія —</option>
-                {categories.filter(c => !c.parentSlug && c.id !== editingCategory?.id).map(c => (
-                  <option key={c.id} value={c.slug}>{c.name}</option>
-                ))}
+                {categories
+                  .filter(c => {
+                    const cpage = c.page || (c.parentSlug === 'spicer-root' ? 'spicer' : 'dreamshop');
+                    if (c.id === editingCategory?.id) return false;
+                    // only show root categories that belong to selected page
+                    const isRoot = !c.parentSlug || c.parentSlug === 'spicer-root';
+                    return isRoot && cpage === formData.page;
+                  })
+                  .map(c => (
+                    <option key={c.id} value={c.slug}>{c.name}</option>
+                  ))}
               </select>
               <p style={{ fontSize: '0.75rem', color: '#666', margin: '0.5rem 0 0' }}>
                 Якщо вибрати значення — це буде підкатегорія.

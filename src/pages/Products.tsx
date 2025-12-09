@@ -452,15 +452,31 @@ const Products: React.FC = () => {
     }
   }, [searchParams]);
 
+  // Логируем загрузку товаров и категорий
+  useEffect(() => {
+    console.log('🔄 Products компонент загружен/обновлен');
+    console.log(`📦 Products: ${products?.length || 0} товарів`);
+    console.log(`📂 Categories: ${categories?.length || 0} категорій`);
+    console.log(`🏷️ Active parent categories: ${activeParentCategories?.length || 0}`);
+  }, [products, categories]);
+
   const filteredProducts = useMemo(() => {
-    if (!Array.isArray(products)) return [];
+    if (!Array.isArray(products)) {
+      console.warn('⚠️ Products не массив:', products);
+      return [];
+    }
     
-    return products.filter(product => {
+    console.log(`🔍 Фильтрую товары. Всего: ${products.length}, Выбранная категория: ${selectedCategory}, Активных категорий: ${allActiveCategories?.length || 0}`);
+    
+    const filtered = products.filter(product => {
       if (!product) return false;
       
       // Проверка активности товара
       const isActive = product.isActive !== false;
-      if (!isActive) return false;
+      if (!isActive) {
+        // console.log('❌ Товар не активен:', product.name);
+        return false;
+      }
 
       // Проверка поискового запроса
       const matchesSearch = !searchTerm || (
@@ -470,30 +486,38 @@ const Products: React.FC = () => {
       if (!matchesSearch) return false;
 
       // Проверка категории и подкатегории
+      // ВАЖНО: Если selectedCategory === 'all', пропускаем фильтрацию по категориям
       if (selectedCategory !== 'all') {
-        const category = allActiveCategories?.find(cat => cat.id === selectedCategory);
-        if (!category) {
-          return false;
-        }
-
-        // Если выбрана родительская категория (без parentSlug)
-        if (!category.parentSlug) {
-          // Проверяем соответствие категории
-          if (product.category !== category.slug) {
+        // FAILSAFE: Если категории не загружены, показываем все активные товары
+        if (!allActiveCategories || allActiveCategories.length === 0) {
+          console.warn('⚠️ Категории не загружены! Показываем все товары.');
+          // Ничего не фильтруем по категориям
+        } else {
+          const category = allActiveCategories.find(cat => cat.id === selectedCategory);
+          if (!category) {
+            console.warn(`⚠️ Категория не найдена: ${selectedCategory}`);
             return false;
           }
 
-          // Если выбрана подкатегория - фильтруем по ней
-          if (selectedSubcategory) {
-            if (product.subcategory !== selectedSubcategory) {
+          // Если выбрана родительская категория (без parentSlug)
+          if (!category.parentSlug) {
+            // Проверяем соответствие категории
+            if (product.category !== category.slug) {
               return false;
             }
-          }
-        } else {
-          // Если выбрана подкатегория из dropdown - показываем только товары с этой подкатегорией
-          const parentCategory = allActiveCategories?.find(cat => cat.slug === category.parentSlug);
-          if (!parentCategory || product.category !== parentCategory.slug || product.subcategory !== category.name) {
-            return false;
+
+            // Если выбрана подкатегория - фильтруем по ней
+            if (selectedSubcategory) {
+              if (product.subcategory !== selectedSubcategory) {
+                return false;
+              }
+            }
+          } else {
+            // Если выбрана подкатегория из dropdown - показываем только товары с этой подкатегорией
+            const parentCategory = allActiveCategories.find(cat => cat.slug === category.parentSlug);
+            if (!parentCategory || product.category !== parentCategory.slug || product.subcategory !== category.name) {
+              return false;
+            }
           }
         }
       }
@@ -505,6 +529,15 @@ const Products: React.FC = () => {
 
       return true;
     });
+    
+    console.log(`✅ Отфильтровано товарів: ${filtered.length}`);
+    if (filtered.length > 0) {
+      console.log('📝 Первые товары:', filtered.slice(0, 2).map(p => ({ name: p.name, category: p.category, isActive: p.isActive })));
+    } else {
+      console.warn('⚠️ ТОВАРЫ НЕ НАЙДЕНЫ после фильтрации!');
+    }
+    
+    return filtered;
   }, [products, searchTerm, selectedCategory, selectedSubcategory, showOrganicOnly, allActiveCategories]);
 
   const clearFilters = () => {

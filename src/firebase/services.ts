@@ -35,11 +35,23 @@ export const productService = {
   // Получить все товары
   async getAll(): Promise<Product[]> {
     const snapshot = await getDocs(collection(db, PRODUCTS_COLLECTION));
-    return snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
-    })) as Product[];
+    console.log(`📦 productService.getAll(): Получено ${snapshot.size} товарів`);
+    
+    const products = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.().toISOString() || 
+                   (typeof data.createdAt === 'string' ? data.createdAt : new Date().toISOString())
+      };
+    }) as Product[];
+    
+    if (products.length > 0) {
+      console.log('📝 Первые товары:', products.slice(0, 2).map(p => ({ id: p.id, name: p.name, category: p.category })));
+    }
+    
+    return products;
   },
 
   // Получить ограниченное число товаров (для быстрой публичной загрузки)

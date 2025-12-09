@@ -255,9 +255,11 @@ const Home: React.FC = () => {
   
   // Фильтруем только активные товары
   const activeProducts = products.filter(p => p.isActive !== false);
+  console.log(`📦 Home: Всего товарів: ${products.length}, Активних: ${activeProducts.length}`);
   
   // Популярные товары (отмеченные как популярные)
   const popularProducts = activeProducts.filter(p => p.isPopular).slice(0, 6);
+  console.log(`⭐ Популярных товаров: ${popularProducts.length}`);
 
   // Arrow is fixed via CSS; no need to compute coordinates in JS.
 

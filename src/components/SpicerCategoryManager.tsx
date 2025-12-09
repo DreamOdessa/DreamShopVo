@@ -306,16 +306,17 @@ const SpicerCategoryManager: React.FC = () => {
   const [imagePreview, setImagePreview] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
-  // Фильтруем только категории Spícer - используем специальный префикс/маркер
-  // Категории Spícer будут иметь parentSlug = 'spicer-root' для корневых или 'spicer-xxx' для подкатегорий
+  // Фильтруем категории Spícer по полю page (с фолбеком по parentSlug)
   const spicerCategories = useMemo(() => {
-    return categories.filter(cat => 
-      cat.parentSlug === 'spicer-root' || (cat.parentSlug && cat.parentSlug.startsWith('spicer-'))
-    ).sort((a, b) => a.sortOrder - b.sortOrder);
+    const toPage = (cat: Category) => (cat.page ? cat.page : (cat.parentSlug === 'spicer-root' ? 'spicer' : 'dreamshop'));
+    return categories
+      .filter(cat => toPage(cat) === 'spicer')
+      .sort((a, b) => a.sortOrder - b.sortOrder);
   }, [categories]);
 
   const rootCategories = useMemo(() => {
-    return spicerCategories.filter(cat => cat.parentSlug === 'spicer-root');
+    const toPage = (cat: Category) => (cat.page ? cat.page : (cat.parentSlug === 'spicer-root' ? 'spicer' : 'dreamshop'));
+    return spicerCategories.filter(cat => (!cat.parentSlug && toPage(cat) === 'spicer') || cat.parentSlug === 'spicer-root');
   }, [spicerCategories]);
 
   const getSubcategories = (parentSlug: string) => {

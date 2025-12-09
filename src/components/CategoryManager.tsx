@@ -625,6 +625,10 @@ const CategoryManager: React.FC = () => {
 
       <CategoryGrid>
         {categories
+          .filter(c => {
+            const cpage = c.page || (c.parentSlug === 'spicer-root' ? 'spicer' : 'dreamshop');
+            return cpage === 'dreamshop';
+          })
           .sort((a,b) => a.sortOrder - b.sortOrder)
           .map((category) => {
             const isSub = !!category.parentSlug;

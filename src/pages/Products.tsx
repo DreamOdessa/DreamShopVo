@@ -458,7 +458,7 @@ const Products: React.FC = () => {
     console.log(`📦 Products: ${products?.length || 0} товарів`);
     console.log(`📂 Categories: ${categories?.length || 0} категорій`);
     console.log(`🏷️ Active parent categories: ${activeParentCategories?.length || 0}`);
-  }, [products, categories]);
+  }, [products, categories, activeParentCategories]);
 
   const filteredProducts = useMemo(() => {
     if (!Array.isArray(products)) {

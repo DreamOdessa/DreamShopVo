@@ -10,7 +10,7 @@ import { useCategorySidebar } from '../contexts/CategorySidebarContext';
 // import { Product } from '../types'; // Отключено для избежания неиспользуемого импорта
 
 const ProductsContainer = styled.div`
-  padding: 2rem 0;
+  padding: clamp(1rem, 3vw, 2rem) 0;
   min-height: 80vh;
 `;
 
@@ -19,7 +19,7 @@ const Header = styled.div`
   color: #1f4b5fff;
   padding: clamp(4rem, 10vw, 7rem) 0;
   text-align: center;
-  background-image: url('https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/background-second.jpg');
+  background-image: url('/background-second.jpg');
   background-size: cover;
   background-position: center;
   background-blend-mode: overlay;
@@ -67,18 +67,18 @@ const FiltersSection = styled.div`
   margin: 0 auto;
   padding: clamp(1rem, 3vw, 2rem) clamp(0.75rem, 2.5vw, 1.5rem);
   background: white;
-  border-radius: clamp(1rem, 2.5vw, 1.5rem);
+  border-radius: 8px;
   margin-top: clamp(-1rem, -2.5vw, -2rem);
   position: relative;
   z-index: 10; /* ⭐ ПОВЫШАЕМ с 1 до 10 */
   pointer-events: auto; /* ⭐ ЯВНО РАЗРЕШАЕМ КЛИКИ */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 14px 34px rgba(18, 73, 86, 0.12);
 `;
 
 const SearchAndFilters = styled.div`
   display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: clamp(0.65rem, 2vw, 1rem);
+  margin-bottom: clamp(1rem, 3vw, 2rem);
   flex-wrap: wrap;
 
   @media (max-width: 768px) {
@@ -89,7 +89,7 @@ const SearchAndFilters = styled.div`
 const SearchInput = styled.div`
   flex: 1;
   position: relative;
-  min-width: 300px;
+  min-width: min(300px, 100%);
 
   @media (max-width: 768px) {
     min-width: auto;
@@ -98,7 +98,7 @@ const SearchInput = styled.div`
 
 const SearchField = styled.input`
   width: 100%;
-  padding: 1rem 1rem 1rem 3rem;
+  padding: 0.9rem 1rem 0.9rem 3rem;
   border: 2px solid #e9ecef;
   border-radius: 25px;
   font-size: 1rem;
@@ -106,8 +106,8 @@ const SearchField = styled.input`
 
   &:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #00acc1;
+    box-shadow: 0 0 0 3px rgba(0, 172, 193, 0.12);
   }
 `;
 
@@ -125,17 +125,17 @@ const FilterButton = styled.button<{ isActive: boolean }>`
   align-items: center;
   gap: 0.5rem;
   padding: 1rem 1.5rem;
-  border: 2px solid ${props => props.isActive ? '#667eea' : '#e9ecef'};
-  border-radius: 25px;
-  background: ${props => props.isActive ? '#667eea' : 'white'};
+  border: 2px solid ${props => props.isActive ? '#00acc1' : '#e9ecef'};
+  border-radius: 8px;
+  background: ${props => props.isActive ? '#00acc1' : 'white'};
   color: ${props => props.isActive ? 'white' : '#6c757d'};
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: #667eea;
-    color: #667eea;
+    border-color: #00acc1;
+    color: #00acc1;
     background: white;
   }
 `;
@@ -143,14 +143,14 @@ const FilterButton = styled.button<{ isActive: boolean }>`
 const CategoryDropdown = styled.div`
   position: relative;
   margin-bottom: 2rem;
-  max-width: 300px;
+  max-width: min(320px, 100%);
 `;
 
 const DropdownButton = styled.button<{ isOpen: boolean }>`
   width: 100%;
   padding: 1rem 1.5rem;
-  border: 2px solid ${props => props.isOpen ? '#667eea' : '#e9ecef'};
-  border-radius: 25px;
+  border: 2px solid ${props => props.isOpen ? '#00acc1' : '#e9ecef'};
+  border-radius: 8px;
   background: white;
   color: #495057;
   font-weight: 600;
@@ -161,14 +161,14 @@ const DropdownButton = styled.button<{ isOpen: boolean }>`
   align-items: center;
 
   &:hover {
-    border-color: #667eea;
-    color: #667eea;
+    border-color: #00acc1;
+    color: #00acc1;
   }
 
   &:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #00acc1;
+    box-shadow: 0 0 0 3px rgba(0, 172, 193, 0.12);
   }
 `;
 
@@ -179,7 +179,7 @@ const DropdownList = styled.div<{ isOpen: boolean }>`
   right: 0;
   background: white;
   border: 2px solid #e9ecef;
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   overflow: hidden;
@@ -191,7 +191,7 @@ const DropdownItem = styled.button<{ isActive: boolean }>`
   width: 100%;
   padding: 1rem 1.5rem;
   border: none;
-  background: ${props => props.isActive ? '#667eea' : 'white'};
+  background: ${props => props.isActive ? '#00acc1' : 'white'};
   color: ${props => props.isActive ? 'white' : '#495057'};
   font-weight: 600;
   cursor: pointer;
@@ -199,8 +199,8 @@ const DropdownItem = styled.button<{ isActive: boolean }>`
   text-align: left;
 
   &:hover {
-    background: ${props => props.isActive ? '#667eea' : '#f8f9fa'};
-    color: ${props => props.isActive ? 'white' : '#667eea'};
+    background: ${props => props.isActive ? '#0097a7' : '#f8f9fa'};
+    color: ${props => props.isActive ? 'white' : '#00acc1'};
   }
 
   &:first-child {
@@ -225,7 +225,7 @@ const ProductsGrid = styled.div`
   */
   justify-content: center; 
   
-  gap: clamp(0.5rem, 2vw, 1.5rem);
+  gap: clamp(0.75rem, 2vw, 1.5rem);
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 clamp(0.5rem, 2.5vw, 1.25rem);
@@ -242,13 +242,13 @@ const ProductWrapper = styled(motion.div)`
     - flex-shrink: 1 (сжиматься, если нужно)
     - flex-basis: clamp(...) (базовый "жидкий" размер)
   */
-  flex: 1 1 clamp(150px, 30vw, 220px);
+  flex: 1 1 clamp(155px, 28vw, 220px);
   
   /* Ограничитель, чтобы 1 или 2 карточки на планшете
     не растягивались СЛИШКОМ сильно.
     Можете поиграться с этим значением.
   */
-  max-width: 350px; 
+  max-width: 280px; 
   
   /* Это нужно, чтобы ссылка (Link) внутри обертки 
     растягивалась на 100% высоты, передавая ее ProductCard
@@ -284,7 +284,7 @@ const ClearFilters = styled.button`
   background: #e74c3c;
   color: white;
   border: none;
-  border-radius: 20px;
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -318,7 +318,7 @@ const SubcategoriesRow = styled.div`
 const SubcategoryToggle = styled.button<{ isActive: boolean }>`
   padding: 0.6rem 1.2rem;
   border: 2px solid ${props => props.isActive ? '#00acc1' : '#e9ecef'};
-  border-radius: 20px;
+  border-radius: 8px;
   background: ${props => props.isActive ? '#00acc1' : 'white'};
   color: ${props => props.isActive ? 'white' : '#6c757d'};
   font-weight: 600;
@@ -410,18 +410,12 @@ const Products: React.FC = () => {
   const ITEMS_PER_PAGE = 24; // 24 товара на странице
 
   // Фильтруем только активные категории (родительские) и сортируем их
-  // Исключаем категорию Spicer - она показывается только на витрине
   const activeParentCategories = useMemo(() => {
     if (!categories || !Array.isArray(categories)) return [];
     return categories
       .filter(cat => {
         if (!cat || cat.isActive === false || cat.parentSlug) return false;
-        // Исключаем категорию Spicer по slug, id или имени
-        const isSpicer = cat.slug === 'spicer' || 
-                        cat.id === 'spicer' || 
-                        cat.name?.toLowerCase().includes('spicer') ||
-                        cat.slug?.toLowerCase().includes('spicer');
-        return !isSpicer;
+        return true;
       })
       .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   }, [categories]);
@@ -453,29 +447,14 @@ const Products: React.FC = () => {
   }, [searchParams]);
 
   // Логируем загрузку товаров и категорий
-  useEffect(() => {
-    console.log('🔄 Products компонент загружен/обновлен');
-    console.log(`📦 Products: ${products?.length || 0} товарів`);
-    console.log(`📂 Categories: ${categories?.length || 0} категорій`);
-    console.log(`🏷️ Active parent categories: ${activeParentCategories?.length || 0}`);
-  }, [products, categories, activeParentCategories]);
-
   const filteredProducts = useMemo(() => {
     if (!Array.isArray(products)) {
       console.warn('⚠️ Products не массив:', products);
       return [];
     }
     
-    console.log(`🔍 Фильтрую товары. Всего: ${products.length}, Выбранная категория: ${selectedCategory}, Активных категорий: ${allActiveCategories?.length || 0}`);
-    
     const filtered = products.filter(product => {
       if (!product) return false;
-      
-      // Исключаем товары Spícer из основного каталога
-      const isSpicer = product.brand === 'spicer' || product.isSpicer === true;
-      if (isSpicer) {
-        return false;
-      }
       
       // Проверка активности товара
       const isActive = product.isActive !== false;
@@ -535,14 +514,6 @@ const Products: React.FC = () => {
 
       return true;
     });
-    
-    console.log(`✅ Отфильтровано товарів: ${filtered.length}`);
-    if (filtered.length > 0) {
-      console.log('📝 Первые товары:', filtered.slice(0, 2).map(p => ({ name: p.name, category: p.category, isActive: p.isActive })));
-    } else {
-      console.warn('⚠️ ТОВАРЫ НЕ НАЙДЕНЫ после фильтрации!');
-    }
-    
     return filtered;
   }, [products, searchTerm, selectedCategory, selectedSubcategory, showOrganicOnly, allActiveCategories]);
 
@@ -649,7 +620,7 @@ const Products: React.FC = () => {
         <div className="container">
           <Title>Наші товари</Title>
           <Subtitle>
-            Відкрийте для себе світ органічних фруктових чіпсів та прикрас для коктейлів
+            Відкрийте для себе світ органічних фруктових чіпсів, сиропів та натуральних продуктів
           </Subtitle>
         </div>
       </Header>
@@ -761,7 +732,7 @@ const Products: React.FC = () => {
                     delay: index < 12 ? index * 0.03 : 0
                   }}
                 >
-                  <ProductCard product={product} />
+                  <ProductCard product={product} priority={index < 8} />
                 </ProductWrapper>
               ))}
             </ProductsGrid>

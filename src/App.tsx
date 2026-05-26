@@ -15,8 +15,6 @@ import Checkout from './pages/Checkout';
 import Profile from './pages/Profile';
 import Wishlist from './pages/Wishlist';
 import Orders from './pages/Orders';
-import SpicerProductsPage from './pages/SpicerProductsPage';
-import AboutBrand from './pages/AboutBrand';
 import { visitorService } from './firebase/services';
 import LoadingSpinner from './components/LoadingSpinner';
 import BugReportToolWrapper from './components/BugReportTool';
@@ -54,8 +52,6 @@ const App: React.FC = () => {
             <Route path="/" element={<Home />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/:id" element={<ProductDetail />} />
-            <Route path="/spicer-products" element={<SpicerProductsPage />} />
-            <Route path="/about-brand" element={<AboutBrand />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/profile" element={<Profile />} />

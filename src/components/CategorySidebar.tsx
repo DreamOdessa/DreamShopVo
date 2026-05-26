@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiGrid, FiTag, FiChevronRight } from 'react-icons/fi';
+import { FiX, FiGrid, FiTag, FiChevronRight, FiRefreshCw } from 'react-icons/fi';
 
 interface Category {
   id: string;
@@ -12,7 +12,7 @@ interface Category {
   image?: string;
   isActive: boolean;
   sortOrder: number;
-  parentSlug?: string; // slug родительской категории (если это подкатегория)
+  parentSlug?: string;
 }
 
 interface CategorySidebarProps {
@@ -23,149 +23,177 @@ interface CategorySidebarProps {
   onCategorySelect: (categoryId: string) => void;
 }
 
+/* ── Оверлей (framer-motion, тот же z-index что раньше) ── */
 const Overlay = styled(motion.div)`
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  inset: 0;
+  background: rgba(0, 20, 32, 0.48);
   z-index: 1000;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-end;   /* панель выезжает справа */
 `;
 
+/* ── Основная панель — единый стиль с бургер-меню ── */
 const SidebarContainer = styled(motion.div)`
-  width: 320px;
-  height: 100vh;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-left: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 
-    -5px 0 30px rgba(0, 0, 0, 0.1),
-    inset 1px 0 0 rgba(255, 255, 255, 0.2);
+  width: 340px;
+  max-width: 92vw;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
 
+  /* Тот же градиент что у бургер-дравера */
+  background: linear-gradient(
+    175deg,
+    rgba(5, 82, 102, 0.99)  0%,
+    rgba(14, 115, 138, 0.98) 22%,
+    rgba(24, 145, 168, 0.97) 48%,
+    rgba(38, 168, 190, 0.96) 72%,
+    rgba(62, 198, 218, 0.95) 100%
+  );
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-left: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: -10px 0 60px rgba(0, 0, 0, 0.35), inset 1px 0 0 rgba(255,255,255,0.12);
+
+  /* Декоративный световой блик */
   &::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, 
-      rgba(77, 208, 225, 0.05) 0%, 
-      rgba(38, 197, 218, 0.08) 50%, 
-      rgba(0, 171, 193, 0.05) 100%);
-    z-index: -1;
+    top: -80px;
+    right: -80px;
+    width: 220px;
+    height: 220px;
+    background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
   }
 `;
 
-const Header = styled.div`
-  padding: 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+/* ── Шапка — единый стиль с DrawerHeader из бургера ── */
+const DrawerHead = styled.div`
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: rgba(255, 255, 255, 0.9);
+  justify-content: space-between;
+  padding: calc(env(safe-area-inset-top, 0px) + 1.1rem) 1.25rem 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+  background: rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
   position: relative;
   z-index: 1;
 `;
 
-const Title = styled.h2`
-  font-size: 1.3rem;
-  font-weight: 600;
+const DrawerTitle = styled.h2`
+  font-size: 1.12rem;
+  font-weight: 800;
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.04em;
+
+  svg { font-size: 1.1rem; opacity: 0.9; }
 `;
 
+/* ── Кнопка закрыть — круглая, поворачивается на 90° при hover ── */
 const CloseButton = styled.button`
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  width: 38px;
+  height: 38px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.25rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
-    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.22);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.38);
+    transform: scale(1.1) rotate(90deg);
   }
 `;
 
+/* ── Список категорий ── */
 const CategoriesList = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 1rem;
+  overflow-x: hidden;
+  padding: 0.75rem 1rem;
+  position: relative;
+  z-index: 1;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.22) transparent;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
 `;
 
+/* ── Кнопка категории — как NavLink в бургере, с акцентной полоской ── */
 const CategoryItem = styled(motion.button)<{ isActive: boolean }>`
   width: 100%;
-  padding: 1rem;
-  margin-bottom: 0.5rem;
-  border: 1px solid ${props => props.isActive ? 'rgba(255, 255, 255, 0.3)' : 'rgba(255, 255, 255, 0.1)'};
-  border-radius: 15px;
-  background: ${props => props.isActive 
-    ? 'rgba(255, 255, 255, 0.2)' 
-    : 'rgba(255, 255, 255, 0.05)'};
-  color: ${props => props.isActive ? 'rgba(255, 255, 255, 1)' : 'rgba(255, 255, 255, 0.8)'};
+  padding: 0.92rem 1.1rem 0.92rem 1.25rem;
+  margin-bottom: 0.4rem;
+  border: 1px solid ${p => (p.isActive ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.1)')};
+  border-radius: 14px;
+  background: ${p => (p.isActive ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.06)')};
+  color: ${p => (p.isActive ? '#ffffff' : 'rgba(255,255,255,0.82)')};
   font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition: background 0.22s ease, border-color 0.22s ease, transform 0.22s ease, box-shadow 0.22s ease, color 0.22s ease;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   text-align: left;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   position: relative;
   overflow: hidden;
+  box-shadow: ${p => (p.isActive ? '0 4px 16px rgba(0,0,0,0.12)' : 'none')};
 
-  &:hover {
-    border-color: rgba(255, 255, 255, 0.4);
-    background: rgba(255, 255, 255, 0.15);
-    transform: translateX(4px) translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  /* Акцентная вертикальная полоска слева */
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%) ${p => (p.isActive ? 'scaleY(1)' : 'scaleY(0)')};
+    width: 3px;
+    height: 55%;
+    background: rgba(255, 255, 255, 0.88);
+    border-radius: 0 3px 3px 0;
+    transition: transform 0.22s ease;
   }
 
-  &::before {
+  &:hover {
+    border-color: rgba(255, 255, 255, 0.36);
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    transform: translateX(4px);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+
+    &::before { transform: translateY(-50%) scaleY(1); }
+  }
+
+  /* Блик при наведении */
+  &::after {
     content: '';
     position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, 
-      transparent, 
-      rgba(255, 255, 255, 0.1), 
-      transparent);
-    transition: left 0.5s ease;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    transition: left 0.45s ease;
   }
-
-  &:hover::before {
-    left: 100%;
-  }
+  &:hover::after { left: 100%; }
 `;
 
 const CategoryIcon = styled.div`
@@ -173,114 +201,114 @@ const CategoryIcon = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
 `;
 
 const CategoryName = styled.span`
   font-size: 1rem;
   flex: 1;
+  line-height: 1.3;
 `;
 
 const ChevronIcon = styled(motion.div)`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
-  transition: transform 0.3s ease;
+  font-size: 1rem;
+  opacity: 0.7;
+  flex-shrink: 0;
 `;
 
+/* ── Подкатегория ── */
 const SubcategoryItem = styled(motion.div)<{ isActive: boolean }>`
-  padding: 0.9rem 1.2rem 0.9rem 3rem;
-  margin: 0;
+  padding: 0.75rem 1rem 0.75rem 2.8rem;
+  margin: 0 0 0.25rem 0.5rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  border-left: 3px solid transparent;
+  transition: all 0.22s ease;
+  border-left: 2px solid ${p => (p.isActive ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.15)')};
+  border-radius: 0 10px 10px 0;
+  background: ${p =>
+    p.isActive
+      ? 'rgba(255,255,255,0.1)'
+      : 'rgba(255,255,255,0.03)'};
+  color: ${p => (p.isActive ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.68)')};
+  font-size: 0.9rem;
+  font-weight: ${p => (p.isActive ? 600 : 400)};
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.5rem;
   position: relative;
-  background: ${props => props.isActive 
-    ? 'linear-gradient(90deg, rgba(77, 208, 225, 0.15) 0%, rgba(38, 197, 218, 0.08) 100%)' 
-    : 'rgba(255, 255, 255, 0.02)'};
-  border-left-color: ${props => props.isActive ? '#4dd0e1' : 'transparent'};
-  color: ${props => props.isActive ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.75)'};
-  font-size: 0.9rem;
-  font-weight: ${props => props.isActive ? '600' : '400'};
 
+  /* Маленькая стрелочка */
   &::before {
-    content: '↳';
+    content: '›';
     position: absolute;
-    left: 1.5rem;
-    color: rgba(77, 208, 225, 0.6);
-    font-size: 1rem;
+    left: 1.1rem;
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.4);
+    line-height: 1;
   }
 
   &:hover {
-    background: linear-gradient(90deg, 
-      rgba(77, 208, 225, 0.2) 0%, 
-      rgba(38, 197, 218, 0.15) 100%);
-    border-left-color: #4dd0e1;
+    background: rgba(255, 255, 255, 0.1);
+    border-left-color: rgba(255, 255, 255, 0.55);
     color: rgba(255, 255, 255, 0.95);
-    padding-left: 3.2rem;
-  }
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, 
-      transparent, 
-      rgba(255, 255, 255, 0.08), 
-      transparent);
-    transition: left 0.5s ease;
-  }
-
-  &:hover::before {
-    left: 100%;
+    padding-left: 3rem;
   }
 `;
 
-const Footer = styled.div`
-  padding: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+/* ── Футер — единый стиль ── */
+const DrawerFoot = styled.div`
+  flex-shrink: 0;
+  padding: 0.9rem 1rem calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
 `;
 
 const ClearButton = styled.button`
   width: 100%;
-  padding: 0.8rem;
-  background: rgba(231, 76, 60, 0.2);
-  color: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(231, 76, 60, 0.3);
-  border-radius: 12px;
-  font-weight: 600;
+  padding: 0.82rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(231, 76, 60, 0.14);
+  color: rgba(255, 200, 195, 0.9);
+  border: 1px solid rgba(231, 76, 60, 0.28);
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  letter-spacing: 0.01em;
+
+  svg { font-size: 0.95rem; transition: transform 0.3s ease; }
 
   &:hover {
-    background: rgba(231, 76, 60, 0.3);
-    border-color: rgba(231, 76, 60, 0.5);
+    background: rgba(231, 76, 60, 0.26);
+    border-color: rgba(231, 76, 60, 0.48);
+    color: #ffb3ae;
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(231, 76, 60, 0.2);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.18);
+
+    svg { transform: rotate(180deg); }
   }
+
+  &:active { transform: translateY(0); }
 `;
 
+/* ════════════════════════════════════════ */
 const CategorySidebar: React.FC<CategorySidebarProps> = ({
   isOpen,
   onClose,
   categories: propCategories = [],
   selectedCategory,
-  onCategorySelect
+  onCategorySelect,
 }) => {
-  // Разделяем на родительские категории и подкатегории
   const { parentCategories, subcategoriesMap } = useMemo(() => {
     const parents: Category[] = [];
     const subMap: { [key: string]: Category[] } = {};
@@ -289,14 +317,11 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
       if (!cat.parentSlug) {
         parents.push(cat);
       } else {
-        if (!subMap[cat.parentSlug]) {
-          subMap[cat.parentSlug] = [];
-        }
+        if (!subMap[cat.parentSlug]) subMap[cat.parentSlug] = [];
         subMap[cat.parentSlug].push(cat);
       }
     });
 
-    // Сортируем родительские категории и подкатегории
     parents.sort((a, b) => a.sortOrder - b.sortOrder);
     Object.keys(subMap).forEach(key => {
       subMap[key].sort((a, b) => a.sortOrder - b.sortOrder);
@@ -307,51 +332,39 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
 
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [lastClickTime, setLastClickTime] = useState<{ [key: string]: number }>({});
-  const [startX, setStartX] = useState<number>(0);
+  const [startX, setStartX]     = useState<number>(0);
   const [currentX, setCurrentX] = useState<number>(0);
   const [isDragging, setIsDragging] = useState<boolean>(false);
 
   const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   };
 
-  const handleClearFilters = () => {
-    onCategorySelect('all');
-  };
+  const handleClearFilters = () => onCategorySelect('all');
 
   const handleCategoryClick = (category: Category) => {
     const now = Date.now();
     const lastClick = lastClickTime[category.id] || 0;
-    const isDoubleClick = now - lastClick < 300; // 300ms для двойного клика
+    const isDoubleClick = now - lastClick < 300;
 
     if (isDoubleClick) {
-      // Двойной клик - открываем все товары категории
       onCategorySelect(category.id);
       setLastClickTime({});
     } else {
-      // Одиночный клик - раскрываем/скрываем подкатегории
       const subcategories = subcategoriesMap[category.slug] || [];
       if (subcategories.length > 0) {
         setExpandedCategories(prev => {
-          const newSet = new Set(prev);
-          if (newSet.has(category.id)) {
-            newSet.delete(category.id);
-          } else {
-            newSet.add(category.id);
-          }
-          return newSet;
+          const s = new Set(prev);
+          s.has(category.id) ? s.delete(category.id) : s.add(category.id);
+          return s;
         });
       } else {
-        // Если нет подкатегорий - сразу открываем категорию
         onCategorySelect(category.id);
       }
       setLastClickTime({ ...lastClickTime, [category.id]: now });
     }
   };
 
-  // Touch events for swipe gestures
   const handleTouchStart = (e: React.TouchEvent) => {
     setStartX(e.touches[0].clientX);
     setIsDragging(true);
@@ -359,24 +372,14 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!isDragging) return;
-    const currentTouchX = e.touches[0].clientX;
-    const deltaX = currentTouchX - startX;
-    
-    // Only allow swiping to the right (closing)
-    if (deltaX > 0) {
-      setCurrentX(Math.min(deltaX, 320));
-    }
+    const delta = e.touches[0].clientX - startX;
+    if (delta > 0) setCurrentX(Math.min(delta, 340));
   };
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
     setIsDragging(false);
-    
-    // If swiped more than 100px, close the sidebar
-    if (currentX > 100) {
-      onClose();
-    }
-    
+    if (currentX > 100) onClose();
     setCurrentX(0);
   };
 
@@ -387,28 +390,30 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.22 }}
           onClick={handleOverlayClick}
         >
           <SidebarContainer
-            initial={{ x: 320 }}
+            initial={{ x: 340 }}
             animate={{ x: isDragging ? currentX : 0 }}
-            exit={{ x: 320 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            exit={{ x: 340 }}
+            transition={{ type: 'spring', damping: 28, stiffness: 220 }}
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            <Header>
-              <Title>
+            {/* Шапка */}
+            <DrawerHead>
+              <DrawerTitle>
                 <FiGrid />
-                Категорії товарів
-              </Title>
-              <CloseButton onClick={onClose}>
+                Категорії
+              </DrawerTitle>
+              <CloseButton onClick={onClose} aria-label="Закрити">
                 <FiX />
               </CloseButton>
-            </Header>
+            </DrawerHead>
 
+            {/* Список категорий */}
             <CategoriesList>
               {parentCategories.map((category: Category, index: number) => {
                 const subcategories = subcategoriesMap[category.slug] || [];
@@ -422,10 +427,13 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
                       onClick={() => handleCategoryClick(category)}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      title={hasSubcategories ? 'Клик - раскрыть, двойной клик - открыть все товары' : 'Открыть категорию'}
+                      transition={{ delay: index * 0.04, duration: 0.3 }}
+                      whileTap={{ scale: 0.97 }}
+                      title={
+                        hasSubcategories
+                          ? 'Клік — розгорнути, подвійний — відкрити всі товари'
+                          : 'Відкрити категорію'
+                      }
                     >
                       <CategoryIcon>
                         {category.icon || <FiTag />}
@@ -434,7 +442,7 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
                       {hasSubcategories && (
                         <ChevronIcon
                           animate={{ rotate: isExpanded ? 90 : 0 }}
-                          transition={{ duration: 0.3 }}
+                          transition={{ duration: 0.25 }}
                         >
                           <FiChevronRight />
                         </ChevronIcon>
@@ -443,36 +451,39 @@ const CategorySidebar: React.FC<CategorySidebarProps> = ({
 
                     {/* Подкатегории */}
                     <AnimatePresence>
-                      {isExpanded && subcategories.map((subcat: Category, subIndex: number) => (
-                        <SubcategoryItem
-                          key={subcat.id}
-                          isActive={selectedCategory === subcat.id}
-                          onClick={() => onCategorySelect(subcat.id)}
-                          initial={{ opacity: 0, height: 0, x: -10 }}
-                          animate={{ opacity: 1, height: 'auto', x: 0 }}
-                          exit={{ opacity: 0, height: 0, x: -10 }}
-                          transition={{ 
-                            duration: 0.2, 
-                            delay: subIndex * 0.03,
-                            ease: 'easeOut'
-                          }}
-                          whileHover={{ scale: 1.01, x: 5 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <CategoryName>{subcat.name}</CategoryName>
-                        </SubcategoryItem>
-                      ))}
+                      {isExpanded &&
+                        subcategories.map((subcat: Category, subIndex: number) => (
+                          <SubcategoryItem
+                            key={subcat.id}
+                            isActive={selectedCategory === subcat.id}
+                            onClick={() => onCategorySelect(subcat.id)}
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{
+                              duration: 0.22,
+                              delay: subIndex * 0.03,
+                              ease: 'easeOut',
+                            }}
+                            whileHover={{ x: 4 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <CategoryName>{subcat.name}</CategoryName>
+                          </SubcategoryItem>
+                        ))}
                     </AnimatePresence>
                   </React.Fragment>
                 );
               })}
             </CategoriesList>
 
-            <Footer>
+            {/* Футер */}
+            <DrawerFoot>
               <ClearButton onClick={handleClearFilters}>
+                <FiRefreshCw />
                 Очистити фільтри
               </ClearButton>
-            </Footer>
+            </DrawerFoot>
           </SidebarContainer>
         </Overlay>
       )}

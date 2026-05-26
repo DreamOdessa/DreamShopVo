@@ -24,7 +24,7 @@ export interface Product {
   originalPrice?: number; // для отображения зачеркнутой цены
   image: string; // основное изображение (для совместимости)
   images?: string[]; // массив изображений (до 5): [главное, hover, галерея1, галерея2, галерея3]
-  category: string; // расширено для поддержки брендов (spicer и др.)
+  category: string; // категория товара
   subcategory?: string; // подкатегория внутри выбранной категории
   organic: boolean;
   inStock: boolean;
@@ -33,11 +33,6 @@ export interface Product {
   weight?: string;
   ingredients?: string[];
   createdAt: string;
-  // Расширенные поля для мультибрендовой поддержки
-  brand?: string; // например 'spicer'
-  isSpicer?: boolean; // дублирующий флаг удобства фильтрации
-  volume?: string; // объем для алкогольных напитков
-  imageUrl?: string; // альтернативное поле изображения (Spicer импорт)
 }
 
 export interface CartItem {
@@ -94,9 +89,6 @@ export interface Category {
   albumImages?: string[]; // images used for CategoryShowcase album
   albumVideos?: string[]; // short silent videos for CategoryShowcase album (mp4/webm)
   showInShowcase?: boolean; // whether this category should appear in the homepage showcase
-  // page: where this category is used in the storefront
-  // 'dreamshop' - main site categories, 'spicer' - Spícer product page
-  page?: 'dreamshop' | 'spicer';
   isActive: boolean;
   sortOrder: number;
   parentSlug?: string; // slug родительской категории (если это подкатегория)

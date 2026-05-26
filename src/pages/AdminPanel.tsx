@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { FiPlus, FiEdit, FiTrash2, FiUsers, FiPackage, FiShoppingBag, FiSave, FiX, FiGrid, FiEye, FiUpload, FiEyeOff, FiStar, FiTag, FiChevronDown, FiSettings, FiAlertCircle, FiDownload } from 'react-icons/fi';
 import CategoryManager from '../components/CategoryManager';
-import SpicerCategoryManager from '../components/SpicerCategoryManager';
 import CategoryShowcaseManager from '../components/CategoryShowcaseManager';
 import AdminSidebar from '../components/admin/AdminSidebar';
 import AdminNavbar from '../components/admin/AdminNavbar';
@@ -11,7 +10,6 @@ import AdminDashboard from '../components/admin/AdminDashboard';
 import UserProfileModal from '../components/admin/UserProfileModal';
 import DiagnosticPanel from '../components/admin/DiagnosticPanel';
 import BugReportsPanel from '../components/admin/BugReportsPanel';
-import CategorizeSpicer from '../components/CategorizeSpicer';
 import { useAuth } from '../contexts/AuthContext';
 import { useAdmin } from '../contexts/AdminContext';
 import { Product, Order, User } from '../types';
@@ -806,7 +804,6 @@ const AdminPanel: React.FC = () => {
   const { user } = useAuth();
   const { products, users, orders, categories, addProduct, updateProduct, deleteProduct, updateUser, updateUserDiscount, updateOrderStatus, deleteOrder } = useAdmin();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [categoriesSubTab, setCategoriesSubTab] = useState('dreamshop'); // 'dreamshop' или 'spicer'
   const [isSidebarHidden, setIsSidebarHidden] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all'); // Фільтр по категории (slug)
@@ -830,7 +827,6 @@ const AdminPanel: React.FC = () => {
     isPopular: false,
     weight: '',
     ingredients: '',
-    brand: ''
   });
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   const [mainImagePreview, setMainImagePreview] = useState<string>('');
@@ -959,8 +955,7 @@ const AdminPanel: React.FC = () => {
       isActive: true,
       isPopular: false,
       weight: '',
-      ingredients: '',
-      brand: ''
+      ingredients: ''
     });
     setImagePreviewUrls([]);
     setMainImagePreview('');
@@ -1011,9 +1006,9 @@ const AdminPanel: React.FC = () => {
             name: product.name || '',
             description: product.description || '',
             price: parseFloat(String(product.price)) || 0,
-            image: product.imageUrl || '',
+            image: product.image || '',
             hoverImage: '',
-            images: product.imageUrl ? [product.imageUrl] : [],
+            images: product.image ? [product.image] : [],
             category: product.category || 'chips',
             subcategory: product.subcategory || '',
             organic: product.organic || false,
@@ -1022,7 +1017,6 @@ const AdminPanel: React.FC = () => {
             isPopular: product.isPopular || false,
             weight: product.weight || '',
             ingredients: Array.isArray(product.ingredients) ? product.ingredients : (product.ingredients ? [product.ingredients] : []),
-            brand: product.brand || ''
           };
 
           console.log('📝 Додаю товар:', productData.name);
@@ -1074,8 +1068,7 @@ const AdminPanel: React.FC = () => {
       isActive: product.isActive ?? true,
       isPopular: product.isPopular ?? false,
       weight: product.weight || '',
-      ingredients: product.ingredients?.join(', ') || '',
-      brand: product.brand || ''
+      ingredients: product.ingredients?.join(', ') || ''
     });
     setImagePreviewUrls(galleryImages);
     setMainImagePreview(mainImage);
@@ -1805,44 +1798,9 @@ const AdminPanel: React.FC = () => {
               transition={{ duration: 0.3 }}
             >
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => setCategoriesSubTab('dreamshop')}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    background: categoriesSubTab === 'dreamshop' 
-                      ? 'linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%)'
-                      : '#e9ecef',
-                    color: categoriesSubTab === 'dreamshop' ? 'white' : '#333'
-                  }}
-                >
-                  🛍️ Категорії DreamShop
-                </button>
-                <button
-                  onClick={() => setCategoriesSubTab('spicer')}
-                  style={{
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    background: categoriesSubTab === 'spicer'
-                      ? 'linear-gradient(135deg, #ff6b35 0%, #ff8c42 50%, #ffa500 100%)'
-                      : '#e9ecef',
-                    color: categoriesSubTab === 'spicer' ? 'white' : '#333'
-                  }}
-                >
-                  🌶️ Категорії Spícer
-                </button>
               </div>
 
-              {categoriesSubTab === 'dreamshop' && <CategoryManager />}
-              {categoriesSubTab === 'spicer' && <SpicerCategoryManager />}
+              <CategoryManager />
             </motion.div>
           )}
 
@@ -1957,8 +1915,6 @@ const AdminPanel: React.FC = () => {
                 </SectionTitle>
               </SectionHeader>
 
-              <CategorizeSpicer />
-              
               <div style={{ marginTop: '40px' }}>
                 <DiagnosticPanel />
               </div>
@@ -2378,20 +2334,6 @@ const AdminPanel: React.FC = () => {
               );
             })()}
 
-            {productForm.brand === 'spicer' && (
-              <FormGroup>
-                <Label>Spicer категорія (для фільтрів)</Label>
-                <Input
-                  type="text"
-                  value={productForm.subcategory || ''}
-                  onChange={(e) => setProductForm(prev => ({ ...prev, subcategory: e.target.value }))}
-                  placeholder="Наприклад: Подарункові набори, Спешл, тощо"
-                />
-                <p style={{ fontSize: '0.85rem', color: '#6c757d', marginTop: '0.5rem' }}>
-                  Введіть категорію для фільтрації на сторінці Spicer товарів
-                </p>
-              </FormGroup>
-            )}
 
             <FormGroup>
               <Label>Статус товара</Label>

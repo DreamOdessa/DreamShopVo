@@ -19,15 +19,8 @@
             padding: 30px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-        h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            color: #7f8c8d;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
+        h1 { color: #2c3e50; margin-bottom: 10px; }
+        .subtitle { color: #7f8c8d; margin-bottom: 30px; font-size: 14px; }
         .button {
             background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
             color: white;
@@ -40,13 +33,8 @@
             margin: 10px 10px 10px 0;
             transition: transform 0.2s;
         }
-        .button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-        }
-        .button.danger {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 50%, #c44569 100%);
-        }
+        .button:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+        .button.danger { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 50%, #c44569 100%); }
         #log {
             background: #f8f9fa;
             border: 1px solid #e9ecef;
@@ -60,10 +48,7 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
-        .log-entry {
-            padding: 5px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
+        .log-entry { padding: 5px 0; border-bottom: 1px solid #e9ecef; }
         .log-entry.success { color: #27ae60; }
         .log-entry.error { color: #e74c3c; }
         .log-entry.info { color: #3498db; }
@@ -77,32 +62,18 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
         }
-        .stat {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
-        }
-        .stat-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: #2c3e50;
-        }
-        .stat-label {
-            color: #7f8c8d;
-            font-size: 12px;
-            margin-top: 5px;
-        }
+        .stat { background: white; padding: 15px; border-radius: 6px; text-align: center; }
+        .stat-value { font-size: 28px; font-weight: 700; color: #2c3e50; }
+        .stat-label { color: #7f8c8d; font-size: 12px; margin-top: 5px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🛒 Імпорт товарів DreamShop</h1>
         <p class="subtitle">Завантажте базові товари з JSON файлів прямо у Firestore</p>
-        
+
         <div>
-            <button class="button" onclick="importBasicProducts()">📥 Імпортувати базові товари</button>
-            <button class="button" onclick="importSpicerProducts()">🍷 Імпортувати Spícer товари</button>
+            <button class="button" onclick="importBasicProducts()">📥 Імпортувати товари</button>
             <button class="button" onclick="checkProducts()">🔍 Перевірити товари в базі</button>
             <button class="button danger" onclick="clearAllProducts()">🗑️ Видалити ВСІ товари</button>
         </div>
@@ -112,14 +83,6 @@
                 <div class="stat-value" id="totalCount">0</div>
                 <div class="stat-label">Усього товарів</div>
             </div>
-            <div class="stat">
-                <div class="stat-value" id="basicCount">0</div>
-                <div class="stat-label">Базові товари</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value" id="spicerCount">0</div>
-                <div class="stat-label">Spícer товари</div>
-            </div>
         </div>
 
         <div id="log"></div>
@@ -127,12 +90,11 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { 
-            getFirestore, 
-            collection, 
-            getDocs, 
-            addDoc, 
-            deleteDoc,
+        import {
+            getFirestore,
+            collection,
+            getDocs,
+            addDoc,
             query,
             where,
             writeBatch
@@ -166,51 +128,31 @@
             try {
                 const snapshot = await getDocs(collection(db, 'products'));
                 log(`✅ Усього товарів: ${snapshot.size}`, 'success');
-                
-                const basicProducts = [];
-                const spicerProducts = [];
-                
-                snapshot.forEach(doc => {
-                    const product = doc.data();
-                    if (product.brand === 'spicer') {
-                        spicerProducts.push(product);
-                    } else {
-                        basicProducts.push(product);
-                    }
-                });
-                
-                log(`📦 Базові товари: ${basicProducts.length}`, 'info');
-                log(`🍷 Spícer товари: ${spicerProducts.length}`, 'info');
-                
                 document.getElementById('totalCount').textContent = snapshot.size;
-                document.getElementById('basicCount').textContent = basicProducts.length;
-                document.getElementById('spicerCount').textContent = spicerProducts.length;
-                
-                if (basicProducts.length > 0) {
-                    log('📝 Перші базові товари:', 'info');
-                    basicProducts.slice(0, 3).forEach(p => {
+                if (snapshot.size > 0) {
+                    const items = [];
+                    snapshot.forEach(doc => items.push(doc.data()));
+                    log('📝 Перші товари:', 'info');
+                    items.slice(0, 3).forEach(p => {
                         log(`  - ${p.name} (категорія: ${p.category})`, 'info');
                     });
                 }
-                
             } catch (error) {
                 log(`❌ Помилка: ${error.message}`, 'error');
             }
         };
 
         window.importBasicProducts = async function() {
-            log('📥 Завантажуємо базові товари...', 'info');
+            log('📥 Завантажуємо товари...', 'info');
             try {
                 const response = await fetch('/data/basic-products.json');
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const products = await response.json();
                 log(`✅ Завантажено з файлу: ${products.length} товарів`, 'success');
-                
+
                 let imported = 0;
                 let skipped = 0;
-                
+
                 for (const product of products) {
                     try {
                         const existingQuery = query(
@@ -218,14 +160,12 @@
                             where('name', '==', product.name)
                         );
                         const existingSnapshot = await getDocs(existingQuery);
-                        
                         if (existingSnapshot.empty) {
-                            const productData = {
+                            await addDoc(collection(db, 'products'), {
                                 ...product,
                                 createdAt: new Date(),
                                 updatedAt: new Date()
-                            };
-                            await addDoc(collection(db, 'products'), productData);
+                            });
                             imported++;
                             log(`✅ Додано: ${product.name}`, 'success');
                         } else {
@@ -236,7 +176,7 @@
                         log(`❌ Помилка при додаванні ${product.name}: ${error.message}`, 'error');
                     }
                 }
-                
+
                 log(`✨ Імпорт завершено! Додано: ${imported}, Пропущено: ${skipped}`, 'success');
                 setTimeout(() => window.checkProducts(), 1000);
             } catch (error) {
@@ -244,91 +184,22 @@
             }
         };
 
-        window.importSpicerProducts = async function() {
-            log('📥 Завантажуємо Spícer товари...', 'info');
-            try {
-                const response = await fetch('/data/firebase-products.json');
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status} - Файл не знайдено`);
-                }
-                const products = await response.json();
-                log(`✅ Завантажено з файлу: ${products.length} товарів`, 'success');
-                
-                let imported = 0;
-                let skipped = 0;
-                
-                for (const product of products) {
-                    try {
-                        const existingQuery = query(
-                            collection(db, 'products'),
-                            where('name', '==', product.name || product.title)
-                        );
-                        const existingSnapshot = await getDocs(existingQuery);
-                        
-                        if (existingSnapshot.empty) {
-                            const productData = {
-                                name: product.name || product.title,
-                                description: product.description || '',
-                                price: parseFloat(product.price) || 0,
-                                image: product.imageUrl || '',
-                                images: product.imageUrl ? [product.imageUrl] : [],
-                                category: product.category || 'chips',
-                                subcategory: product.subcategory || '',
-                                organic: false,
-                                inStock: true,
-                                isActive: true,
-                                isPopular: false,
-                                weight: product.volume || '',
-                                ingredients: product.ingredients ? [product.ingredients] : [],
-                                brand: 'spicer',
-                                createdAt: new Date(),
-                                updatedAt: new Date()
-                            };
-                            await addDoc(collection(db, 'products'), productData);
-                            imported++;
-                        } else {
-                            skipped++;
-                        }
-                    } catch (error) {
-                        log(`❌ Помилка при додаванні: ${error.message}`, 'error');
-                    }
-                }
-                
-                log(`✨ Імпорт Spícer товарів завершено! Додано: ${imported}, Пропущено: ${skipped}`, 'success');
-                setTimeout(() => window.checkProducts(), 1000);
-            } catch (error) {
-                log(`❌ Помилка: ${error.message}`, 'error');
-            }
-        };
-
         window.clearAllProducts = async function() {
-            if (!confirm('Ви впевнені, що хочете ВИДАЛИТИ ВСІ товари? Це дійство не можна скасувати!')) {
-                return;
-            }
-            
+            if (!confirm('Ви впевнені, що хочете ВИДАЛИТИ ВСІ товари? Це дійство не можна скасувати!')) return;
             log('🗑️ Видаляю ВСІ товари...', 'warning');
             try {
                 const snapshot = await getDocs(collection(db, 'products'));
                 log(`Знайдено ${snapshot.size} товарів для видалення...`, 'info');
-                
                 const batch = writeBatch(db);
-                let count = 0;
-                
-                snapshot.forEach(doc => {
-                    batch.delete(doc.ref);
-                    count++;
-                });
-                
+                snapshot.forEach(doc => batch.delete(doc.ref));
                 await batch.commit();
-                log(`✅ Видалено ${count} товарів!`, 'success');
-                
+                log(`✅ Видалено ${snapshot.size} товарів!`, 'success');
                 setTimeout(() => window.checkProducts(), 1000);
             } catch (error) {
                 log(`❌ Помилка при видаленні: ${error.message}`, 'error');
             }
         };
 
-        // Перевіряємо товари при завантаженні сторінки
         window.checkProducts();
     </script>
 </body>

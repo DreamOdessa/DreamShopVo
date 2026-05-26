@@ -7,15 +7,14 @@ import { Product } from '../types';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useWishlist } from '../contexts/WishlistContext';
-import { getOptimizedImageUrl } from '../utils/imageOptimization';
 import toast from 'react-hot-toast';
 
 const Card = styled(motion.div)`
   background: white;
-  border-radius: 20px;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  box-shadow: 0 10px 28px rgba(18, 73, 86, 0.1);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
   position: relative;
   /* ИЗМЕНЕНО: Добавим display: flex, чтобы контент мог растягиваться */
   display: flex;
@@ -24,7 +23,7 @@ const Card = styled(motion.div)`
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 18px 36px rgba(18, 73, 86, 0.16);
   }
 `;
 
@@ -79,7 +78,7 @@ const OrganicBadge = styled.div`
   background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 100%);
   color: white;
   padding: 0.3rem 0.8rem;
-  border-radius: 20px;
+  border-radius: 8px;
   font-size: 0.8rem;
   font-weight: 600;
   display: flex;
@@ -90,11 +89,11 @@ const OrganicBadge = styled.div`
 
 const ActionButtons = styled.div`
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: clamp(0.4rem, 2vw, 1rem);
+  right: clamp(0.4rem, 2vw, 1rem);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: 10;
@@ -102,20 +101,26 @@ const ActionButtons = styled.div`
   ${Card}:hover & {
     opacity: 1;
   }
+
+  /* На мобільних завжди показуємо (немає hover) */
+  @media (hover: none) {
+    opacity: 1;
+  }
 `;
 
 const ActionButton = styled.button`
-  width: 40px;
-  height: 40px;
+  width: clamp(32px, 8vw, 40px);
+  height: clamp(32px, 8vw, 40px);
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.9);
   color: #00acc1;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 3vw, 1.2rem);
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+  box-shadow: 0 4px 14px rgba(18, 73, 86, 0.12);
 
   &:hover {
     background: #00acc1;
@@ -125,7 +130,7 @@ const ActionButton = styled.button`
 `;
 
 const CardContent = styled.div`
-  padding: clamp(0.75rem, 2.5vw, 1.75rem);
+  padding: clamp(0.75rem, 2.2vw, 1.35rem);
   /* ИЗМЕНЕНО: Добавим flex-grow, чтобы контент занимал оставшееся место */
   display: flex;
   flex-direction: column;
@@ -133,18 +138,18 @@ const CardContent = styled.div`
 `;
 
 const Category = styled.div`
-  color: #18646eff;
-  font-size: clamp(0.75rem, 1.5vw, 0.9rem);
-  font-weight: 600;
+  color: #00acc1;
+  font-size: clamp(0.7rem, 1.4vw, 0.82rem);
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   margin-bottom: clamp(0.3rem, 1vw, 0.5rem);
 `;
 
 // --- ИЗМЕНЕНИЯ ЗДЕСЬ ---
 const ProductName = styled.h3`
   /* ИЗМЕНЕНО: Размер шрифта теперь плавный */
-  font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+  font-size: clamp(0.92rem, 1.7vw, 1.12rem);
   font-weight: 600;
   color: #2c3e50;
   margin-bottom: 0.5rem;
@@ -164,7 +169,7 @@ const ProductName = styled.h3`
     - Добавлена *минимальная* высота, чтобы карточки не прыгали.
     - Эта высота тоже плавная, т.к. зависит от плавного font-size.
   */
-  min-height: calc(clamp(0.9rem, 2.5vw, 1.2rem) * 1.4 * 3); /* min-height = (fluid font-size * line-height * 3 строки) */
+  min-height: calc(clamp(0.92rem, 1.7vw, 1.12rem) * 1.4 * 3); /* min-height = (fluid font-size * line-height * 3 строки) */
 
   /* ИЗМЕНЕНО: @media запросы, менявшие height и font-size, удалены */
 `;
@@ -172,7 +177,7 @@ const ProductName = styled.h3`
 
 const ProductDescription = styled.p`
   color: #6c757d;
-  font-size: clamp(0.85rem, 1.6vw, 1rem);
+  font-size: clamp(0.82rem, 1.25vw, 0.95rem);
   line-height: 1.5;
   margin-bottom: clamp(0.75rem, 1.8vw, 1.2rem);
   display: -webkit-box;
@@ -196,11 +201,12 @@ const PriceContainer = styled.div`
 `;
 
 const Price = styled.span<{ isDiscounted?: boolean }>`
-  font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-  font-weight: 700;
-  color: #27ae60;
+  font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 800;
+  color: #1a9b5c;
   text-decoration: ${props => props.isDiscounted ? 'line-through' : 'none'};
   opacity: ${props => props.isDiscounted ? 0.6 : 1};
+  letter-spacing: -0.5px;
 `;
 
 const OriginalPrice = styled.span`
@@ -213,15 +219,23 @@ const AddToCartButton = styled.button`
   background: linear-gradient(135deg, #4dd0e1 0%, #26c6da 50%, #00acc1 100%);
   color: white;
   border: none;
-  padding: clamp(0.5rem, 1.5vw, 0.8rem) clamp(0.7rem, 2vw, 1.2rem);
-  border-radius: clamp(1.25rem, 3vw, 1.5625rem);
-  font-weight: 600;
-  font-size: clamp(0.85rem, 1.5vw, 1rem);
+  width: clamp(36px, 9vw, 48px);
+  height: clamp(36px, 9vw, 48px);
+  border-radius: 50%;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: clamp(0.3rem, 1vw, 0.5rem);
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  box-shadow: 0 4px 12px rgba(0, 172, 193, 0.35);
+
+  &:hover {
+    filter: brightness(1.1);
+    transform: scale(1.08);
+    box-shadow: 0 6px 16px rgba(0, 172, 193, 0.5);
+  }
 `;
 
 const getCategoryName = (category: string) => {
@@ -237,12 +251,13 @@ const getCategoryName = (category: string) => {
 
 interface ProductCardProps {
   product: Product;
-  customLink?: string; // Опциональная кастомная ссылка (например, для Spicer)
+  customLink?: string;
   disableLink?: boolean; // Отключить ссылку на детальную страницу
   disableHoverImage?: boolean; // Отключить смену изображения при наведении
+  priority?: boolean; // Для первых видимых карточек: грузим сразу
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableLink, disableHoverImage }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableLink, disableHoverImage, priority }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
@@ -257,18 +272,22 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
   const mainImage = (product.images && product.images.length > 0) ? product.images[0] : mainImageBase;
   const hoverImage = (product.images && product.images.length > 1) ? product.images[1] : null;
 
-  // Оптимизация: используем уменьшенные версии для каталога (400x400)
-  const optimizedMainImage = getOptimizedImageUrl(mainImage, 'small');
-  const optimizedHoverImage = hoverImage ? getOptimizedImageUrl(hoverImage, 'small') : null;
+  const [currentMainImage, setCurrentMainImage] = React.useState(mainImage);
+  const [currentHoverImage, setCurrentHoverImage] = React.useState(hoverImage);
+
+  React.useEffect(() => {
+    setCurrentMainImage(mainImage);
+    setCurrentHoverImage(hoverImage);
+  }, [mainImage, hoverImage]);
   
   // ⭐ Предзагрузка hover изображения при наведении с использованием preload
   const handleMouseEnter = () => {
-    if (optimizedHoverImage && !hoverImageLoaded && !disableHoverImage && !preloadLink) {
+    if (currentHoverImage && !hoverImageLoaded && !disableHoverImage && !preloadLink) {
       // Создаем link для preload только один раз
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
-      link.href = optimizedHoverImage;
+      link.href = currentHoverImage;
       document.head.appendChild(link);
       setPreloadLink(link);
       setHoverImageLoaded(true);
@@ -331,22 +350,26 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
       <ImageContainer>
         <ImageWrapper onMouseEnter={handleMouseEnter}>
           <MainImage 
-            src={optimizedMainImage} 
+            src={currentMainImage} 
             alt={product.name}
-            loading="lazy"
+            loading={priority ? 'eager' : 'lazy'}
             decoding="async"
-            fetchPriority="low"
+            fetchPriority={priority ? 'high' : 'low'}
             width={400}
             height={400}
             style={{ backgroundColor: '#f5f5f5' }}
             $disableHover={disableHoverImage}
             onError={(e) => {
-              e.currentTarget.src = mainImage;
+              if ((product as any).imageUrl && currentMainImage !== (product as any).imageUrl) {
+                setCurrentMainImage((product as any).imageUrl);
+                return;
+              }
+              e.currentTarget.style.opacity = '0';
             }}
           />
-          {!disableHoverImage && hoverImageLoaded && optimizedHoverImage && (
+          {!disableHoverImage && hoverImageLoaded && currentHoverImage && (
             <HoverImage 
-              src={optimizedHoverImage} 
+              src={currentHoverImage} 
               alt={product.name}
               loading="lazy"
               decoding="async"
@@ -355,7 +378,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
               height={400}
               style={{ backgroundColor: '#f5f5f5' }}
               onError={(e) => {
-                if (hoverImage) e.currentTarget.src = hoverImage;
+                e.currentTarget.style.display = 'none';
               }}
             />
           )}
@@ -394,9 +417,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
             )}
           </PriceContainer>
 
-          <AddToCartButton onClick={handleAddToCart}>
+          <AddToCartButton onClick={handleAddToCart} title="Додати до кошика">
             <FiShoppingCart />
-            В кошик
           </AddToCartButton>
         </ProductFooter>
       </CardContent>
@@ -421,6 +443,7 @@ export default React.memo(ProductCard, (prevProps, nextProps) => {
     prevProps.product.id === nextProps.product.id &&
     prevProps.customLink === nextProps.customLink &&
     prevProps.disableLink === nextProps.disableLink &&
-    prevProps.disableHoverImage === nextProps.disableHoverImage
+    prevProps.disableHoverImage === nextProps.disableHoverImage &&
+    prevProps.priority === nextProps.priority
   );
 });

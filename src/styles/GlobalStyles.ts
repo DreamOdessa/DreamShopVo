@@ -102,7 +102,23 @@ export const GlobalStyles = createGlobalStyle`
     max-width: 1400px;
     width: 100%;
     margin: 0 auto;
-    padding: 0 clamp(1rem, 2.5vw, 2rem);
+    padding: 0 clamp(0.75rem, 3vw, 2rem);
+  }
+
+  /* Прибираємо tap highlight на мобільних */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Плавний скрол */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Запобігаємо переповненню тексту */
+  h1, h2, h3, h4, h5, h6, p {
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 `;
 

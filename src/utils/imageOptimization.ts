@@ -70,25 +70,31 @@ export function getOptimizedImageUrl(originalUrl: string, size: ImageSize = 'sma
   }
 
   const config = IMAGE_SIZES[size];
-  
-  // Извлекаем путь к файлу и расширение
-  // URL вида: https://firebasestorage.googleapis.com/.../products%2Fimage.jpg?alt=media&token=...
-  const pathMatch = originalUrl.match(/\/([^/]+\.(jpg|jpeg|png|webp|gif))/i);
-  if (!pathMatch) {
-    console.warn('Could not parse image path from URL:', originalUrl);
+
+  try {
+    const url = new URL(originalUrl);
+    const objectPath = url.pathname.match(/\/o\/([^?]+)/)?.[1];
+
+    if (!objectPath) {
+      return originalUrl;
+    }
+
+    const decodedPath = decodeURIComponent(objectPath);
+    const extensionMatch = decodedPath.match(/\.([a-z0-9]+)$/i);
+
+    if (!extensionMatch || !['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extensionMatch[1].toLowerCase())) {
+      return originalUrl;
+    }
+
+    const extension = extensionMatch[1];
+    const basePath = decodedPath.slice(0, -(extension.length + 1));
+    const resizedPath = `${basePath}${config.suffix}.${extension}`;
+
+    url.pathname = url.pathname.replace(objectPath, encodeURIComponent(resizedPath));
+    return url.toString();
+  } catch {
     return originalUrl;
   }
-
-  const [fullFileName, fileName, extension] = pathMatch;
-  const baseFileName = fileName.replace(`.${extension}`, '');
-
-  // Формируем имя файла с суффиксом размера
-  const resizedFileName = `${baseFileName}${config.suffix}.${extension}`;
-  
-  // Заменяем имя файла в URL
-  const optimizedUrl = originalUrl.replace(fullFileName, `/${resizedFileName}`);
-  
-  return optimizedUrl;
 }
 
 /**

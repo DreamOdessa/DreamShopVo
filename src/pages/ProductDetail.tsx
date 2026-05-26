@@ -400,7 +400,7 @@ const ProductDetail: React.FC = () => {
   const getCategoryName = (category: string) => {
     const categories = {
       chips: 'Фруктові чіпси',
-      decorations: 'Прикраси для коктейлів',
+      decorations: 'Прикраси',
       syrups: 'Сиропи',
       purees: 'Пюре',
       dried_flowers: 'Сухоцвіти'

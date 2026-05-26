@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useWishlist } from '../contexts/WishlistContext';
@@ -14,13 +14,14 @@ import { useCategorySidebar } from '../contexts/CategorySidebarContext';
 import SideCartDrawer from './SideCartDrawer';
 
 const HeaderContainer = styled.header`
-  background: linear-gradient(to bottom,rgb(37, 159, 175) 0%,rgba(61, 174, 194, 0.9) 50%,rgba(84, 226, 245, 0.47) 100%);
+  background: linear-gradient(to bottom, rgba(21, 139, 157, 0.96) 0%, rgba(47, 174, 194, 0.92) 62%, rgba(91, 219, 232, 0.78) 100%);
   color: white;
-  padding: clamp(0.6rem, 1.5vw, 1rem) 0;
+  padding: clamp(0.7rem, 1.7vw, 1.1rem) 0;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 20px rgba(0, 150, 136, 0.2);
+  box-shadow: 0 2px 18px rgba(18, 73, 86, 0.18);
+  backdrop-filter: blur(12px);
 `;
 
 const Nav = styled.nav`
@@ -31,6 +32,7 @@ const Nav = styled.nav`
   margin: 0 auto;
   padding: 0 clamp(0.5rem, 2.5vw, 2rem);
   position: relative;
+  min-height: clamp(3.5rem, 8vw, 4.4rem);
   
   /* На десктопе растягиваем элементы с равномерными промежутками */
   @media (min-width: 769px) {
@@ -42,7 +44,7 @@ const Nav = styled.nav`
 
 const Logo = styled(Link)`
   /* ИЗМЕНЕНО: Размер шрифта стал крупнее на минимуме */
-  font-size: clamp(1rem, 4vw, 1.8rem);
+  font-size: clamp(1.1rem, 4vw, 2rem);
   font-weight: 700;
   color: white;
   text-decoration: none;
@@ -60,15 +62,20 @@ const Logo = styled(Link)`
   /* ИЗМЕНЕНО: Логотип теперь (order: 2) на мобильных, чтобы быть в центре */
   @media (max-width: 768px) {
     order: 2;
-    /* Уменьшим flex-shrink, чтобы он не сжимался так сильно */
-    flex-shrink: 2; 
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    flex-shrink: 0;
+    z-index: 2;
+    gap: 0.4rem;
   }
 `;
 
 const LogoIcon = styled.div`
   /* ИЗМЕНЕНО: Clamp() теперь не позволяет лого быть "масюской". Мин. ~34px. */
-  width: clamp(2.1rem, 7vw, 3.125rem);
-  height: clamp(2.1rem, 7vw, 3.125rem);
+  width: clamp(2.8rem, 8vw, 4rem);
+  height: clamp(2.8rem, 8vw, 4rem);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -79,7 +86,10 @@ const LogoIcon = styled.div`
     object-fit: contain;
   }
 
-  /* ИЗМЕНЕНО: Удалены ВСЕ @media запросы, которые делали иконку 28px, 25px, 22px */
+  @media (max-width: 768px) {
+    width: clamp(3.2rem, 12vw, 4.25rem);
+    height: clamp(3.2rem, 12vw, 4.25rem);
+  }
 `;
 
 const LogoText = styled.span`
@@ -90,54 +100,138 @@ const LogoText = styled.span`
     /* На очень маленьких экранах можно скрыть, чтобы не ломать layout */
     display: none;
   }
+
+  @media (max-width: 420px) {
+    font-size: clamp(0.95rem, 4vw, 1.15rem);
+  }
 `;
 
-const NavLinks = styled.div<{ isOpen: boolean }>`
-  display: flex;
-  align-items: center;
-  /* ИЗМЕНЕНО: Отступ стал плавным */
-  gap: clamp(0.5rem, 2vw, 2rem);
-  
-  /* На десктопе растягиваем навигацию */
+/* ── Десктоп-навигация (только внутри хедера, только на десктопе) ── */
+const DesktopNav = styled.div`
+  display: none;
+
   @media (min-width: 769px) {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.5rem, 2vw, 2rem);
     flex: 1;
     justify-content: center;
     max-width: 60%;
+  }
+`;
+
+/* ── Десктоп-кнопки (только внутри хедера, только на десктопе) ── */
+const DesktopUserActions = styled.div`
+  display: none;
+
+  @media (min-width: 769px) {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.5rem, 1.5vw, 1.5rem);
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+`;
+
+/* ── Мобильный дравер (ВЫНЕСЕН за пределы хедера → root stacking context) ──
+   position: fixed здесь работает относительно viewport, а z-index: 1200
+   действует от корня документа, а не от хедера (z-index 100) */
+const NavLinks = styled.div<{ isOpen: boolean }>`
+  /* На десктопе скрыт — там используется DesktopNav */
+  @media (min-width: 769px) {
+    display: none;
   }
 
   @media (max-width: 768px) {
     position: fixed;
     top: 0;
-    left: 0;
-    right: 0;
+    left: 0;            /* ← СЛЕВА */
     bottom: 0;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    flex-direction: column;
-    justify-content: center;
-    gap: 2rem;
-    transform: ${props => (props.isOpen ? 'translateX(0)' : 'translateX(-100%)')};
-    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    z-index: 1000;
-    box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    width: 290px;
+    max-width: 84vw;
 
+    /* Адаптивная высота: 100dvh учитывает мобильные браузеры
+       (скрытую адресную строку). Overflow-y позволяет скролить
+       если контент не влезает на маленький экран */
+    height: 100dvh;
+    padding: 0;
+
+    /* Глубокий бирюзовый градиент под цвет хедера */
+    background: linear-gradient(
+      175deg,
+      rgba(5, 82, 102, 0.99)  0%,
+      rgba(14, 115, 138, 0.98) 22%,
+      rgba(24, 145, 168, 0.97) 48%,
+      rgba(38, 168, 190, 0.96) 72%,
+      rgba(62, 198, 218, 0.95) 100%
+    );
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border-right: 1px solid rgba(255, 255, 255, 0.18);
+
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+
+    /* Выдвижение СЛЕВА */
+    transform: ${props => (props.isOpen ? 'translateX(0)' : 'translateX(-110%)')};
+    transition: transform 0.44s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 1200;
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    box-shadow: ${props =>
+      props.isOpen
+        ? '10px 0 60px rgba(0, 0, 0, 0.35), inset -1px 0 0 rgba(255,255,255,0.12)'
+        : 'none'};
+
+    /* Декоративный световой блик (верхний левый угол) */
     &::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, 
-        rgba(77, 208, 225, 0.1) 0%, 
-        rgba(38, 197, 218, 0.15) 50%, 
-        rgba(0, 171, 193, 0.1) 100%);
-      z-index: -1;
+      top: -80px;
+      left: -80px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
+      pointer-events: none;
     }
+
+    /* Тонкий скроллбар */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.22) transparent;
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+    /* Отступ сверху для первого пункта меню (после DrawerHeader) */
+    & > *:nth-child(2) {
+      margin-top: 0.75rem;
+    }
+
+    /* Stagger-анимация: всё кроме DrawerHeader (первый дочерній).
+       Элементы вылетают слева → вправо, вместе с дравером */
+    & > *:not(:first-child) {
+      opacity: 0;
+      transform: translateX(-16px);
+      transition: opacity 0.32s ease, transform 0.32s ease;
+    }
+
+    ${props =>
+      props.isOpen &&
+      css`
+        & > *:not(:first-child) {
+          opacity: 1;
+          transform: translateX(0);
+        }
+        & > *:nth-child(2) { transition-delay: 0.07s; }
+        & > *:nth-child(3) { transition-delay: 0.13s; }
+        & > *:nth-child(4) { transition-delay: 0.19s; }
+        & > *:nth-child(5) { transition-delay: 0.25s; }
+        & > *:nth-child(6) { transition-delay: 0.31s; }
+        & > *:nth-child(7) { transition-delay: 0.37s; }
+      `}
   }
 `;
 
@@ -153,12 +247,49 @@ const NavLink = styled(Link)<{ isActive: boolean }>`
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: ${props =>
-    props.isActive
-      ? 'rgba(255, 255, 255, 0.2)'
-      : 'rgba(255, 255, 255, 0.05)'};
+    props.isActive ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)'};
 
   @media (min-width: 769px) {
     color: ${props => (props.isActive ? 'white' : 'rgba(255, 255, 255, 0.9)')};
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+
+    /* Отступы по бокам через margin (не width:100%) */
+    margin: 0.2rem 1rem;
+    padding: 0.92rem 1.1rem 0.92rem 1.25rem;
+
+    color: ${props => (props.isActive ? '#ffffff' : 'rgba(255, 255, 255, 0.82)')};
+    background: ${props =>
+      props.isActive ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 255, 255, 0.06)'};
+    border: 1px solid
+      ${props =>
+        props.isActive ? 'rgba(255, 255, 255, 0.32)' : 'rgba(255, 255, 255, 0.1)'};
+    border-radius: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: ${props =>
+      props.isActive ? '0 4px 16px rgba(0,0,0,0.12)' : 'none'};
+
+    /* Акцентная вертикальная полоска слева */
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%)
+        ${props => (props.isActive ? 'scaleY(1)' : 'scaleY(0)')};
+      width: 3px;
+      height: 55%;
+      background: rgba(255, 255, 255, 0.88);
+      border-radius: 0 3px 3px 0;
+      transition: transform 0.22s ease;
+    }
   }
 
   &:hover {
@@ -166,39 +297,41 @@ const NavLink = styled(Link)<{ isActive: boolean }>`
     border-color: rgba(255, 255, 255, 0.3);
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    
+
     @media (min-width: 769px) {
       color: white;
+    }
+
+    @media (max-width: 768px) {
+      border-color: rgba(255, 255, 255, 0.36);
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      /* Смещение вправо — «выходит» из левого края дравера */
+      transform: translateX(4px);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.14);
+
+      &::before {
+        transform: translateY(-50%) scaleY(1);
+      }
     }
   }
 `;
 
-// Spicer icon (from provided SVG simplified)
-const SpicerIcon = styled.span`
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  margin-right:8px;
-  svg { width:20px; height:20px; display:block; }
-  @media (max-width:768px){
-    margin-right:6px;
-    svg { width:18px; height:18px; }
-  }
-`;
 
+/* ── Футер дравера с иконками (только мобильный дравер) ── */
 const UserActions = styled.div`
   display: flex;
   align-items: center;
-  /* ИЗМЕНЕНО: Отступ стал плавным */
-  gap: clamp(0.5rem, 1.5vw, 1.5rem);
-  
-  /* На десктопе выравниваем элементы справа */
-  @media (min-width: 769px) {
-    justify-content: flex-end;
-    flex-shrink: 0;
-  }
-
-  /* ИЗМЕНЕНО: Удалены @media запросы для gap */
+  /* Прижат к низу дравера через flex column + margin-top: auto */
+  margin-top: auto;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 0.6rem;
+  padding: 0.9rem 1.25rem calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.1);
+  min-height: fit-content;
 `;
 
 const CategoryButton = styled.button`
@@ -497,33 +630,80 @@ const MobileProfileDropdownItem = styled(Link)<{ isActive?: boolean }>`
   }
 `;
 
-const CloseButton = styled.button`
-  display: none;
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  cursor: pointer;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+/* ── Затемнение-оверлей под дравером ──
+   NavLinks вынесен за пределы хедера → оба элемента теперь в
+   root stacking context. z-index: 1199 безопасен: NavLinks(1200) > Overlay(1199) ✓ */
+const MenuOverlay = styled.div<{ isOpen: boolean }>`
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 20, 32, ${props => (props.isOpen ? '0.48' : '0')});
+  z-index: 1199;
+  pointer-events: ${props => (props.isOpen ? 'all' : 'none')};
+  transition: background 0.44s ease;
 
-  &:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.4);
-    transform: scale(1.1);
+  @media (min-width: 769px) {
+    display: none;
   }
+`;
+
+/* ── Шапка дравера (логотип + кнопка закрыть) ── */
+const DrawerHeader = styled.div`
+  display: none;
 
   @media (max-width: 768px) {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    padding: calc(env(safe-area-inset-top, 0px) + 1.1rem) 1.25rem 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.13);
+    background: rgba(0, 0, 0, 0.12);
+    flex-shrink: 0;
+    /* Шапка не участвует в stagger — всегда видна */
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+`;
+
+const DrawerBrand = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  img {
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+  }
+`;
+
+const DrawerTitle = styled.span`
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.04em;
+`;
+
+const DrawerCloseBtn = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.25rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.22);
+    color: white;
+    border-color: rgba(255, 255, 255, 0.38);
+    transform: scale(1.1) rotate(90deg);
   }
 `;
 
@@ -637,6 +817,102 @@ const Header: React.FC = () => {
 
   return (
     <>
+      {/* ═══════════════════════════════════════════════════════════
+          МОБИЛЬНЫЙ ДРАВЕР — вне HeaderContainer!
+          Причина: HeaderContainer имеет backdrop-filter + sticky + z-index:100,
+          что создаёт stacking context. position:fixed внутри него привязывается
+          к хедеру, а не к viewport. Вынос наружу → истинный fixed от viewport,
+          z-index:1200 от корня документа, скролл страницы под дравером работает.
+          ═══════════════════════════════════════════════════════════ */}
+      <MenuOverlay isOpen={isMenuOpen} onClick={() => setIsMenuOpen(false)} />
+
+      <NavLinks isOpen={isMenuOpen}>
+        {/* Шапка дравера */}
+        <DrawerHeader>
+          <DrawerBrand>
+            <img src="/small-icon.png" alt="DreamShop" width={34} height={34} decoding="async" />
+            <DrawerTitle>DreamShop</DrawerTitle>
+          </DrawerBrand>
+          <DrawerCloseBtn onClick={toggleMenu} aria-label="Закрити меню">
+            <FiX />
+          </DrawerCloseBtn>
+        </DrawerHeader>
+
+        {!location.pathname.startsWith('/admin') && (
+          <>
+            <NavLink
+              to="/"
+              isActive={location.pathname === '/'}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Головна
+            </NavLink>
+            <NavLink
+              to="/products"
+              isActive={location.pathname === '/products'}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Товари
+            </NavLink>
+          </>
+        )}
+
+        {user?.isAdmin && !location.pathname.startsWith('/admin') && (
+          <NavLink
+            to="/admin"
+            isActive={location.pathname === '/admin'}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Адмін панель
+          </NavLink>
+        )}
+
+        {/* Иконки в подвале дравера */}
+        <UserActions>
+          <NotificationBell onClick={() => setNotificationsOpen(true)} />
+          {user && (
+            <WishlistButton onClick={() => { navigate('/wishlist'); setIsMenuOpen(false); }} aria-label="Обране">
+              <FiHeart />
+              {getWishlistItems() > 0 && <CartBadge>{getWishlistItems()}</CartBadge>}
+            </WishlistButton>
+          )}
+          <CartButton onClick={() => { setIsCartOpen(true); setIsMenuOpen(false); }} aria-label="Кошик">
+            <FiShoppingCart />
+            {getTotalItems() > 0 && <CartBadge>{getTotalItems()}</CartBadge>}
+          </CartButton>
+          {user ? (
+            <ProfileDropdown data-profile-dropdown>
+              <ProfileButton onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}>
+                <FiUser />
+                <span className="desktop-only">{user.name} {user.lastName}</span>
+                <FiChevronDown style={{
+                  fontSize: '0.8rem',
+                  transform: isProfileDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.3s ease'
+                }} />
+              </ProfileButton>
+              <ProfileDropdownList isOpen={isProfileDropdownOpen}>
+                <ProfileDropdownItem to="/profile" isActive={location.pathname === '/profile'}
+                  onClick={() => { setIsProfileDropdownOpen(false); setIsMenuOpen(false); }}>
+                  <FiUser />Мій профіль
+                </ProfileDropdownItem>
+                <ProfileDropdownItem to="/orders" isActive={location.pathname === '/orders'}
+                  onClick={() => { setIsProfileDropdownOpen(false); setIsMenuOpen(false); }}>
+                  <FiShoppingCart />Мої замовлення
+                </ProfileDropdownItem>
+                <ProfileDropdownItem to="#"
+                  onClick={(e) => { e.preventDefault(); logout(); setIsProfileDropdownOpen(false); setIsMenuOpen(false); }}>
+                  <FiLogOut />Вихід
+                </ProfileDropdownItem>
+              </ProfileDropdownList>
+            </ProfileDropdown>
+          ) : (
+            <GoogleLogin />
+          )}
+        </UserActions>
+      </NavLinks>
+      {/* ═══════════════════════════════════════════════════════════ */}
+
       <HeaderContainer
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -645,145 +921,71 @@ const Header: React.FC = () => {
       <Nav>
           <Logo to="/">
             <LogoIcon>
-              <img src="https://raw.githubusercontent.com/DreamOdessa/DreamShopVo/main/public/small-icon.png" alt="DreamShop Logo" /> 
+              <img src="/small-icon.png" alt="DreamShop Logo" width={50} height={50} decoding="async" />
             </LogoIcon>
             <LogoText>DreamShop</LogoText>
           </Logo>
 
-        <NavLinks isOpen={isMenuOpen}>
-          <CloseButton onClick={toggleMenu}>
-            <FiX />
-          </CloseButton>
-          
-          {/* Скрываем навигационные ссылки на админ-маршрутах */}
-          {!location.pathname.startsWith('/admin') && (
-            <>
-              <NavLink 
-                to="/" 
-                isActive={location.pathname === '/'}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Головна
-              </NavLink>
-              <NavLink
-                to="/about-brand"
-                isActive={location.pathname === '/about-brand'}
-                onClick={() => setIsMenuOpen(false)}
-                aria-label="Spicer бренд"
-              >
-                <SpicerIcon>
-                  <svg viewBox="0 0 92.833 92.833" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-                    <path fill="currentColor" d="M89.834 1.75H3c-1.654 0-3 1.346-3 3v13.334c0 1.654 1.346 3 3 3h86.833c1.653 0 3-1.346 3-3V4.75c0-1.654-1.346-3-3-3zm0 35H3c-1.654 0-3 1.346-3 3v13.334c0 1.654 1.346 3 3 3h86.833c1.653 0 3-1.346 3-3V39.75c0-1.654-1.346-3-3-3zm0 35H3c-1.654 0-3 1.346-3 3v13.334c0 1.654 1.346 3 3 3h86.833c1.653 0 3-1.346 3-3V74.75c0-1.654-1.346-3-3-3z" />
-                  </svg>
-                </SpicerIcon>
-                Spicer
-              </NavLink>
-              
-              <NavLink 
-                to="/products" 
-                isActive={location.pathname === '/products'}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Товари
-              </NavLink>
-            </>
-          )}
+          {/* ── Десктопная навигация (только >= 769px) ── */}
+          <DesktopNav>
+            {!location.pathname.startsWith('/admin') && (
+              <>
+                <NavLink to="/" isActive={location.pathname === '/'}>Головна</NavLink>
+                <NavLink to="/products" isActive={location.pathname === '/products'}>Товари</NavLink>
+              </>
+            )}
+            {user?.isAdmin && !location.pathname.startsWith('/admin') && (
+              <NavLink to="/admin" isActive={location.pathname === '/admin'}>Адмін панель</NavLink>
+            )}
+          </DesktopNav>
 
-          {user?.isAdmin && !location.pathname.startsWith('/admin') && (
-            <NavLink 
-              to="/admin" 
-              isActive={location.pathname === '/admin'}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Адмін панель
-            </NavLink>
-          )}
-
-          <UserActions>
+          {/* ── Десктопные кнопки (только >= 769px) ── */}
+          <DesktopUserActions>
             <NotificationBell onClick={() => setNotificationsOpen(true)} />
             {user && (
               <WishlistButton onClick={() => navigate('/wishlist')} aria-label="Обране">
                 <FiHeart />
-                {getWishlistItems() > 0 && (
-                  <CartBadge>{getWishlistItems()}</CartBadge>
-                )}
+                {getWishlistItems() > 0 && <CartBadge>{getWishlistItems()}</CartBadge>}
               </WishlistButton>
             )}
-
             <CartButton onClick={() => setIsCartOpen(true)} aria-label="Кошик">
               <FiShoppingCart />
-              {getTotalItems() > 0 && (
-                <CartBadge>{getTotalItems()}</CartBadge>
-              )}
+              {getTotalItems() > 0 && <CartBadge>{getTotalItems()}</CartBadge>}
             </CartButton>
-
-            <CategoryButton 
-              onClick={openSidebar}
-              title="Категорії товарів"
-            >
+            <CategoryButton onClick={openSidebar} title="Категорії товарів">
               <FiGrid />
             </CategoryButton>
-
-            
             {user ? (
               <ProfileDropdown data-profile-dropdown>
-                <ProfileButton 
-                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                >
+                <ProfileButton onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}>
                   <FiUser />
-                  <span className="desktop-only">{user.name} {user.lastName && user.lastName}</span>
-                  <FiChevronDown style={{ 
+                  <span className="desktop-only">{user.name} {user.lastName}</span>
+                  <FiChevronDown style={{
                     fontSize: '0.8rem',
                     transform: isProfileDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
                     transition: 'transform 0.3s ease'
                   }} />
                 </ProfileButton>
-                
                 <ProfileDropdownList isOpen={isProfileDropdownOpen}>
-                  <ProfileDropdownItem 
-                    to="/profile" 
-                    isActive={location.pathname === '/profile'}
-                    onClick={() => {
-                      setIsProfileDropdownOpen(false);
-                      setIsMenuOpen(false);
-                    }}
-                  >
-                    <FiUser />
-                    Мій профіль
+                  <ProfileDropdownItem to="/profile" isActive={location.pathname === '/profile'}
+                    onClick={() => setIsProfileDropdownOpen(false)}>
+                    <FiUser />Мій профіль
                   </ProfileDropdownItem>
-                  <ProfileDropdownItem 
-                    to="/orders" 
-                    isActive={location.pathname === '/orders'}
-                    onClick={() => {
-                      setIsProfileDropdownOpen(false);
-                      setIsMenuOpen(false);
-                    }}
-                  >
-                    <FiShoppingCart />
-                    Мої замовлення
+                  <ProfileDropdownItem to="/orders" isActive={location.pathname === '/orders'}
+                    onClick={() => setIsProfileDropdownOpen(false)}>
+                    <FiShoppingCart />Мої замовлення
                   </ProfileDropdownItem>
-                  <ProfileDropdownItem 
-                    to="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      logout();
-                      setIsProfileDropdownOpen(false);
-                      setIsMenuOpen(false);
-                    }}
-                  >
-                    <FiLogOut />
-                    Вихід
+                  <ProfileDropdownItem to="#"
+                    onClick={(e) => { e.preventDefault(); logout(); setIsProfileDropdownOpen(false); }}>
+                    <FiLogOut />Вихід
                   </ProfileDropdownItem>
                 </ProfileDropdownList>
               </ProfileDropdown>
             ) : (
               <GoogleLogin />
             )}
-          </UserActions>
-        </NavLinks>
+          </DesktopUserActions>
 
-        {/* Мобільний порядок: ліворуч меню та профіль, праворуч — кошик і категорії */}
-        {/* ИЗМЕНЕНА ЛОГИКА РАСПОЛОЖЕНИЯ: 'order' во flex-контейнере 'Nav' */}
         <MobileLeftActions>
           <MobileMenuButton onClick={toggleMenu}>
             <FiMenu />

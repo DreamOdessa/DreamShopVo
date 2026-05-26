@@ -252,7 +252,6 @@ interface MoveProductsModalProps {
   categories: Category[];
   sourceCategory: Category | null;
   onMove: (productIds: string[], targetCategory: string, targetSubcategory: string) => Promise<void>;
-  isForSpicer?: boolean;
 }
 
 const MoveProductsModal: React.FC<MoveProductsModalProps> = ({
@@ -261,8 +260,7 @@ const MoveProductsModal: React.FC<MoveProductsModalProps> = ({
   products,
   categories,
   sourceCategory,
-  onMove,
-  isForSpicer = false
+  onMove
 }) => {
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [targetCategory, setTargetCategory] = useState<string>('');
@@ -273,17 +271,10 @@ const MoveProductsModal: React.FC<MoveProductsModalProps> = ({
   const availableProducts = useMemo(() => {
     if (!sourceCategory) return [];
     
-    const filtered = products.filter(p => {
-      if (isForSpicer) {
-        return (p.brand === 'spicer' || p.isSpicer) && 
-               p.category === sourceCategory.slug;
-      } else {
-        return p.category === sourceCategory.slug;
-      }
-    });
-    
+    const filtered = products.filter(p => p.category === sourceCategory.slug);
+
     return filtered.sort((a, b) => a.name.localeCompare(b.name));
-  }, [products, sourceCategory, isForSpicer]);
+  }, [products, sourceCategory]);
 
   // Фильтруем доступные категории для перемещения
   const availableCategories = useMemo(() => {
@@ -431,7 +422,7 @@ const MoveProductsModal: React.FC<MoveProductsModalProps> = ({
                   >
                     <option value="">— оберіть категорію —</option>
                     {availableCategories
-                      .filter(c => !c.parentSlug || c.parentSlug === 'spicer-root')
+                      .filter(c => !c.parentSlug)
                       .map(c => (
                         <option key={c.id} value={c.slug}>
                           {c.name}

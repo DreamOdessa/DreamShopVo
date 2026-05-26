@@ -28,9 +28,8 @@ interface CategoryItemProps {
 
 // --- СТИЛИ (Styled Components) ---
 
-// 'ShowcaseContainer' - самый внешний контейнер
 const ShowcaseContainer = styled.section`
-  padding: clamp(1.5rem, 5vw, 4rem) 0;
+  padding: clamp(1.5rem, 4vw, 4rem) 0;
   background: transparent;
   width: 100%;
   overflow: visible;
@@ -63,10 +62,9 @@ const CategoryContainer = styled.div<{ layout: 'left' | 'right' }>`
   }
 `;
 
-// 'CarouselContainer' - контейнер для колонки с каруселью
 const CarouselContainer = styled.div<{ layout: 'left' | 'right' }>`
-  flex: 0 0 58%;
-  padding: 0 clamp(0.75rem, 2.5vw, 2rem);
+  flex: 0 0 67%;
+  padding: 0 clamp(0.5rem, 2.5vw, 2rem);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -79,6 +77,10 @@ const CarouselContainer = styled.div<{ layout: 'left' | 'right' }>`
   @media (max-width: 1200px) {
     flex: auto;
     width: 100%;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 clamp(0.4rem, 2vw, 0.75rem);
   }
 `;
 
@@ -125,9 +127,8 @@ const CategoryHeader = styled.div`
   align-items: center; // Центрируем линии и текст
 `;
 
-// 'CategoryTitle' - Заголовок (ФРУКТОВЫЕ ЧИПСЫ) - кликабельный
 const CategoryTitle = styled(Link)`
-  font-size: clamp(1.2rem, 3vw, 2rem);
+  font-size: clamp(1rem, 3.5vw, 2rem);
   font-weight: 700;
   color: #2c3e50ff;
   margin: 0;
@@ -135,21 +136,23 @@ const CategoryTitle = styled(Link)`
   text-align: center;
   text-decoration: none;
   transition: color 0.3s ease;
-  
+  line-height: 1.2;
+  padding: 0 0.5rem;
+
   &:hover {
     color: #00acc1;
     cursor: pointer;
   }
 `;
 
-// 'CategoryDescription' - Описание (КРАТКОЕ ОПИСАНИЕ...)
 const CategoryDescription = styled.p`
-  font-size: clamp(0.85rem, 1.8vw, 1.1rem);
+  font-size: clamp(0.75rem, 1.8vw, 1.1rem);
   color: #495d6eff;
   line-height: 1.6;
   text-transform: uppercase;
   text-align: center;
-  margin-top: clamp(0.6rem, 2vw, 1.5rem);
+  margin-top: clamp(0.4rem, 1.5vw, 1.5rem);
+  padding: 0 clamp(0.5rem, 2vw, 1rem);
 `;
 
 // 'SliderContainer' - Контейнер, который "обрезает" карусель
@@ -169,11 +172,10 @@ const SliderContainer = styled.div<{ layout: 'left' | 'right' }>`
   }
 `;
 
-// 'SliderTrack' - Сама "лента" (track) с карточками, которая едет
 const SliderTrack = styled(motion.div)`
   display: flex;
-  gap: 1rem;
-  align-items: stretch; // Карточки выравниваются по высоте
+  gap: clamp(10px, 1.4vw, 16px);
+  align-items: stretch;
 `;
 
 // 'ItemWrapper' - Обертка для каждой карточки (задает ширину)
@@ -240,41 +242,38 @@ const ArrowButton = styled.button<{ direction: 'left' | 'right' }>`
 // 'AlbumContainer' - Контейнер для колонки с Альбомом с фиксированным фоном
 // Растягивается от края до края браузера
 const AlbumContainer = styled(motion.div)<{ $layout: 'left' | 'right' }>`
-  flex: 0 0 42%;
-  min-height: 300px;
-  height: auto;
-  aspect-ratio: 13 / 9;
+  flex: 0 0 33%;
+  align-self: center;
+  width: 33%;
+  aspect-ratio: 16 / 9;
   position: relative;
   overflow: hidden;
   border-radius: 0;
   margin: 0;
   padding: 0;
   z-index: 2;
-  
-  /* 👇 ГРАДИЕНТНЫЙ ФОН: диагональная линия от угла до угла 👇 */
-  background: ${props => props.$layout === 'left' 
-    ? 'linear-gradient(215deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.05) 48%, rgba(0, 225, 255, 0.96) 50%, rgba(0, 58, 255, 0.98) 100%)' 
-    : 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.05) 48%, rgba(0, 241, 254, 0.94) 50%, rgba(0, 60, 255, 0.97) 100%)'};
+
+  /*
+    to bottom left  ($layout='left' — альбом ліворуч,  прозорий верхній-правий кут)
+    to bottom right ($layout='right' — альбом праворуч, прозорий верхній-лівий кут)
+    CSS "magic corner" автоматично прораховує точний кут для будь-якого розміру блоку.
+    48% → 50% — оригінальна м'яка межа як було.
+  */
+  background: ${props => props.$layout === 'left'
+    ? 'linear-gradient(to bottom left,  rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.05) 48%, rgba(0, 225, 255, 0.96) 50%, rgba(0, 58, 255, 0.98) 100%)'
+    : 'linear-gradient(to bottom right, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.05) 48%, rgba(0, 241, 254, 0.94) 50%, rgba(0, 60, 255, 0.97) 100%)'};
 
   @media (max-width: 1200px) {
     flex: auto;
+    align-self: auto;
     width: 100%;
-    min-height: 280px;
-    aspect-ratio: 16 / 9;
-  }
-  @media (max-width: 992px) {
-    flex: auto;
-    width: 100%;
-    min-height: 250px;
     aspect-ratio: 16 / 9;
   }
   @media (max-width: 768px) {
-    min-height: 220px;
     aspect-ratio: 16 / 10;
   }
   @media (max-width: 480px) {
-    min-height: 180px;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 9;
   }
 `;
 
@@ -540,23 +539,12 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
               playsInline
               autoPlay
               loop
-              preload="auto"
-              onLoadedMetadata={() => {
-                console.log('✅ Video metadata loaded:', media[currentIndex].src);
-              }}
+              preload="metadata"
               onLoadedData={() => {
                 setVideoLoaded(true);
-                console.log('✅ Video data loaded, ready to play:', media[currentIndex].src);
                 // Принудительный запуск после загрузки
                 if (videoRef.current) {
                   videoRef.current.muted = true; // Гарантируем muted
-                  // Проверяем реальные размеры видео
-                  console.log('📐 Video dimensions:', {
-                    videoWidth: videoRef.current.videoWidth,
-                    videoHeight: videoRef.current.videoHeight,
-                    duration: videoRef.current.duration
-                  });
-                  
                   if (videoRef.current.videoWidth === 0 || videoRef.current.videoHeight === 0) {
                     console.error('❌ Видео загрузилось, но размеры 0x0 — возможно, неподдерживаемый кодек');
                     setVideoError(true);
@@ -566,7 +554,6 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
                   const promise = videoRef.current.play();
                   if (promise) {
                     promise
-                      .then(() => console.log('▶️ Video playing'))
                       .catch(err => console.warn('⚠️ Play rejected:', err));
                   }
                 }
@@ -582,16 +569,9 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
                 setVideoError(true);
               }}
               onCanPlay={() => {
-                console.log('🎬 Video can play:', media[currentIndex].src);
                 if (videoRef.current && videoRef.current.paused) {
                   videoRef.current.play().catch(err => console.warn('CanPlay autostart failed:', err));
                 }
-              }}
-              onPlay={() => {
-                console.log('▶️ Video started playing');
-              }}
-              onPause={() => {
-                console.log('⏸️ Video paused');
               }}
               onStalled={() => {
                 console.warn('⏱️ Video stalled (buffering)');
@@ -612,39 +592,51 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
 // НОВАЯ, УПРОЩЕННАЯ ЛОГИКА ProductSlider
 // (Эта логика исправляет баг с "Сиропами" и 1-2 товарами)
 // ==========================================================
+// Мінімальна ширина карточки в px — карточки не будуть менші за це значення
+const MIN_CARD_WIDTH = 200;
+const CARD_GAP = 16;
+
+// Розраховує скільки карточок вміщується в контейнер заданої ширини
+const calcItemsPerView = (containerWidth: number): number => {
+  if (containerWidth <= 0) return 3;
+  // Кількість повних карточок + 0.3 для "peek" (підказка що є ще)
+  const full = Math.floor((containerWidth + CARD_GAP) / (MIN_CARD_WIDTH + CARD_GAP));
+  const count = Math.max(1, Math.min(full, 8));
+  // Додаємо peek тільки якщо є ще товари за межею
+  return count + 0.3;
+};
+
 const ProductSlider: React.FC<{
   products: Product[];
   categoryName: string;
   categoryDescription: string;
   layout: 'left' | 'right';
-  categorySlug: string; // Добавляем slug для ссылки
-  isSpicer?: boolean; // Флаг для категории Spicer
-}> = ({ products, categoryName, categoryDescription, layout, categorySlug, isSpicer }) => {
-  // Функция для определения количества видимых карточек в зависимости от ширины экрана
-  const getItemsPerView = () => {
-    if (typeof window === 'undefined') return 5.5;
-    const width = window.innerWidth;
-    if (width <= 480) return 1.5;      // Маленькие телефоны
-    if (width <= 768) return 2;        // Телефоны
-    if (width <= 992) return 2.5;      // Планшеты вертикально
-    if (width <= 1200) return 4;       // Планшеты горизонтально / маленькие ноутбуки
-    return 5.5;                        // Десктопы
-  };
-
-  const [itemsPerView, setItemsPerView] = useState(getItemsPerView());
+  categorySlug: string;
+}> = ({ products, categoryName, categoryDescription, layout, categorySlug }) => {
+  const [itemsPerView, setItemsPerView] = useState(3.3);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const trackRef = useRef<HTMLDivElement>(null);
-  
+  const sliderRef = useRef<HTMLDivElement>(null);
+
   const totalItems = products.length;
 
-  // Обновляем itemsPerView при ресайзе
+  // ResizeObserver — вимірює реальну ширину SliderContainer і підлаштовує кількість карточок
   useEffect(() => {
-    const onResize = () => {
-      setItemsPerView(getItemsPerView());
-    };
+    const el = sliderRef.current;
+    if (!el) return;
 
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    const observer = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        setItemsPerView(calcItemsPerView(width));
+      }
+    });
+
+    observer.observe(el);
+    // Одразу вираховуємо при монтуванні
+    setItemsPerView(calcItemsPerView(el.getBoundingClientRect().width));
+
+    return () => observer.disconnect();
   }, []);
 
   // Вычисляем максимальный индекс для прокрутки
@@ -682,7 +674,7 @@ const ProductSlider: React.FC<{
         </CategoryTitle>
       </CategoryHeader>
 
-      <SliderContainer layout={layout}>
+      <SliderContainer layout={layout} ref={sliderRef}>
         <SliderTrack
           ref={trackRef}
           animate={{ x: translateX }}
@@ -692,7 +684,8 @@ const ProductSlider: React.FC<{
             <ItemWrapper key={`${product.id}-${idx}`} itemsPerView={itemsPerView}>
               <ProductCard 
                 product={product}
-                customLink={isSpicer ? '/about-brand' : undefined}
+                customLink={undefined}
+                priority={idx < 3}
               />
             </ItemWrapper>
           ))}
@@ -754,8 +747,6 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, layout }) => {
           layout={layout}
           // 'categorySlug' - id категории для ссылки на страницу категории (Products.tsx фильтрует по id)
           categorySlug={category.id}
-          // Проверяем, является ли это категорией Spicer по slug или id
-          isSpicer={category.slug === 'spicer' || category.id === 'spicer' || category.name.toLowerCase().includes('spicer')}
         />
       </CarouselContainer>
       
@@ -837,13 +828,6 @@ const CategoryShowcase: React.FC = () => {
           // 'allProducts.filter(...)' - ищем в *общем* списке продуктов
           products: allProducts
             .filter((p: Product) => {
-              // Специальная логика для категории Spicer - фильтруем по полю brand
-              const isSpicer = c.slug === 'spicer' || c.id === 'spicer' || (c.name || '').toLowerCase().includes('spicer');
-              if (isSpicer) {
-                // Для категории Spicer показываем все товары с brand='spicer'
-                return p.brand === 'spicer' && p.isActive !== false;
-              }
-              // Для обычных категорий фильтруем по category
               return p.category === (c.slug || c.id) && p.isActive !== false;
             })
             // .slice(0, 8) - берем только первые 8 найденных товаров

@@ -18,18 +18,6 @@ const FiltersBar = styled.div`
   margin-bottom: 1.5rem;
 `;
 
-const FilterButton = styled.button<{active:boolean}>`
-  padding: .6rem 1rem;
-  border-radius: 8px;
-  border: 1px solid ${p=>p.active ? '#f4d03f' : '#ccc'};
-  background: ${p=>p.active ? 'linear-gradient(135deg,#f4d03f,#f39c12)' : '#fff'};
-  color: ${p=>p.active ? '#000' : '#333'};
-  cursor: pointer;
-  font-weight: ${p=>p.active ? 600 : 400};
-  transition:.2s;
-  &:hover { border-color:#f4d03f; }
-`;
-
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
@@ -65,17 +53,6 @@ const PopularToggle = styled.button<{active:boolean}>`
   &:hover { border-color:#27ae60; }
 `;
 
-const Badge = styled.span<{type:'spicer'|'other'}>`
-  display:inline-block;
-  padding: .25rem .55rem;
-  border-radius: 6px;
-  font-size: .65rem;
-  letter-spacing:.5px;
-  background: ${p=>p.type==='spicer' ? 'linear-gradient(135deg,#f4d03f,#f39c12)' : '#4dd0e1'};
-  color: ${p=>p.type==='spicer' ? '#000' : '#083b44'};
-  font-weight:700;
-  margin-right:.4rem;
-`;
 
 const EmptyState = styled.div`
   padding:2rem;
@@ -85,22 +62,16 @@ const EmptyState = styled.div`
 
 const AdminProductsPage: React.FC = () => {
   const { products, updateProduct } = useAdmin();
-  const [brandFilter, setBrandFilter] = useState<'all'|'spicer'|'main'>('all');
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
     return products
       .filter(p => {
-        if (brandFilter === 'spicer') return p.brand === 'spicer';
-        if (brandFilter === 'main') return !p.brand || p.brand !== 'spicer';
-        return true;
-      })
-      .filter(p => {
         if (!search) return true;
         const q = search.toLowerCase();
         return (p.name||'').toLowerCase().includes(q) || (p.description||'').toLowerCase().includes(q);
       });
-  }, [products, brandFilter, search]);
+  }, [products, search]);
 
   const togglePopular = async (id: string, current?: boolean) => {
     try { await updateProduct(id, { isPopular: !current }); } catch(e) { console.error(e); }
@@ -108,11 +79,8 @@ const AdminProductsPage: React.FC = () => {
 
   return (
     <Container>
-      <Heading>Товары (все бренды)</Heading>
+      <Heading>Товари</Heading>
       <FiltersBar>
-        <FilterButton active={brandFilter==='all'} onClick={()=>setBrandFilter('all')}>Все</FilterButton>
-        <FilterButton active={brandFilter==='spicer'} onClick={()=>setBrandFilter('spicer')}>Spicer</FilterButton>
-        <FilterButton active={brandFilter==='main'} onClick={()=>setBrandFilter('main')}>Основные</FilterButton>
         <input
           placeholder="Поиск..."
           value={search}
@@ -129,7 +97,6 @@ const AdminProductsPage: React.FC = () => {
               <tr>
                 <Th>ID</Th>
                 <Th>Название</Th>
-                <Th>Бренд</Th>
                 <Th>Категория</Th>
                 <Th>Цена</Th>
                 <Th>Популярное</Th>
@@ -141,15 +108,11 @@ const AdminProductsPage: React.FC = () => {
                   <Td style={{maxWidth:160,wordBreak:'break-all'}}>{p.id}</Td>
                   <Td>
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      { (p.image || p.imageUrl) && <img src={p.image || p.imageUrl} alt={p.name} style={{width:40,height:40,objectFit:'cover',borderRadius:8}} /> }
+                      { p.image && <img src={p.image} alt={p.name} style={{width:40,height:40,objectFit:'cover',borderRadius:8}} /> }
                       <div>
                         <div style={{fontWeight:600}}>{p.name}</div>
-                        <div style={{fontSize:'.65rem',opacity:.6}}>{p.volume || ''}</div>
                       </div>
                     </div>
-                  </Td>
-                  <Td>
-                    <Badge type={p.brand==='spicer' ? 'spicer' : 'other'}>{p.brand==='spicer' ? 'SPICER' : 'MAIN'}</Badge>
                   </Td>
                   <Td>{p.category || '-'}</Td>
                   <Td>{p.price} ₴</Td>

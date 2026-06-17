@@ -1,0 +1,22 @@
+# CODEOWNERS
+# Этот файл определяет владельцев кода для различных частей репозитория
+# Больше информации: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Владельцы по умолчанию для всего репозитория
+* @DreamOdessa
+
+# Владельцы документации
+*.md @DreamOdessa
+
+# Владельцы конфигурационных файлов
+*.json @DreamOdessa
+*.yml @DreamOdessa
+*.yaml @DreamOdessa
+
+# Владельцы Firebase конфигурации
+/firebase.json @DreamOdessa
+/firestore.* @DreamOdessa
+/functions/ @DreamOdessa
+
+# Владельцы исходного кода
+/src/ @DreamOdessa

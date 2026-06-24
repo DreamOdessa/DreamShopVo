@@ -38,7 +38,6 @@ const Header = styled.div`
   padding: 7rem 0;
   text-align: center;
   margin-top: -7rem;
-  background-image: url('https://firebasestorage.googleapis.com/v0/b/dreamshop-odessa.firebasestorage.app/o/products%2Fhover%2FPhotoroom_20251106_131829.png?alt=media&token=342dbb66-4901-47e1-9cf9-e7bed64a60db');
   background-size: cover;
   background-position: center;
   background-blend-mode: overlay;

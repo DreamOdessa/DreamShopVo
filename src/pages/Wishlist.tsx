@@ -7,6 +7,8 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
+const PRODUCT_IMAGE_PLACEHOLDER = '/small-icon.png';
+
 const WishlistContainer = styled.div`
   padding: 2rem 0;
   min-height: 80vh;
@@ -38,7 +40,6 @@ const Header = styled.div`
   padding: 7rem 0;
   text-align: center;
   margin-top: -7rem;
-  background-image: url('https://firebasestorage.googleapis.com/v0/b/dreamshop-odessa.firebasestorage.app/o/products%2Fhover%2FPhotoroom_20251106_121809.png?alt=media&token=375faee3-f208-4fa1-baf7-13343fa314d2');
   background-size: cover;
   background-position: center;
   background-blend-mode: overlay;
@@ -107,8 +108,6 @@ const WishlistContent = styled.div`
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 
-  /* Фоновое изображение */
-  background-image: url('https://firebasestorage.googleapis.com/v0/b/dreamshop-odessa.firebasestorage.app/o/products%2Fhover%2FPhotoroom_20251106_121809.png?alt=media&token=375faee3-f208-4fa1-baf7-13343fa314d2');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -377,10 +376,10 @@ const Wishlist: React.FC = () => {
                 {items.map((product) => (
                   <WishlistItem key={product.id}>
                     <ProductImage 
-                      src={product.image} 
+                      src={product.image || PRODUCT_IMAGE_PLACEHOLDER} 
                       alt={product.name}
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x200?text=No+Image';
+                        (e.target as HTMLImageElement).src = PRODUCT_IMAGE_PLACEHOLDER;
                       }}
                     />
                     <ProductName>{product.name}</ProductName>

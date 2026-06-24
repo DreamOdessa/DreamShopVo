@@ -3,7 +3,7 @@
     "name": "Апельсинові чіпси",
     "description": "Хрусткі органічні апельсинові чіпси, вирощені в Одесі. Без цукру, без консервантів. Ідеальна закуска для чаю та кави.",
     "price": 120,
-    "imageUrl": "https://images.unsplash.com/photo-1599599810694-b5ac4dd12a81?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "chips",
     "subcategory": "цитрус",
     "organic": true,
@@ -11,14 +11,16 @@
     "isActive": true,
     "isPopular": true,
     "weight": "50г",
-    "ingredients": ["апельсин"],
+    "ingredients": [
+      "апельсин"
+    ],
     "brand": ""
   },
   {
     "name": "Яблучні чіпси",
     "description": "Натуральні яблучні чіпси без цукру. Хрусткі, смачні, корисні. Один з найпопулярніших продуктів DreamShop.",
     "price": 110,
-    "imageUrl": "https://images.unsplash.com/photo-1599599810017-e2cbf50e5c5c?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "chips",
     "subcategory": "ягоди",
     "organic": true,
@@ -26,14 +28,16 @@
     "isActive": true,
     "isPopular": true,
     "weight": "50г",
-    "ingredients": ["яблуко"],
+    "ingredients": [
+      "яблуко"
+    ],
     "brand": ""
   },
   {
     "name": "Полуничні чіпси",
     "description": "Сушені полуничні ломтики. Натуральна солодкість без добавок. Чудовий варіант для дітей.",
     "price": 140,
-    "imageUrl": "https://images.unsplash.com/photo-1600080869399-9d1c6e505de5?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "chips",
     "subcategory": "ягоди",
     "organic": true,
@@ -41,14 +45,16 @@
     "isActive": true,
     "isPopular": false,
     "weight": "50г",
-    "ingredients": ["полуниця"],
+    "ingredients": [
+      "полуниця"
+    ],
     "brand": ""
   },
   {
     "name": "Класичний сироп",
     "description": "Чистий, натуральний сироп зі спеціальної суміші ягід та фруктів. Для коктейлів та напоїв.",
     "price": 180,
-    "imageUrl": "https://images.unsplash.com/photo-1553530666-ba2a8e36cd12?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "syrups",
     "subcategory": "класичні",
     "organic": true,
@@ -56,14 +62,18 @@
     "isActive": true,
     "isPopular": true,
     "weight": "250ml",
-    "ingredients": ["ягоди", "цукор", "вода"],
+    "ingredients": [
+      "ягоди",
+      "цукор",
+      "вода"
+    ],
     "brand": ""
   },
   {
     "name": "Сироп Малина-Мога",
     "description": "Ароматний малиновий сироп з легким смаком мокі. Експериментальна рецептура DreamShop.",
     "price": 195,
-    "imageUrl": "https://images.unsplash.com/photo-1600080869399-9d1c6e505de5?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "syrups",
     "subcategory": "спеціальні",
     "organic": true,
@@ -71,14 +81,17 @@
     "isActive": true,
     "isPopular": false,
     "weight": "250ml",
-    "ingredients": ["малина", "мока"],
+    "ingredients": [
+      "малина",
+      "мока"
+    ],
     "brand": ""
   },
   {
     "name": "Прикраса для коктейлів Зірка",
     "description": "Декоративна гіацинт-зірка для прикрашення коктейлів та десертів. Натуральна, їстівна.",
     "price": 85,
-    "imageUrl": "https://images.unsplash.com/photo-1599599810017-e2cbf50e5c5c?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "decorations",
     "subcategory": "цвітка",
     "organic": true,
@@ -86,14 +99,16 @@
     "isActive": true,
     "isPopular": true,
     "weight": "5g",
-    "ingredients": ["гіацинт"],
+    "ingredients": [
+      "гіацинт"
+    ],
     "brand": ""
   },
   {
     "name": "Цукристі кісточки троянди",
     "description": "Їстівні кісточки троянди в цукровій глазурі. Елегантний декор для коктейлів та тортів.",
     "price": 95,
-    "imageUrl": "https://images.unsplash.com/photo-1599599810017-e2cbf50e5c5c?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "decorations",
     "subcategory": "цвітка",
     "organic": true,
@@ -101,14 +116,17 @@
     "isActive": true,
     "isPopular": false,
     "weight": "10g",
-    "ingredients": ["троянда", "цукор"],
+    "ingredients": [
+      "троянда",
+      "цукор"
+    ],
     "brand": ""
   },
   {
     "name": "Сухоцвіти лаванда",
     "description": "Натуральна висушена лаванда. Для чаю, декорування, парфумування кімнат.",
     "price": 75,
-    "imageUrl": "https://images.unsplash.com/photo-1599599810017-e2cbf50e5c5c?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "dried_flowers",
     "subcategory": "лаванда",
     "organic": true,
@@ -116,14 +134,16 @@
     "isActive": true,
     "isPopular": true,
     "weight": "20g",
-    "ingredients": ["лаванда"],
+    "ingredients": [
+      "лаванда"
+    ],
     "brand": ""
   },
   {
     "name": "Сухоцвіти гарденія",
     "description": "Висушені квітки гарденії з приємним ароматом. Ідеальна для букетів та декорацій.",
     "price": 125,
-    "imageUrl": "https://images.unsplash.com/photo-1599599810017-e2cbf50e5c5c?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "dried_flowers",
     "subcategory": "екзотика",
     "organic": true,
@@ -131,14 +151,16 @@
     "isActive": true,
     "isPopular": false,
     "weight": "15g",
-    "ingredients": ["гарденія"],
+    "ingredients": [
+      "гарденія"
+    ],
     "brand": ""
   },
   {
     "name": "Персикові чіпси",
     "description": "Сушені персикові ломтики з природною солодкістю. Улюблена закуска любителів фруктів.",
     "price": 130,
-    "imageUrl": "https://images.unsplash.com/photo-1599599810694-b5ac4dd12a81?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "chips",
     "subcategory": "кісточкові",
     "organic": true,
@@ -146,14 +168,16 @@
     "isActive": true,
     "isPopular": true,
     "weight": "50г",
-    "ingredients": ["персик"],
+    "ingredients": [
+      "персик"
+    ],
     "brand": ""
   },
   {
     "name": "Манго чіпси",
     "description": "Екзотичні манго чіпси зі справжнім смаком манго. Вихідна сировина від перевірених постачальників.",
     "price": 150,
-    "imageUrl": "https://images.unsplash.com/photo-1599599810694-b5ac4dd12a81?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "chips",
     "subcategory": "екзотика",
     "organic": true,
@@ -161,14 +185,16 @@
     "isActive": true,
     "isPopular": false,
     "weight": "50г",
-    "ingredients": ["манго"],
+    "ingredients": [
+      "манго"
+    ],
     "brand": ""
   },
   {
     "name": "Сироп Апельсин-Кориця",
     "description": "Ароматний сироп з апельсину та корицею. Ідеальний для класичних та осінніх коктейлів.",
     "price": 210,
-    "imageUrl": "https://images.unsplash.com/photo-1553530666-ba2a8e36cd12?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "syrups",
     "subcategory": "спеціальні",
     "organic": true,
@@ -176,14 +202,17 @@
     "isActive": true,
     "isPopular": false,
     "weight": "250ml",
-    "ingredients": ["апельсин", "кориця"],
+    "ingredients": [
+      "апельсин",
+      "кориця"
+    ],
     "brand": ""
   },
   {
     "name": "Сухоцвіти вереск",
     "description": "Нарізні кульки вересу з приємною структурою. Популярні для букетних композицій.",
     "price": 90,
-    "imageUrl": "https://images.unsplash.com/photo-1599599810017-e2cbf50e5c5c?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "dried_flowers",
     "subcategory": "універсальні",
     "organic": true,
@@ -191,14 +220,16 @@
     "isActive": true,
     "isPopular": true,
     "weight": "25g",
-    "ingredients": ["вереск"],
+    "ingredients": [
+      "вереск"
+    ],
     "brand": ""
   },
   {
     "name": "Банановий сироп",
     "description": "Кремовий сироп з натурального банану. Чудово смакує в молочних напоях та десертах.",
     "price": 170,
-    "imageUrl": "https://images.unsplash.com/photo-1553530666-ba2a8e36cd12?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "syrups",
     "subcategory": "класичні",
     "organic": true,
@@ -206,14 +237,18 @@
     "isActive": true,
     "isPopular": false,
     "weight": "250ml",
-    "ingredients": ["банан", "цукор", "вода"],
+    "ingredients": [
+      "банан",
+      "цукор",
+      "вода"
+    ],
     "brand": ""
   },
   {
     "name": "Прикраса мікс квітів",
     "description": "Мікс з різних висушених квітів. Універсальна прикраса для будь-якого коктейлю.",
     "price": 110,
-    "imageUrl": "https://images.unsplash.com/photo-1599599810017-e2cbf50e5c5c?w=400&h=400&fit=crop",
+    "imageUrl": "",
     "category": "decorations",
     "subcategory": "мікс",
     "organic": true,
@@ -221,7 +256,9 @@
     "isActive": true,
     "isPopular": true,
     "weight": "8g",
-    "ingredients": ["мікс квітів"],
+    "ingredients": [
+      "мікс квітів"
+    ],
     "brand": ""
   }
 ]

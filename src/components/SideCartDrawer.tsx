@@ -5,6 +5,8 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
+const PRODUCT_IMAGE_PLACEHOLDER = '/small-icon.png';
+
 interface SideCartDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -371,7 +373,7 @@ const SideCartDrawer: React.FC<SideCartDrawerProps> = ({ isOpen, onClose }) => {
             items.map(({ product, quantity }) => (
               <Item key={product.id}>
                 <Thumb
-                  src={(product.images && product.images[0]) || product.image}
+                  src={(product.images && product.images[0]) || product.image || PRODUCT_IMAGE_PLACEHOLDER}
                   alt={product.name}
                 />
                 <ItemInfo>

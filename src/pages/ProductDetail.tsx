@@ -9,6 +9,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useWishlist } from '../contexts/WishlistContext';
 import toast from 'react-hot-toast';
 
+const PRODUCT_IMAGE_PLACEHOLDER = '/small-icon.png';
+
 const ProductDetailContainer = styled.div`
   padding: 2rem 0;
   min-height: 80vh;
@@ -358,7 +360,7 @@ const ProductDetail: React.FC = () => {
   // Для страницы товара показываем ВСЕ изображения (до 5 шт)
   const productImages = product?.images && product.images.length > 0 
     ? product.images // показываем все изображения
-    : (product?.image ? [product.image] : []);
+    : (product?.image ? [product.image] : [PRODUCT_IMAGE_PLACEHOLDER]);
 
   if (!product) {
     return (

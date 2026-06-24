@@ -39,7 +39,6 @@ const Header = styled.div`
   padding: 7rem 0;
   text-align: center;
   margin-top: -7rem;
-  background-image: url('https://firebasestorage.googleapis.com/v0/b/dreamshop-odessa.firebasestorage.app/o/products%2Fhover%2FPhotoroom_20251106_130558.png?alt=media&token=7fae918c-5977-479f-aa04-fa1870b2a119');
   background-size: cover;
   background-position: center;
   background-blend-mode: overlay;
@@ -864,4 +863,3 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
-

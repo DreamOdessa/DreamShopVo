@@ -48,15 +48,5 @@
     "productsCount": 3,
     "order": 0,
     "active": true
-  },
-  {
-    "id": "cat_______",
-    "name": "Лікери",
-    "slug": "------",
-    "description": "Категорія Лікери",
-    "imageUrl": "",
-    "productsCount": 6,
-    "order": 0,
-    "active": true
   }
 ]

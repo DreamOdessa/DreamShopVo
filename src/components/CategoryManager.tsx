@@ -508,13 +508,13 @@ const CategoryManager: React.FC = () => {
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
 
-      // Загружаем в Firebase Storage
+      // Загружаем в Cloudinary
       const downloadURL = await storageService.uploadFile(
         file, 
         STORAGE_PATHS.CATEGORIES
       );
 
-      // Сохраняем URL из Firebase Storage
+      // Сохраняем URL из Cloudinary
       setFormData(prev => ({ ...prev, image: downloadURL }));
       toast.success('✅ Изображение категории загружено!');
       

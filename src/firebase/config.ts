@@ -3,7 +3,6 @@ import { initializeApp } from "firebase/app";
 // import { getAnalytics } from "firebase/analytics"; // Отключено для избежания неиспользуемого импорта
 import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence, inMemoryPersistence } from 'firebase/auth';
 import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
 import { getPerformance } from 'firebase/performance';
 
 // Your web app's Firebase configuration
@@ -39,7 +38,6 @@ console.log('✅ Firebase app initialized:', app.name);
 // Инициализация сервисов
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const storage = getStorage(app);
 
 // Инициализация Performance Monitoring для отслеживания производительности
 let perf;

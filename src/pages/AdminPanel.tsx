@@ -16,8 +16,11 @@ import { Product, Order, User } from '../types';
 import OrderDetails from '../components/OrderDetails';
 import toast from 'react-hot-toast';
 import { storageService, STORAGE_PATHS } from '../firebase/storageService';
+import { productService } from '../firebase/services';
 import { requestNotificationPermission } from '../firebase/messaging';
 import { FiBell } from 'react-icons/fi';
+
+const PRODUCT_IMAGE_PLACEHOLDER = '/small-icon.png';
 
 const AdminContainer = styled.div<{ isSidebarHidden: boolean }>`
   position: relative;
@@ -802,7 +805,7 @@ const SubcategoryOption = styled.div<{ isSelected: boolean }>`
 
 const AdminPanel: React.FC = () => {
   const { user } = useAuth();
-  const { products, users, orders, categories, addProduct, updateProduct, deleteProduct, updateUser, updateUserDiscount, updateOrderStatus, deleteOrder } = useAdmin();
+  const { products, users, orders, categories, addProduct, updateProduct, deleteProduct, updateUser, updateUserDiscount, updateOrderStatus, deleteOrder, refreshData } = useAdmin();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isSidebarHidden, setIsSidebarHidden] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -1046,6 +1049,44 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  const handleClearAllProductImages = async () => {
+    if (products.length === 0) {
+      toast.error('Нет товаров для очистки');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Удалить ссылки на фото у всех товаров (${products.length} шт.)? Сами старые файлы в Firebase не трогаем, очищаем только ссылки в базе.`
+    );
+
+    if (!confirmed) return;
+
+    const toastId = toast.loading('Очищаю ссылки на фото...');
+    let cleared = 0;
+    let errors = 0;
+
+    for (const product of products) {
+      try {
+        await productService.update(product.id, {
+          image: '',
+          images: [],
+          imageUrl: ''
+        } as Partial<Product> & { imageUrl: string });
+        cleared++;
+      } catch (error) {
+        errors++;
+        console.error('Ошибка очистки фото товара:', product.id, error);
+      }
+    }
+
+    await refreshData();
+
+    const message = errors > 0
+      ? `Очищено ${cleared}, ошибок ${errors}`
+      : `Фото очищены у ${cleared} товаров`;
+    toast.success(message, { id: toastId, duration: 5000 });
+  };
+
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
     
@@ -1077,7 +1118,7 @@ const AdminPanel: React.FC = () => {
   };
 
   const handleSaveProduct = async () => {
-    if (!productForm.name || !productForm.description || !productForm.price || !productForm.image) {
+    if (!productForm.name || !productForm.description || !productForm.price) {
       toast.error('Заповніть всі обов\'язкові поля');
       return;
     }
@@ -1094,7 +1135,7 @@ const AdminPanel: React.FC = () => {
       const productData = {
         ...productForm,
         image: productForm.image, // главное фото
-        images: allImages.length > 0 ? allImages : [productForm.image], // Всегда массив с хотя бы одним изображением
+        images: allImages,
         price: parseFloat(productForm.price),
         category: productForm.category as 'chips' | 'decorations' | 'syrups' | 'purees' | 'dried_flowers',
         subcategory: productForm.subcategory || undefined,
@@ -1167,7 +1208,7 @@ const AdminPanel: React.FC = () => {
       const previewUrl = URL.createObjectURL(file);
       setMainImagePreview(previewUrl);
 
-      // Загружаем в Firebase Storage
+      // Загружаем в Cloudinary
       const downloadURL = await storageService.uploadFile(
         file, 
         STORAGE_PATHS.PRODUCT_MAIN_IMAGES,
@@ -1176,7 +1217,7 @@ const AdminPanel: React.FC = () => {
         }
       );
 
-      // Сохраняем URL из Firebase Storage
+      // Сохраняем URL из Cloudinary
       setProductForm(prev => ({ ...prev, image: downloadURL }));
       toast.success('✅ Главное изображение загружено!');
       
@@ -1214,7 +1255,7 @@ const AdminPanel: React.FC = () => {
       const previewUrl = URL.createObjectURL(file);
       setHoverImagePreview(previewUrl);
 
-      // Загружаем в Firebase Storage
+      // Загружаем в Cloudinary
       const downloadURL = await storageService.uploadFile(
         file, 
         STORAGE_PATHS.PRODUCT_HOVER_IMAGES,
@@ -1223,7 +1264,7 @@ const AdminPanel: React.FC = () => {
         }
       );
 
-      // Сохраняем URL из Firebase Storage
+      // Сохраняем URL из Cloudinary
       setProductForm(prev => ({ ...prev, hoverImage: downloadURL }));
       toast.success('✅ Дополнительное изображение загружено!');
       
@@ -1269,7 +1310,7 @@ const AdminPanel: React.FC = () => {
       const newPreviewUrls = files.map(file => URL.createObjectURL(file));
       setImagePreviewUrls(prev => [...prev, ...newPreviewUrls]);
 
-      // Загружаем все файлы в Firebase Storage
+      // Загружаем все файлы в Cloudinary
       const downloadURLs = await storageService.uploadMultipleFiles(
         files,
         STORAGE_PATHS.PRODUCT_GALLERY,
@@ -1279,7 +1320,7 @@ const AdminPanel: React.FC = () => {
         }
       );
 
-      // Сохраняем URL из Firebase Storage
+      // Сохраняем URL из Cloudinary
       setProductForm(prev => ({
         ...prev,
         images: [...prev.images, ...downloadURLs]
@@ -1300,21 +1341,7 @@ const AdminPanel: React.FC = () => {
   };
 
   const handleRemoveImage = async (index: number) => {
-    const imageUrl = productForm.images[index];
-    
-    // Если изображение из Firebase Storage, удаляем его
-    if (imageUrl && storageService.isFirebaseStorageURL(imageUrl)) {
-      try {
-        await storageService.deleteFile(imageUrl);
-        toast.success('Изображение удалено из хранилища');
-      } catch (error) {
-        console.error('Ошибка удаления изображения из Firebase Storage:', error);
-        const msg = (error as any)?.message || String(error);
-        toast.error(`Ошибка удаления изображения: ${msg}`);
-      }
-    }
-    
-    // Удаляем из всех массивов
+    // Удаляем ссылку из формы. Старые файлы в Firebase/Cloudinary с клиента не удаляем.
     setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
     setProductForm(prev => ({
       ...prev,
@@ -1467,6 +1494,10 @@ const AdminPanel: React.FC = () => {
                     <FiDownload />
                     Импортировать товары
                   </AddButton>
+                  <AddButton onClick={handleClearAllProductImages} style={{ background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)' }}>
+                    <FiTrash2 />
+                    Очистить фото
+                  </AddButton>
                 </div>
               </SectionHeader>
 
@@ -1553,7 +1584,7 @@ const AdminPanel: React.FC = () => {
                     <TableRow key={product.id}>
                       <TableCell>
                         <img
-                          src={product.image}
+                          src={product.image || PRODUCT_IMAGE_PLACEHOLDER}
                           alt={product.name}
                           style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '8px' }}
                         />
@@ -1674,7 +1705,7 @@ const AdminPanel: React.FC = () => {
                     <MobileCardHeader>
                       <MobileCardTitle>{product.name}</MobileCardTitle>
                       <img
-                        src={product.image}
+                        src={product.image || PRODUCT_IMAGE_PLACEHOLDER}
                         alt={product.name}
                         style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '8px' }}
                       />
@@ -2120,9 +2151,9 @@ const AdminPanel: React.FC = () => {
             </FormGroup>
 
             <FormGroup>
-              <Label>Главное фото *</Label>
+              <Label>Главное фото</Label>
               <p style={{ fontSize: '0.85rem', color: '#6c757d', marginBottom: '0.5rem' }}>
-                Введите URL изображения или загрузите файл в Firebase Storage
+                Введите URL изображения или загрузите файл в Cloudinary
               </p>
               <Input
                 value={productForm.image}
@@ -2178,7 +2209,7 @@ const AdminPanel: React.FC = () => {
             <FormGroup>
               <Label>Доп фото (при наведении)</Label>
               <p style={{ fontSize: '0.85rem', color: '#6c757d', marginBottom: '0.5rem' }}>
-                Введите URL изображения или загрузите файл в Firebase Storage
+                Введите URL изображения или загрузите файл в Cloudinary
               </p>
               <Input
                 value={productForm.hoverImage}
@@ -2234,7 +2265,7 @@ const AdminPanel: React.FC = () => {
             <FormGroup>
               <Label>Галерея (максимум 3 изображения)</Label>
               <p style={{ fontSize: '0.85rem', color: '#6c757d', marginBottom: '0.5rem' }}>
-                Введите URL изображений через запятую или загрузите файлы в Firebase Storage
+                Введите URL изображений через запятую или загрузите файлы в Cloudinary
               </p>
               <Input
                 value={productForm.images.join(', ')}
@@ -2516,4 +2547,3 @@ const AdminPanel: React.FC = () => {
 };
 
 export default AdminPanel;
-

@@ -1,157 +1,120 @@
-import {
-  ref,
-  uploadBytes,
-  uploadBytesResumable,
-  getDownloadURL,
-  deleteObject
-} from 'firebase/storage';
-import { storage } from './config';
+type UploadProgressCallback = (progress: number) => void;
+
+const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || '';
+const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || '';
+
+const getCloudinaryUploadUrl = () => {
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+    throw new Error(
+      'Cloudinary не настроен. Добавьте REACT_APP_CLOUDINARY_CLOUD_NAME и REACT_APP_CLOUDINARY_UPLOAD_PRESET в .env'
+    );
+  }
+
+  return `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+};
+
+const getUploadFolder = (path: string) => `dreamshop/${path}`.replace(/\/+/g, '/');
+
+const uploadToCloudinary = (
+  file: File,
+  path: string,
+  onProgress?: UploadProgressCallback
+): Promise<string> => {
+  const uploadUrl = getCloudinaryUploadUrl();
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', getUploadFolder(path));
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.onprogress = event => {
+      if (event.lengthComputable && onProgress) {
+        onProgress((event.loaded / event.total) * 100);
+      }
+    };
+
+    xhr.onload = () => {
+      try {
+        const response = JSON.parse(xhr.responseText || '{}');
+
+        if (xhr.status >= 200 && xhr.status < 300 && response.secure_url) {
+          resolve(response.secure_url);
+          return;
+        }
+
+        reject(new Error(response.error?.message || `Cloudinary upload failed (${xhr.status})`));
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('Не удалось подключиться к Cloudinary'));
+    xhr.open('POST', uploadUrl);
+    xhr.send(formData);
+  });
+};
 
 /**
- * Сервис для работы с Firebase Storage
+ * Сервис для работы с медиа-хранилищем.
+ * Сейчас используется Cloudinary unsigned upload, чтобы не хранить секретные ключи в браузере.
  */
 export const storageService = {
-  /**
-   * Загрузить файл в Firebase Storage
-   * @param file - файл для загрузки
-   * @param path - путь в storage (например, 'products/image.jpg')
-   * @param onProgress - callback для отслеживания прогресса (0-100)
-   * @returns URL загруженного файла
-   */
   async uploadFile(
-    file: File, 
+    file: File,
     path: string,
-    onProgress?: (progress: number) => void
+    onProgress?: UploadProgressCallback
   ): Promise<string> {
     try {
-      // Создаем уникальное имя файла с timestamp
-      const timestamp = Date.now();
-      const fileName = `${timestamp}_${file.name}`;
-      const fullPath = `${path}/${fileName}`;
-      
-      const storageRef = ref(storage, fullPath);
-      
-      // Готовим metadata: важно передать правильный contentType (для правил Storage)
-      const metadata = file.type ? { contentType: file.type } : undefined;
-
-      // Если нужен прогресс, используем uploadBytesResumable и передаем metadata
-      if (onProgress) {
-        const uploadTask = uploadBytesResumable(storageRef, file, metadata);
-        
-        return new Promise((resolve, reject) => {
-          uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              onProgress(progress);
-            },
-            (error) => {
-              console.error('Ошибка загрузки файла:', error);
-              reject(error);
-            },
-            async () => {
-              try {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                resolve(downloadURL);
-              } catch (error) {
-                reject(error);
-              }
-            }
-          );
-        });
-      } else {
-        // Простая загрузка без отслеживания прогресса (передаем metadata)
-        await uploadBytes(storageRef, file, metadata);
-        const downloadURL = await getDownloadURL(storageRef);
-        return downloadURL;
-      }
+      return await uploadToCloudinary(file, path, onProgress);
     } catch (error) {
-      console.error('Ошибка загрузки файла в Firebase Storage:', error);
+      console.error('Ошибка загрузки файла в Cloudinary:', error);
       throw error;
     }
   },
 
-  /**
-   * Загрузить несколько файлов
-   * @param files - массив файлов
-   * @param path - базовый путь в storage
-   * @param onProgress - callback для отслеживания прогресса каждого файла
-   * @returns массив URL загруженных файлов
-   */
   async uploadMultipleFiles(
     files: File[],
     path: string,
     onProgress?: (fileIndex: number, progress: number) => void
   ): Promise<string[]> {
-    const uploadPromises = files.map((file, index) => {
-      const progressCallback = onProgress 
-        ? (progress: number) => onProgress(index, progress)
-        : undefined;
-      
-      return this.uploadFile(file, path, progressCallback);
-    });
-
-    return Promise.all(uploadPromises);
+    return Promise.all(
+      files.map((file, index) =>
+        this.uploadFile(file, path, progress => onProgress?.(index, progress))
+      )
+    );
   },
 
-  /**
-   * Удалить файл из Firebase Storage
-   * @param url - URL файла для удаления
-   */
   async deleteFile(url: string): Promise<void> {
-    try {
-      // Извлекаем путь из URL
-      const urlObj = new URL(url);
-      const path = decodeURIComponent(urlObj.pathname);
-      
-      // Убираем /o/ из начала пути и параметры из конца
-      const pathMatch = path.match(/\/o\/(.+?)\?/);
-      if (!pathMatch) {
-        throw new Error('Не удалось извлечь путь из URL');
-      }
-      
-      const filePath = pathMatch[1];
-      const storageRef = ref(storage, filePath);
-      
-      await deleteObject(storageRef);
-      console.log('Файл успешно удален:', filePath);
-    } catch (error) {
-      console.error('Ошибка удаления файла:', error);
-      throw error;
-    }
+    if (!url) return;
+
+    console.warn(
+      'Удаление файлов из Cloudinary с клиента отключено: для этого нужен серверный signed-запрос.',
+      url
+    );
   },
 
-  /**
-   * Удалить несколько файлов
-   * @param urls - массив URL файлов для удаления
-   */
   async deleteMultipleFiles(urls: string[]): Promise<void> {
-    const deletePromises = urls.map(url => this.deleteFile(url));
-    await Promise.all(deletePromises);
+    await Promise.all(urls.map(url => this.deleteFile(url)));
   },
 
-  /**
-   * Получить URL из пути в storage
-   * @param path - путь в storage
-   * @returns URL файла
-   */
   async getFileURL(path: string): Promise<string> {
-    const storageRef = ref(storage, path);
-    return getDownloadURL(storageRef);
+    return path;
   },
 
-  /**
-   * Проверить, является ли URL из Firebase Storage
-   * @param url - URL для проверки
-   * @returns true если URL из Firebase Storage
-   */
   isFirebaseStorageURL(url: string): boolean {
     return url.includes('firebasestorage.googleapis.com') || url.includes('firebase.storage');
+  },
+
+  isCloudinaryURL(url: string): boolean {
+    return url.includes('res.cloudinary.com');
   }
 };
 
 /**
- * Пути для хранения медиа
+ * Папки для хранения медиа.
+ * Название оставлено прежним, чтобы не менять импорты в компонентах.
  */
 export const STORAGE_PATHS = {
   PRODUCTS: 'products',
@@ -164,4 +127,3 @@ export const STORAGE_PATHS = {
   ORDERS: 'orders',
   BACKGROUNDS: 'backgrounds'
 } as const;
-

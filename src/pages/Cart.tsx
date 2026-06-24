@@ -7,6 +7,8 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
+const PRODUCT_IMAGE_PLACEHOLDER = '/small-icon.png';
+
 const CartContainer = styled.div`
   padding: 2rem 0;
   min-height: 80vh;
@@ -370,7 +372,7 @@ const Cart: React.FC = () => {
               transition={{ duration: 0.3, delay: index * 0.1 }}
             >
               <CartItem>
-                <ItemImage src={item.product.image} alt={item.product.name} />
+                <ItemImage src={item.product.image || PRODUCT_IMAGE_PLACEHOLDER} alt={item.product.name} />
                 <ItemInfo>
                   <ItemName>{item.product.name}</ItemName>
                   <ItemDescription>{item.product.description}</ItemDescription>

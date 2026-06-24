@@ -257,6 +257,8 @@ interface ProductCardProps {
   priority?: boolean; // Для первых видимых карточек: грузим сразу
 }
 
+const PRODUCT_IMAGE_PLACEHOLDER = '/small-icon.png';
+
 const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableLink, disableHoverImage, priority }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
@@ -269,7 +271,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
   // Получаем изображения: [главное фото, доп фото при hover, ...галерея]
   // Обработка старых товаров (без массива images) и новых товаров
   const mainImageBase = product.image || (product as any).imageUrl || '';
-  const mainImage = (product.images && product.images.length > 0) ? product.images[0] : mainImageBase;
+  const mainImage = ((product.images && product.images.length > 0) ? product.images[0] : mainImageBase) || PRODUCT_IMAGE_PLACEHOLDER;
   const hoverImage = (product.images && product.images.length > 1) ? product.images[1] : null;
 
   const [currentMainImage, setCurrentMainImage] = React.useState(mainImage);

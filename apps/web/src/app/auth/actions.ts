@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 
-import { getSiteUrl } from "../../lib/env";
+import { getApiUrl, getSiteUrl } from "../../lib/env";
+import { sessionTokens } from "../../lib/auth/session-tokens";
 import { createClient } from "../../lib/supabase/server";
 
 import type { AuthActionState } from "./auth-state";
@@ -53,10 +54,37 @@ export async function signIn(
   }
 
   const supabase = await createClient();
-  const credentials = email
-    ? { email, password }
-    : { password, phone: phone as string };
-  const { error } = await supabase.auth.signInWithPassword(credentials);
+  let error: unknown;
+
+  if (email) {
+    ({ error } = await supabase.auth.signInWithPassword({ email, password }));
+  } else {
+    try {
+      const response = await fetch(
+        new URL("/auth/phone/login", `${getApiUrl().replace(/\/+$/, "")}/`),
+        {
+          method: "POST",
+          cache: "no-store",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ password, phone }),
+          redirect: "error",
+        },
+      );
+      const tokens = response.ok
+        ? sessionTokens(await response.json())
+        : null;
+
+      if (!tokens) {
+        error = new Error("Phone sign-in failed.");
+      } else {
+        ({ error } = await supabase.auth.setSession(tokens));
+      }
+    } catch {
+      error = new Error("Phone sign-in failed.");
+    }
+  }
 
   if (error) {
     return errorState("Не вдалося увійти. Перевірте дані або підтвердьте email.");

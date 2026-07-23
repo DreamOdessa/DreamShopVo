@@ -53,6 +53,11 @@ select 1 / case
     then 1
   else 0
 end as customer_cannot_change_role;
+select 1 / case
+  when has_column_privilege(current_user, 'public.profiles', 'phone', 'UPDATE') = false
+    then 1
+  else 0
+end as customer_cannot_change_verified_phone;
 rollback;
 
 begin;

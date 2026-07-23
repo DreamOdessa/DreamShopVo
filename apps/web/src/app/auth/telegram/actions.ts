@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { getApiUrl } from "../../../lib/env";
+import { sessionTokens } from "../../../lib/auth/session-tokens";
 import { createClient } from "../../../lib/supabase/server";
 
 import type { TelegramAuthState } from "./telegram-state";
@@ -17,24 +18,6 @@ function stringValue(formData: FormData, name: string) {
 
 function errorState(message: string): TelegramAuthState {
   return { message, status: "error" };
-}
-
-function sessionTokens(value: unknown) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-
-  const accessToken = Reflect.get(value, "access_token");
-  const refreshToken = Reflect.get(value, "refresh_token");
-
-  if (typeof accessToken !== "string" || typeof refreshToken !== "string") {
-    return null;
-  }
-
-  return {
-    access_token: accessToken,
-    refresh_token: refreshToken,
-  };
 }
 
 export async function completeTelegramRegistration(

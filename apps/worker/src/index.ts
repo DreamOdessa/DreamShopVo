@@ -8,6 +8,7 @@ import {
 import {
   completeTelegramRegistration,
   handleTelegramWebhook,
+  signInWithTelegramPhone,
 } from "./telegram";
 import type { WorkerEnv } from "./types";
 
@@ -65,12 +66,17 @@ async function handleRequest(request: Request, env: WorkerEnv) {
     return completeTelegramRegistration(request, env);
   }
 
+  if (pathname === "/auth/phone/login" && request.method === "POST") {
+    return signInWithTelegramPhone(request, env);
+  }
+
   if (
     pathname === "/admin/media" ||
     pathname.startsWith("/media/") ||
     pathname.startsWith("/admin/media/") ||
     pathname === "/telegram/webhook" ||
-    pathname === "/auth/telegram/complete"
+    pathname === "/auth/telegram/complete" ||
+    pathname === "/auth/phone/login"
   ) {
     throw new HttpError(405, "method_not_allowed", "Method is not allowed.");
   }

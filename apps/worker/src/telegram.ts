@@ -118,6 +118,12 @@ async function sha256Hex(value: string) {
   ).join("");
 }
 
+export async function telegramLoginEmail(phone: string) {
+  const phoneHash = await sha256Hex(phone);
+
+  return `telegram-${phoneHash}@auth.dreamshop.invalid`;
+}
+
 export function normalizeTelegramPhone(value: string) {
   const digits = value.replace(/\D/g, "");
 
@@ -333,10 +339,11 @@ export async function completeTelegramRegistration(
       app_metadata: {
         role: "customer",
       },
+      email: await telegramLoginEmail(challenge.phone),
+      email_confirm: true,
       password,
-      phone: challenge.phone,
-      phone_confirm: true,
       user_metadata: {
+        auth_source: "telegram",
         telegram_chat_id: String(challenge.telegram_chat_id),
         telegram_user_id: String(challenge.telegram_user_id),
       },
@@ -357,14 +364,35 @@ export async function completeTelegramRegistration(
     );
   }
 
+  const { error: profileError } = await adminClient
+    .from("profiles")
+    .update({
+      email: null,
+      phone: challenge.phone,
+    })
+    .eq("id", created.user.id);
+
+  if (profileError) {
+    await adminClient.auth.admin.deleteUser(created.user.id);
+
+    throw new HttpError(
+      profileError.code === "23505" ? 409 : 503,
+      profileError.code === "23505" ? "conflict" : "service_unavailable",
+      profileError.code === "23505"
+        ? "An account with this phone number already exists."
+        : "Registration is temporarily unavailable.",
+    );
+  }
+
   const publicClient = createSupabaseClient(
     env.SUPABASE_URL,
     env.SUPABASE_PUBLISHABLE_KEY,
   );
+  const email = await telegramLoginEmail(challenge.phone);
   const { data: signedIn, error: signInError } =
     await publicClient.auth.signInWithPassword({
+      email,
       password,
-      phone: challenge.phone,
     });
 
   if (signInError || !signedIn.session) {
@@ -379,5 +407,47 @@ export async function completeTelegramRegistration(
   return json(request, env, {
     access_token: signedIn.session.access_token,
     refresh_token: signedIn.session.refresh_token,
+  });
+}
+
+export async function signInWithTelegramPhone(
+  request: Request,
+  env: WorkerEnv,
+) {
+  const body = requireObject(await parseJson(request));
+  const phone =
+    typeof body.phone === "string"
+      ? normalizeTelegramPhone(body.phone)
+      : null;
+  const password = typeof body.password === "string" ? body.password : "";
+
+  if (!phone || !password || password.length > 72) {
+    throw new HttpError(
+      400,
+      "invalid_request",
+      "The phone number or password is invalid.",
+    );
+  }
+
+  const publicClient = createSupabaseClient(
+    env.SUPABASE_URL,
+    env.SUPABASE_PUBLISHABLE_KEY,
+  );
+  const { data, error } = await publicClient.auth.signInWithPassword({
+    email: await telegramLoginEmail(phone),
+    password,
+  });
+
+  if (error || !data.session) {
+    throw new HttpError(
+      401,
+      "unauthorized",
+      "The phone number or password is invalid.",
+    );
+  }
+
+  return json(request, env, {
+    access_token: data.session.access_token,
+    refresh_token: data.session.refresh_token,
   });
 }

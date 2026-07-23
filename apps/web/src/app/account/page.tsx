@@ -72,7 +72,9 @@ export default async function AccountPage() {
           </div>
           <span className="account-status">
             <ShieldCheck aria-hidden size={18} strokeWidth={1.8} />
-            Email підтверджено
+            {profile?.phone && !profile.email
+              ? "Telegram підтверджено"
+              : "Email підтверджено"}
           </span>
         </div>
 

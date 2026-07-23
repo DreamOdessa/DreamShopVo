@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { fetchRequest, type WorkerEnv } from "../src/index";
-import { normalizeTelegramPhone } from "../src/telegram";
+import {
+  normalizeTelegramPhone,
+  telegramLoginEmail,
+} from "../src/telegram";
 
 function createEnv(overrides: Partial<WorkerEnv> = {}): WorkerEnv {
   return {
@@ -163,6 +166,18 @@ describe("DreamShop Worker", () => {
     expect(normalizeTelegramPhone("123")).toBeNull();
   });
 
+  it("derives a stable private login identifier without exposing the phone", async () => {
+    const phone = "+380671234567";
+    const first = await telegramLoginEmail(phone);
+    const second = await telegramLoginEmail(phone);
+
+    expect(first).toBe(second);
+    expect(first).toMatch(
+      /^telegram-[a-f0-9]{64}@auth\.dreamshop\.invalid$/,
+    );
+    expect(first).not.toContain(phone);
+  });
+
   it("rejects malformed Telegram registration tokens before database access", async () => {
     const response = await fetchRequest(
       new Request("https://api.example.test/auth/telegram/complete", {
@@ -173,6 +188,25 @@ describe("DreamShop Worker", () => {
         body: JSON.stringify({
           password: "long-enough-password",
           token: "invalid",
+        }),
+      }),
+      createEnv(),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: "invalid_request" });
+  });
+
+  it("rejects malformed phone login before contacting Supabase", async () => {
+    const response = await fetchRequest(
+      new Request("https://api.example.test/auth/phone/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password: "long-enough-password",
+          phone: "123",
         }),
       }),
       createEnv(),

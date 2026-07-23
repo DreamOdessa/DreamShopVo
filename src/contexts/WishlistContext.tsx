@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product } from '../types';
 import toast from 'react-hot-toast';
+import { parseStoredArray } from '../utils/cart';
+
+const WISHLIST_STORAGE_KEY = 'dreamshop_wishlist';
 
 interface WishlistContextType {
   items: Product[];
@@ -26,24 +29,17 @@ interface WishlistProviderProps {
 }
 
 export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) => {
-  const [items, setItems] = useState<Product[]>([]);
+  const [items, setItems] = useState<Product[]>(() => {
+    if (typeof window === 'undefined') return [];
+    return parseStoredArray<Product>(localStorage.getItem(WISHLIST_STORAGE_KEY));
+  });
 
-  // Загрузка избранного из localStorage при инициализации
   useEffect(() => {
-    const savedWishlist = localStorage.getItem('dreamshop_wishlist');
-    if (savedWishlist) {
-      try {
-        setItems(JSON.parse(savedWishlist));
-      } catch (error) {
-        console.error('Ошибка загрузки избранного:', error);
-        setItems([]);
-      }
+    try {
+      localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(items));
+    } catch (error) {
+      console.error('Не удалось сохранить избранное:', error);
     }
-  }, []);
-
-  // Сохранение избранного в localStorage при изменении
-  useEffect(() => {
-    localStorage.setItem('dreamshop_wishlist', JSON.stringify(items));
   }, [items]);
 
   const addToWishlist = (product: Product) => {

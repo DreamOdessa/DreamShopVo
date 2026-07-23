@@ -484,7 +484,10 @@ const Orders: React.FC = () => {
                     <DetailItem>
                       <FiPackage />
                       <span>
-                        {getDeliveryMethodText(order.deliveryInfo?.deliveryMethod || order.shippingAddress ? 'address' : 'post_office')}
+                        {getDeliveryMethodText(
+                          order.deliveryInfo?.deliveryMethod ||
+                          (order.shippingAddress ? 'address' : 'post_office')
+                        )}
                       </span>
                     </DetailItem>
                     <DetailItem>

@@ -19,6 +19,7 @@ import { storageService, STORAGE_PATHS } from '../firebase/storageService';
 import { productService } from '../firebase/services';
 import { requestNotificationPermission } from '../firebase/messaging';
 import { FiBell } from 'react-icons/fi';
+import { escapeHtml } from '../utils/security';
 
 const PRODUCT_IMAGE_PLACEHOLDER = '/small-icon.png';
 
@@ -2466,13 +2467,35 @@ const AdminPanel: React.FC = () => {
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
           onPrint={() => {
-            // Функция печати накладной
+            const customerName = selectedOrder.customerInfo?.firstName ||
+              selectedOrder.shippingAddress?.name?.split(' ')[0] ||
+              '';
+            const customerPhone = selectedOrder.customerInfo?.phone ||
+              selectedOrder.shippingAddress?.phone ||
+              '';
+            const deliveryCity = selectedOrder.deliveryInfo?.city ||
+              selectedOrder.shippingAddress?.city ||
+              '';
+            const deliveryDetails = selectedOrder.deliveryInfo?.deliveryDetails ||
+              selectedOrder.shippingAddress?.address ||
+              '';
+            const createdAt = new Date(selectedOrder.createdAt).toLocaleString('uk-UA');
+            const itemRows = selectedOrder.items.map(item => `
+              <tr>
+                <td>${escapeHtml(item.product.name)}</td>
+                <td>${escapeHtml(item.quantity)}</td>
+                <td>${escapeHtml(item.product.price)} ₴</td>
+                <td>${escapeHtml(item.product.price * item.quantity)} ₴</td>
+              </tr>
+            `).join('');
+
             const printWindow = window.open('', '_blank');
             if (printWindow) {
+              printWindow.opener = null;
               printWindow.document.write(`
                 <html>
                   <head>
-                    <title>Накладна #${selectedOrder.id}</title>
+                    <title>Накладна #${escapeHtml(selectedOrder.id)}</title>
                     <style>
                       body { font-family: Arial, sans-serif; margin: 20px; }
                       .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; }
@@ -2486,19 +2509,19 @@ const AdminPanel: React.FC = () => {
                   <body>
                     <div class="header">
                       <h1>DreamShop</h1>
-                      <h2>Накладна #${selectedOrder.id}</h2>
-                      <p>Дата: ${new Date(selectedOrder.createdAt).toLocaleString('uk-UA')}</p>
+                      <h2>Накладна #${escapeHtml(selectedOrder.id)}</h2>
+                      <p>Дата: ${escapeHtml(createdAt)}</p>
                     </div>
                     
                     <div class="section">
                       <h3>Клієнт:</h3>
                       <div class="info">
-                        <span>Ім'я: ${selectedOrder.customerInfo?.firstName || selectedOrder.shippingAddress.name.split(' ')[0]}</span>
-                        <span>Телефон: ${selectedOrder.customerInfo?.phone || selectedOrder.shippingAddress.phone}</span>
+                        <span>Ім'я: ${escapeHtml(customerName)}</span>
+                        <span>Телефон: ${escapeHtml(customerPhone)}</span>
                       </div>
                       <div class="info">
-                        <span>Місто: ${selectedOrder.deliveryInfo?.city || selectedOrder.shippingAddress.city}</span>
-                        <span>Адреса: ${selectedOrder.deliveryInfo?.deliveryDetails || selectedOrder.shippingAddress.address}</span>
+                        <span>Місто: ${escapeHtml(deliveryCity)}</span>
+                        <span>Адреса: ${escapeHtml(deliveryDetails)}</span>
                       </div>
                     </div>
                     
@@ -2511,16 +2534,9 @@ const AdminPanel: React.FC = () => {
                           <th>Ціна</th>
                           <th>Сума</th>
                         </tr>
-                        ${selectedOrder.items.map(item => `
-                          <tr>
-                            <td>${item.product.name}</td>
-                            <td>${item.quantity}</td>
-                            <td>${item.product.price} ₴</td>
-                            <td>${item.product.price * item.quantity} ₴</td>
-                          </tr>
-                        `).join('')}
+                        ${itemRows}
                       </table>
-                      <div class="total">Загальна сума: ${selectedOrder.total} ₴</div>
+                      <div class="total">Загальна сума: ${escapeHtml(selectedOrder.total)} ₴</div>
                     </div>
                   </body>
                 </html>

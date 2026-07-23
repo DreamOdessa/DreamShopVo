@@ -8,6 +8,7 @@ node_modules/
 
 # Production
 /build
+/functions/lib/
 
 # Misc
 .DS_Store
@@ -15,6 +16,11 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+/functions/.env
+/functions/.env.*
+!/functions/.env.example
+/firebase-service-account.json
+/.runtimeconfig.json
 
 # Logs
 npm-debug.log*

@@ -19,7 +19,7 @@ import { visitorService } from './firebase/services';
 import LoadingSpinner from './components/LoadingSpinner';
 import BugReportToolWrapper from './components/BugReportTool';
 import BugMarker from './components/BugReportTool/BugMarker';
-import './utils/adminUtils'; // Импортируем утилиты для консоли
+import RequireAdmin from './components/RequireAdmin';
 
 // Ленивые загрузки админских страниц для уменьшения бандла публичных страниц
 const AdminPanel = React.lazy(() => import('./pages/AdminPanel'));
@@ -57,12 +57,12 @@ const App: React.FC = () => {
             <Route path="/profile" element={<Profile />} />
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/orders" element={<Orders />} />
-            <Route path="/admin" element={<Suspense fallback={<LoadingSpinner />}><AdminPanel /></Suspense>} />
-            <Route path="/admin/products" element={<Suspense fallback={<LoadingSpinner />}><AdminProductsPage /></Suspense>} />
-            <Route path="/admin/users" element={<Suspense fallback={<LoadingSpinner />}><AdminUsersPage /></Suspense>} />
-            <Route path="/admin/orders" element={<Suspense fallback={<LoadingSpinner />}><AdminOrdersPage /></Suspense>} />
-            <Route path="/admin/categories" element={<Suspense fallback={<LoadingSpinner />}><AdminCategoriesPage /></Suspense>} />
-            <Route path="/admin/settings" element={<Suspense fallback={<LoadingSpinner />}><AdminSettingsPage /></Suspense>} />
+            <Route path="/admin" element={<RequireAdmin><Suspense fallback={<LoadingSpinner />}><AdminPanel /></Suspense></RequireAdmin>} />
+            <Route path="/admin/products" element={<RequireAdmin><Suspense fallback={<LoadingSpinner />}><AdminProductsPage /></Suspense></RequireAdmin>} />
+            <Route path="/admin/users" element={<RequireAdmin><Suspense fallback={<LoadingSpinner />}><AdminUsersPage /></Suspense></RequireAdmin>} />
+            <Route path="/admin/orders" element={<RequireAdmin><Suspense fallback={<LoadingSpinner />}><AdminOrdersPage /></Suspense></RequireAdmin>} />
+            <Route path="/admin/categories" element={<RequireAdmin><Suspense fallback={<LoadingSpinner />}><AdminCategoriesPage /></Suspense></RequireAdmin>} />
+            <Route path="/admin/settings" element={<RequireAdmin><Suspense fallback={<LoadingSpinner />}><AdminSettingsPage /></Suspense></RequireAdmin>} />
           </Routes>
         </main>
         <Footer />

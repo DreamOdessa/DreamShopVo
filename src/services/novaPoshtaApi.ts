@@ -112,8 +112,16 @@ export interface NovaPoshtaCity {
 }
 
 class NovaPoshtaApiService {
-  private readonly API_KEY = process.env.REACT_APP_NOVA_POSHTA_API_KEY || '01b6aa62c09ccb6f0218cf21e3f5de33';
+  private readonly API_KEY = process.env.REACT_APP_NOVA_POSHTA_API_KEY || '';
   private readonly API_URL = 'https://api.novaposhta.ua/v2.0/json/';
+
+  private getApiKey(): string {
+    if (!this.API_KEY) {
+      throw new Error('Nova Poshta API is not configured');
+    }
+
+    return this.API_KEY;
+  }
 
   // Поиск городов по названию
   async searchCities(cityName: string): Promise<NovaPoshtaCity[]> {
@@ -126,7 +134,7 @@ class NovaPoshtaApiService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey: this.API_KEY,
+          apiKey: this.getApiKey(),
           modelName: 'Address',
           calledMethod: 'searchSettlements',
           methodProperties: {
@@ -171,7 +179,7 @@ class NovaPoshtaApiService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey: this.API_KEY,
+          apiKey: this.getApiKey(),
           modelName: 'Address',
           calledMethod: 'getCities',
           methodProperties: {
@@ -208,7 +216,7 @@ class NovaPoshtaApiService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey: this.API_KEY,
+          apiKey: this.getApiKey(),
           modelName: 'AddressGeneral',
           calledMethod: 'getWarehouses',
           methodProperties: {
@@ -250,7 +258,7 @@ class NovaPoshtaApiService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey: this.API_KEY,
+          apiKey: this.getApiKey(),
           modelName: 'AddressGeneral',
           calledMethod: 'getWarehouses',
           methodProperties: {
@@ -287,7 +295,7 @@ class NovaPoshtaApiService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey: this.API_KEY,
+          apiKey: this.getApiKey(),
           modelName: 'AddressGeneral',
           calledMethod: 'getWarehouses',
           methodProperties: {
@@ -329,7 +337,7 @@ class NovaPoshtaApiService {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          apiKey: this.API_KEY,
+          apiKey: this.getApiKey(),
           modelName: 'InternetDocument',
           calledMethod: 'getDocumentPrice',
           methodProperties: {

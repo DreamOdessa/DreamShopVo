@@ -439,13 +439,4 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, customLink, disableL
   );
 };
 
-// ⭐ МЕМОИЗАЦИЯ для оптимизации - компонент не будет ре-рендериться если props не изменились
-export default React.memo(ProductCard, (prevProps, nextProps) => {
-  return (
-    prevProps.product.id === nextProps.product.id &&
-    prevProps.customLink === nextProps.customLink &&
-    prevProps.disableLink === nextProps.disableLink &&
-    prevProps.disableHoverImage === nextProps.disableHoverImage &&
-    prevProps.priority === nextProps.priority
-  );
-});
+export default React.memo(ProductCard);

@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { CartItem, Product, Order } from '../types';
 import { orderService } from '../firebase/services';
 import toast from 'react-hot-toast';
+import { calculateCartTotal, parseStoredArray } from '../utils/cart';
+
+const CART_STORAGE_KEY = 'dreamshop_cart';
 
 interface CartContextType {
   items: CartItem[];
@@ -29,30 +32,37 @@ interface CartProviderProps {
 }
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CartItem[]>(() => {
+    if (typeof window === 'undefined') return [];
+    return parseStoredArray<CartItem>(localStorage.getItem(CART_STORAGE_KEY));
+  });
 
   useEffect(() => {
-    const savedCart = localStorage.getItem('dreamshop_cart');
-    if (savedCart) {
-      setItems(JSON.parse(savedCart));
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    } catch (error) {
+      console.error('Не удалось сохранить корзину:', error);
     }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('dreamshop_cart', JSON.stringify(items));
   }, [items]);
 
   const addToCart = (product: Product, quantity: number = 1) => {
+    if (!product.inStock) {
+      toast.error('Товару немає в наявності');
+      return;
+    }
+
+    const normalizedQuantity = Math.min(99, Math.max(1, Math.floor(quantity)));
+
     setItems(prevItems => {
       const existingItem = prevItems.find(item => item.product.id === product.id);
       if (existingItem) {
         return prevItems.map(item =>
           item.product.id === product.id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: Math.min(99, item.quantity + normalizedQuantity) }
             : item
         );
       }
-      return [...prevItems, { product, quantity }];
+      return [...prevItems, { product, quantity: normalizedQuantity }];
     });
   };
 
@@ -65,10 +75,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       removeFromCart(productId);
       return;
     }
+    const normalizedQuantity = Math.min(99, Math.floor(quantity));
     setItems(prevItems =>
       prevItems.map(item =>
         item.product.id === productId
-          ? { ...item, quantity }
+          ? { ...item, quantity: normalizedQuantity }
           : item
       )
     );
@@ -79,16 +90,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
   };
 
   const getTotalPrice = (userDiscount?: number) => {
-    const total = items.reduce((total, item) => {
-      const price = item.product.originalPrice || item.product.price;
-      return total + (price * item.quantity);
-    }, 0);
-    
-    if (userDiscount && userDiscount > 0) {
-      return total * (1 - userDiscount / 100);
-    }
-    
-    return total;
+    return calculateCartTotal(items, userDiscount);
   };
 
   const getTotalItems = () => {
@@ -146,4 +148,3 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     </CartContext.Provider>
   );
 };
-

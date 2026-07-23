@@ -51,7 +51,7 @@ export const checkRedirectResult = async (): Promise<User | null> => {
 };
 
 // Вход через Google (popup сначала, redirect как фолбэк)
-export const signInWithGoogle = async (): Promise<User> => {
+export const signInWithGoogle = async (): Promise<User | null> => {
   try {
     console.log('🔄 Начинаем вход через Google...');
     console.log('🔧 Auth domain:', auth.app.options.authDomain);
@@ -73,8 +73,7 @@ export const signInWithGoogle = async (): Promise<User> => {
       ) {
         console.log('↪️ Переключаемся на signInWithRedirect');
         await signInWithRedirect(auth, googleProvider);
-        // Вернем заглушку; фактический пользователь придет из onAuthStateChanged после редиректа
-        return mapFirebaseUser({ uid: 'redirect_pending' } as any);
+        return null;
       }
       throw e;
     }
@@ -115,33 +114,34 @@ export const signOutUser = async (): Promise<void> => {
 // Слушатель изменений состояния аутентификации
 export const onAuthStateChange = (callback: (user: User | null) => void) => {
   return onAuthStateChanged(auth, async (firebaseUser) => {
-    if (firebaseUser) {
-      console.log('🔐 Firebase пользователь вошел:', firebaseUser.email);
-      
-      // Получаем данные пользователя из базы данных
-      const userData = await userService.getById(firebaseUser.uid);
-      if (userData) {
-        console.log('✅ Пользователь найден в базе:', userData.email);
-        // Обновляем только основные данные, сохраняя права администратора
-        const updatedUser = {
-          ...userData,
-          // Не затираем имя из базы, используем Google-имя только если в базе пусто
-          name: userData.name || firebaseUser.displayName || 'Користувач',
-          email: firebaseUser.email || userData.email,
-          avatar: firebaseUser.photoURL || userData.avatar
-        };
-        await userService.createOrUpdate(updatedUser);
-        callback(updatedUser);
+    try {
+      if (firebaseUser) {
+        console.log('🔐 Firebase пользователь вошел:', firebaseUser.email);
+
+        const userData = await userService.getById(firebaseUser.uid);
+        if (userData) {
+          console.log('✅ Пользователь найден в базе:', userData.email);
+          const updatedUser = {
+            ...userData,
+            name: userData.name || firebaseUser.displayName || 'Користувач',
+            email: firebaseUser.email || userData.email,
+            avatar: firebaseUser.photoURL || userData.avatar
+          };
+          await userService.createOrUpdate(updatedUser);
+          callback(updatedUser);
+        } else {
+          console.log('➕ Создаем нового пользователя в базе');
+          const user = mapFirebaseUser(firebaseUser);
+          await userService.createOrUpdate(user);
+          callback(user);
+        }
       } else {
-        // Если пользователя нет в базе, создаем его
-        console.log('➕ Создаем нового пользователя в базе');
-        const user = mapFirebaseUser(firebaseUser);
-        await userService.createOrUpdate(user);
-        callback(user);
+        console.log('🚪 Пользователь вышел');
+        callback(null);
       }
-    } else {
-      console.log('🚪 Пользователь вышел');
-      callback(null);
+    } catch (error) {
+      console.error('Ошибка синхронизации пользователя:', error);
+      callback(firebaseUser ? mapFirebaseUser(firebaseUser) : null);
     }
   });
 };

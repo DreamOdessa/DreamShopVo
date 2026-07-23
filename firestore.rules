@@ -1,67 +1,44 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // ВСЕ могут читать товары, категории и пользователей
     match /users/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow read, write: if false;
     }
-    
+
     match /products/{productId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if false;
     }
-    
+
     match /spicer_products/{productId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if false;
     }
-    
+
     match /categories/{categoryId} {
       allow read: if true;
-      allow write: if request.auth != null;
-    }
-    
-    match /orders/{orderId} {
-      allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if false;
     }
 
-    // Настройки сайта (CMS)
+    match /orders/{orderId} {
+      allow read, write: if false;
+    }
+
     match /site_settings/{docId} {
       allow read: if true;
-      allow write: if request.auth != null; // можно сузить до админов, если добавить custom claims
+      allow write: if false;
     }
 
-    // Просмотры товаров (статистика)
     match /product_views/{docId} {
-      allow read: if true;
-      allow write: if request.auth != null; // инкремент просмотров после авторизации
+      allow read, write: if false;
     }
 
-    // Уникальные посетители (для логирования анонимных заходов)
     match /visitors/{docId} {
-      allow read: if true;
-      allow write: if true; // разрешено без авторизации для записи посещений
+      allow read, write: if false;
     }
 
-    // Bug Reports (Visual Feedback Tool)
-    // Спрощені правила: дозволяємо всім авторизованим створювати та читати
-    // Адміни можуть керувати через UI перевірку isAdmin/isTester
     match /bug_reports/{reportId} {
-      // Читання: всі авторизовані користувачі
-      allow read: if request.auth != null;
-      
-      // Створення: всі авторизовані (перевірка ролі на frontend)
-      allow create: if request.auth != null && 
-                       request.resource.data.userId == request.auth.uid;
-      
-      // Оновлення: всі авторизовані (UI обмежує доступ)
-      allow update: if request.auth != null;
-      
-      // Видалення: всі авторизовані (UI обмежує доступ)
-      allow delete: if request.auth != null;
+      allow read, write: if false;
     }
   }
 }

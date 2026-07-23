@@ -379,6 +379,13 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
   const [videoError, setVideoError] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  useEffect(() => {
+    setCurrentIndex(previousIndex => {
+      if (media.length === 0) return 0;
+      return Math.min(previousIndex, media.length - 1);
+    });
+  }, [media.length]);
+
   // На первом рендере пытаемся начать с видео, если оно есть
   useEffect(() => {
     const firstVideo = media.findIndex(m => m.type === 'video');

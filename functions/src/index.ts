@@ -12,9 +12,9 @@ if (!getApps().length) {
 const db = getFirestore();
 const messaging = getMessaging();
 
-// Telegram Bot Configuration
-const TELEGRAM_BOT_TOKEN = '8201620010:AAHs-9LmntL4PdIsUyJYCJXhL6FCmrjODtY';
-const ADMIN_CHAT_IDS = ['8471136015', '275072930']; // @DreamOdessaShop, @SenonKray
+const telegramRuntime = functions.runWith({
+  secrets: ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_ADMIN_CHAT_IDS']
+});
 
 interface NotificationPayload {
   title: string;
@@ -23,11 +23,35 @@ interface NotificationPayload {
   data?: Record<string, string>;
 }
 
-// Send Telegram notification
+function escapeTelegramHtml(value: unknown): string {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function getTelegramConfig(): { token: string; chatIds: string[] } | null {
+  const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
+  const chatIds = (process.env.TELEGRAM_ADMIN_CHAT_IDS || '')
+    .split(',')
+    .map(chatId => chatId.trim())
+    .filter(Boolean);
+
+  if (!token || chatIds.length === 0) {
+    functions.logger.warn('Telegram notifications are not configured');
+    return null;
+  }
+
+  return { token, chatIds };
+}
+
 async function sendTelegramNotification(message: string): Promise<void> {
-  for (const chatId of ADMIN_CHAT_IDS) {
+  const config = getTelegramConfig();
+  if (!config) return;
+
+  for (const chatId of config.chatIds) {
     try {
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      const response = await fetch(`https://api.telegram.org/bot${config.token}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -37,9 +61,15 @@ async function sendTelegramNotification(message: string): Promise<void> {
           disable_web_page_preview: true
         })
       });
-      functions.logger.info(`✅ Telegram sent to ${chatId}`);
+
+      if (!response.ok) {
+        const responseBody = await response.text();
+        throw new Error(`Telegram API ${response.status}: ${responseBody.slice(0, 200)}`);
+      }
+
+      functions.logger.info('Telegram notification sent', { chatId });
     } catch (error) {
-      functions.logger.error(`❌ Telegram error for ${chatId}:`, error);
+      functions.logger.error('Telegram notification failed', { chatId, error });
     }
   }
 }
@@ -88,26 +118,32 @@ async function sendToTokens(tokens: string[], payload: NotificationPayload) {
   }
 }
 
-// Firestore trigger: new order -> notify admins
-export const onOrderCreated = functions.firestore
+export const onOrderCreated = telegramRuntime.firestore
   .document('orders/{orderId}')
   .onCreate(async (snap, context) => {
     const data = snap.data();
-    const total = data.total || 0;
+    const numericTotal = Number(data.total);
+    const total = Number.isFinite(numericTotal) ? numericTotal : 0;
     const orderId = context.params.orderId.substring(0, 8);
     const fullOrderId = context.params.orderId;
-    const customerName = data.customerName || data.name || 'Не указан';
-    const customerPhone = data.phone || 'Не указан';
-    const itemsCount = data.items?.length || 0;
+    const firstName = data.customerInfo?.firstName || '';
+    const lastName = data.customerInfo?.lastName || '';
+    const customerName = `${firstName} ${lastName}`.trim() || 'Не указан';
+    const customerPhone = data.customerInfo?.phone || 'Не указан';
+    const itemsCount = Array.isArray(data.items)
+      ? data.items.reduce((sum: number, item: { quantity?: unknown }) => {
+        const quantity = Number(item?.quantity);
+        return sum + (Number.isFinite(quantity) && quantity > 0 ? quantity : 0);
+      }, 0)
+      : 0;
     
-    // Send Telegram notification to admins
     const telegramMessage = 
       `🛒 <b>Новый заказ!</b>\n\n` +
-      `📋 Заказ: <code>#${orderId}</code>\n` +
-      `💰 Сумма: <b>${total} ₴</b>\n` +
-      `👤 Клиент: ${customerName}\n` +
-      `📞 Телефон: ${customerPhone}\n` +
-      `📦 Товаров: ${itemsCount}\n\n` +
+      `📋 Заказ: <code>#${escapeTelegramHtml(orderId)}</code>\n` +
+      `💰 Сумма: <b>${escapeTelegramHtml(total)} ₴</b>\n` +
+      `👤 Клиент: ${escapeTelegramHtml(customerName)}\n` +
+      `📞 Телефон: ${escapeTelegramHtml(customerPhone)}\n` +
+      `📦 Товаров: ${escapeTelegramHtml(itemsCount)}\n\n` +
       `🔗 <a href="https://www.dream-odessa.com/admin">Открыть админку</a>`;
     
     await sendTelegramNotification(telegramMessage);
@@ -121,8 +157,7 @@ export const onOrderCreated = functions.firestore
     });
   });
 
-// Firestore trigger: order status update -> notify user
-export const onOrderStatusUpdated = functions.firestore
+export const onOrderStatusUpdated = telegramRuntime.firestore
   .document('orders/{orderId}')
   .onUpdate(async (change, context) => {
     const before = change.before.data();
@@ -131,9 +166,11 @@ export const onOrderStatusUpdated = functions.firestore
     if (before.status === after.status) return; // no status change
     const userId = after.userId;
     if (!userId) return;
-    const status = after.status;
+    const status = String(after.status || '');
     const orderId = context.params.orderId.substring(0, 8);
-    const customerName = after.customerName || after.name || 'Клиент';
+    const firstName = after.customerInfo?.firstName || '';
+    const lastName = after.customerInfo?.lastName || '';
+    const customerName = `${firstName} ${lastName}`.trim() || 'Клиент';
     
     const statusMessages: Record<string, string> = {
       pending: 'Ваш заказ ожидает обработки',
@@ -151,12 +188,11 @@ export const onOrderStatusUpdated = functions.firestore
       cancelled: '❌'
     };
     
-    // Send Telegram notification to admins about status change
     const telegramMessage = 
       `${statusEmojis[status] || '📦'} <b>Статус заказа изменен</b>\n\n` +
-      `📋 Заказ: <code>#${orderId}</code>\n` +
-      `👤 Клиент: ${customerName}\n` +
-      `📊 Новый статус: <b>${statusMessages[status] || status}</b>\n\n` +
+      `📋 Заказ: <code>#${escapeTelegramHtml(orderId)}</code>\n` +
+      `👤 Клиент: ${escapeTelegramHtml(customerName)}\n` +
+      `📊 Новый статус: <b>${escapeTelegramHtml(statusMessages[status] || status)}</b>\n\n` +
       `🔗 <a href="https://www.dream-odessa.com/admin">Открыть админку</a>`;
     
     await sendTelegramNotification(telegramMessage);

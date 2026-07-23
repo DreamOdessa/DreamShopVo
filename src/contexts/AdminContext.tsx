@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useState, useEffect, ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Product, User, Order, Category } from '../types';
 import { productService, userService, orderService, categoryService } from '../firebase/services';
 import toast from 'react-hot-toast';
+import { useAuth } from './AuthContext';
 
 interface AdminContextType {
   products: Product[];
@@ -37,6 +39,8 @@ interface AdminProviderProps {
 }
 
 export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
+  const { user, loading: authLoading } = useAuth();
+  const location = useLocation();
   const [products, setProducts] = useState<Product[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -45,11 +49,11 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
 
 
   // Загрузка данных
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       console.log('🔄 Завантаження даних...');
       setLoading(true);
-      const isAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+      const isAdminRoute = location.pathname.startsWith('/admin');
 
       const productsPromise = productService.getAll();
 
@@ -78,8 +82,7 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
       setProducts(productsData);
       setCategories(categoriesData);
 
-      // Загружаем пользователей и заказы только в админке
-      if (isAdmin) {
+      if (isAdminRoute && user?.isAdmin) {
         try {
           const [usersData, ordersData] = await Promise.all([
             userService.getAll(),
@@ -90,17 +93,24 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
         } catch (error) {
           console.log('ℹ️ Не удалось загрузить users/orders (не авторизован или нет прав)');
         }
+      } else {
+        setUsers([]);
+        setOrders([]);
       }
     } catch (error) {
       console.error('❌ КРИТИЧНА ПОМИЛКА при завантаженні даних:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [location.pathname, user?.isAdmin]);
 
   useEffect(() => {
+    if (location.pathname.startsWith('/admin') && authLoading) {
+      return;
+    }
+
     loadData();
-  }, []);
+  }, [authLoading, loadData, location.pathname]);
 
   const addProduct = async (productData: Omit<Product, 'id' | 'createdAt'>) => {
     try {

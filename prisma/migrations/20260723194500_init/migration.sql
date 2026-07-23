@@ -87,6 +87,7 @@ CREATE TABLE "verifications" (
 CREATE TABLE "telegram_auth_challenges" (
     "id" TEXT NOT NULL,
     "tokenHash" TEXT NOT NULL,
+    "requestFingerprint" TEXT,
     "telegramUserId" TEXT,
     "telegramChatId" TEXT,
     "telegramName" TEXT,
@@ -276,6 +277,9 @@ CREATE INDEX "verifications_expiresAt_idx" ON "verifications"("expiresAt");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "telegram_auth_challenges_tokenHash_key" ON "telegram_auth_challenges"("tokenHash");
+
+-- CreateIndex
+CREATE INDEX "telegram_auth_challenges_requestFingerprint_createdAt_idx" ON "telegram_auth_challenges"("requestFingerprint", "createdAt");
 
 -- CreateIndex
 CREATE INDEX "telegram_auth_challenges_telegramUserId_status_idx" ON "telegram_auth_challenges"("telegramUserId", "status");

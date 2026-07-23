@@ -1,5 +1,12 @@
 const PRODUCTION_ORIGIN = 'https://dream-shop-vo.vercel.app';
 
+export type TelegramWebhookEnvironment = {
+  botToken: string;
+  secret: string;
+  siteOrigin: string;
+  webhookSecret: string;
+};
+
 function readRequiredEnv(name: string): string {
   const value = process.env[name]?.trim();
   if (!value) {
@@ -16,6 +23,18 @@ function normalizeOrigin(value: string): string {
   return url.origin;
 }
 
+function getServerSecret(): string {
+  const secret = readRequiredEnv('BETTER_AUTH_SECRET');
+  if (Buffer.byteLength(secret, 'utf8') < 32) {
+    throw new Error('BETTER_AUTH_SECRET must be at least 32 bytes');
+  }
+  return secret;
+}
+
+function getSiteOrigin(): string {
+  return normalizeOrigin(readRequiredEnv('BETTER_AUTH_URL'));
+}
+
 export function getDatabaseUrl(): string {
   return readRequiredEnv('DATABASE_URL');
 }
@@ -29,12 +48,8 @@ export function getAuthEnvironment(): {
     clientSecret: string;
   };
 } {
-  const secret = readRequiredEnv('BETTER_AUTH_SECRET');
-  if (Buffer.byteLength(secret, 'utf8') < 32) {
-    throw new Error('BETTER_AUTH_SECRET must be at least 32 bytes');
-  }
-
-  const baseUrl = normalizeOrigin(readRequiredEnv('BETTER_AUTH_URL'));
+  const secret = getServerSecret();
+  const baseUrl = getSiteOrigin();
   const trustedOrigins = new Set([baseUrl, PRODUCTION_ORIGIN]);
 
   if (process.env.NODE_ENV !== 'production') {
@@ -59,5 +74,39 @@ export function getAuthEnvironment(): {
           },
         }
       : {}),
+  };
+}
+
+export function getTelegramStartEnvironment(): {
+  botUsername: string;
+  secret: string;
+} {
+  const botUsername = readRequiredEnv('TELEGRAM_BOT_USERNAME').replace(/^@/, '');
+  if (!/^[A-Za-z0-9_]{5,32}$/.test(botUsername)) {
+    throw new Error('TELEGRAM_BOT_USERNAME is invalid');
+  }
+
+  return {
+    botUsername,
+    secret: getServerSecret(),
+  };
+}
+
+export function getTelegramWebhookEnvironment(): TelegramWebhookEnvironment {
+  const botToken = readRequiredEnv('TELEGRAM_BOT_TOKEN');
+  if (!/^\d{6,12}:[A-Za-z0-9_-]{30,}$/.test(botToken)) {
+    throw new Error('TELEGRAM_BOT_TOKEN is invalid');
+  }
+
+  const webhookSecret = readRequiredEnv('TELEGRAM_WEBHOOK_SECRET');
+  if (Buffer.byteLength(webhookSecret, 'utf8') < 32) {
+    throw new Error('TELEGRAM_WEBHOOK_SECRET must be at least 32 bytes');
+  }
+
+  return {
+    botToken,
+    secret: getServerSecret(),
+    siteOrigin: getSiteOrigin(),
+    webhookSecret,
   };
 }

@@ -127,19 +127,21 @@ model Verification {
 }
 
 model TelegramAuthChallenge {
-  id             String                  @id @default(cuid())
-  tokenHash      String                  @unique
-  telegramUserId String?
-  telegramChatId String?
-  telegramName   String?
-  phoneNumber    String?
-  status         TelegramChallengeStatus @default(PENDING_CONTACT)
-  attempts       Int                     @default(0)
-  expiresAt      DateTime
-  consumedAt     DateTime?
-  createdAt      DateTime                @default(now())
-  updatedAt      DateTime                @updatedAt
+  id                 String                  @id @default(cuid())
+  tokenHash          String                  @unique
+  requestFingerprint String?
+  telegramUserId     String?
+  telegramChatId     String?
+  telegramName       String?
+  phoneNumber        String?
+  status             TelegramChallengeStatus @default(PENDING_CONTACT)
+  attempts           Int                     @default(0)
+  expiresAt          DateTime
+  consumedAt         DateTime?
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
 
+  @@index([requestFingerprint, createdAt])
   @@index([telegramUserId, status])
   @@index([status, expiresAt])
   @@map("telegram_auth_challenges")

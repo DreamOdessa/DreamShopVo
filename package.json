@@ -32,6 +32,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:server": "node --test server/*.test.js",
     "typecheck:api": "node node_modules/typescript-api/bin/tsc -p api/tsconfig.json",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",

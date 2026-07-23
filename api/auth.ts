@@ -11,7 +11,8 @@ export default async function handler(
   response: ApiResponse
 ): Promise<void> {
   try {
-    await getAuthHandler()(request, response);
+    const authHandler = await getAuthHandler();
+    await authHandler(request, response);
   } catch (error) {
     console.error('Auth API is unavailable', error);
 

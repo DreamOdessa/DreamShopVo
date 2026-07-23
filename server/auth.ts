@@ -1,6 +1,3 @@
-import { prismaAdapter } from '@better-auth/prisma-adapter';
-import { betterAuth } from 'better-auth';
-import { toNodeHandler } from 'better-auth/node';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { getAuthEnvironment } from './env';
 import { getPrisma } from './prisma';
@@ -10,10 +7,14 @@ type NodeAuthHandler = (
   response: ServerResponse
 ) => Promise<void>;
 
-let authHandler: NodeAuthHandler | undefined;
+let authHandlerPromise: Promise<NodeAuthHandler> | undefined;
 
-export function getAuthHandler(): NodeAuthHandler {
-  if (authHandler) return authHandler;
+async function createAuthHandler(): Promise<NodeAuthHandler> {
+  const [{ prismaAdapter }, { betterAuth }, { toNodeHandler }] = await Promise.all([
+    import('@better-auth/prisma-adapter'),
+    import('better-auth'),
+    import('better-auth/node'),
+  ]);
 
   const environment = getAuthEnvironment();
   const prisma = getPrisma();
@@ -123,6 +124,13 @@ export function getAuthHandler(): NodeAuthHandler {
     },
   });
 
-  authHandler = toNodeHandler(auth);
-  return authHandler;
+  return toNodeHandler(auth);
+}
+
+export function getAuthHandler(): Promise<NodeAuthHandler> {
+  if (!authHandlerPromise) {
+    authHandlerPromise = createAuthHandler();
+  }
+
+  return authHandlerPromise;
 }

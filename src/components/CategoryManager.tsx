@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useAdmin } from '../contexts/AdminContext';
 import { Category } from '../types';
 import { FiEdit, FiTrash2, FiPlus, FiX, FiUpload, FiShuffle, FiArrowRight } from 'react-icons/fi';
-import { storageService, STORAGE_PATHS } from '../firebase/storageService';
+import { storageService, STORAGE_PATHS } from '../services/mediaStorage';
 import toast from 'react-hot-toast';
 import MoveProductsModal from './MoveProductsModal';
 
@@ -502,10 +502,10 @@ const CategoryManager: React.FC = () => {
     }
 
     setIsUploading(true);
+    let previewUrl: string | null = null;
     
     try {
-      // Создаем превью
-      const previewUrl = URL.createObjectURL(file);
+      previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
 
       // Загружаем в Cloudinary
@@ -516,15 +516,16 @@ const CategoryManager: React.FC = () => {
 
       // Сохраняем URL из Cloudinary
       setFormData(prev => ({ ...prev, image: downloadURL }));
+      setImagePreview(downloadURL);
       toast.success('✅ Изображение категории загружено!');
-      
-      // Очищаем превью URL
-      URL.revokeObjectURL(previewUrl);
     } catch (error) {
       console.error('Ошибка загрузки изображения категории:', error);
       toast.error('❌ Ошибка загрузки изображения');
       setImagePreview('');
     } finally {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
       setIsUploading(false);
     }
   };

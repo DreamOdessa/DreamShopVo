@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useAdmin } from '../contexts/AdminContext';
-import { storageService, STORAGE_PATHS } from '../firebase/storageService';
+import { storageService, STORAGE_PATHS } from '../services/mediaStorage';
 import { FiUpload, FiTrash2, FiVideo } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -183,7 +183,7 @@ const CategoryShowcaseManager: React.FC = () => {
     if (!window.confirm('Удалить изображение из альбома?')) return;
 
     try {
-      if (storageService.isFirebaseStorageURL(url)) {
+      if (storageService.isLegacyFirebaseStorageUrl(url)) {
         await storageService.deleteFile(url);
       }
     } catch (err) {
@@ -203,7 +203,7 @@ const CategoryShowcaseManager: React.FC = () => {
     if (!window.confirm('Удалить видео из альбома?')) return;
 
     try {
-      if (storageService.isFirebaseStorageURL(url)) {
+      if (storageService.isLegacyFirebaseStorageUrl(url)) {
         await storageService.deleteFile(url);
       }
     } catch (err) {

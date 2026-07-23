@@ -15,7 +15,7 @@ import { useAdmin } from '../contexts/AdminContext';
 import { Product, Order, User } from '../types';
 import OrderDetails from '../components/OrderDetails';
 import toast from 'react-hot-toast';
-import { storageService, STORAGE_PATHS } from '../firebase/storageService';
+import { storageService, STORAGE_PATHS } from '../services/mediaStorage';
 import { productService } from '../firebase/services';
 import { requestNotificationPermission } from '../firebase/messaging';
 import { FiBell } from 'react-icons/fi';
@@ -1203,10 +1203,10 @@ const AdminPanel: React.FC = () => {
 
     setIsUploading(true);
     const fileId = `main-${Date.now()}`;
+    let previewUrl: string | null = null;
     
     try {
-      // Создаем превью
-      const previewUrl = URL.createObjectURL(file);
+      previewUrl = URL.createObjectURL(file);
       setMainImagePreview(previewUrl);
 
       // Загружаем в Cloudinary
@@ -1220,16 +1220,17 @@ const AdminPanel: React.FC = () => {
 
       // Сохраняем URL из Cloudinary
       setProductForm(prev => ({ ...prev, image: downloadURL }));
+      setMainImagePreview(downloadURL);
       toast.success('✅ Главное изображение загружено!');
-      
-      // Очищаем превью URL
-      URL.revokeObjectURL(previewUrl);
     } catch (error) {
       console.error('Ошибка загрузки главного изображения:', error);
       const msg = (error as any)?.message || String(error);
       toast.error(`❌ Ошибка загрузки изображения: ${msg}`);
       setMainImagePreview('');
     } finally {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
       setIsUploading(false);
       setUploadProgress(prev => {
         const newProgress = { ...prev };
@@ -1250,10 +1251,10 @@ const AdminPanel: React.FC = () => {
 
     setIsUploading(true);
     const fileId = `hover-${Date.now()}`;
+    let previewUrl: string | null = null;
     
     try {
-      // Создаем превью
-      const previewUrl = URL.createObjectURL(file);
+      previewUrl = URL.createObjectURL(file);
       setHoverImagePreview(previewUrl);
 
       // Загружаем в Cloudinary
@@ -1267,16 +1268,17 @@ const AdminPanel: React.FC = () => {
 
       // Сохраняем URL из Cloudinary
       setProductForm(prev => ({ ...prev, hoverImage: downloadURL }));
+      setHoverImagePreview(downloadURL);
       toast.success('✅ Дополнительное изображение загружено!');
-      
-      // Очищаем превью URL
-      URL.revokeObjectURL(previewUrl);
     } catch (error) {
         console.error('Ошибка загрузки дополнительного изображения:', error);
         const msg = (error as any)?.message || String(error);
         toast.error(`❌ Ошибка загрузки изображения: ${msg}`);
       setHoverImagePreview('');
     } finally {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
       setIsUploading(false);
       setUploadProgress(prev => {
         const newProgress = { ...prev };
@@ -1305,12 +1307,10 @@ const AdminPanel: React.FC = () => {
     }
 
     setIsUploading(true);
+    const newPreviewUrls = files.map(file => URL.createObjectURL(file));
+    setImagePreviewUrls(prev => [...prev, ...newPreviewUrls]);
     
     try {
-      // Создаем превью изображений
-      const newPreviewUrls = files.map(file => URL.createObjectURL(file));
-      setImagePreviewUrls(prev => [...prev, ...newPreviewUrls]);
-
       // Загружаем все файлы в Cloudinary
       const downloadURLs = await storageService.uploadMultipleFiles(
         files,
@@ -1326,16 +1326,19 @@ const AdminPanel: React.FC = () => {
         ...prev,
         images: [...prev.images, ...downloadURLs]
       }));
+      setImagePreviewUrls(prev => prev.map(url => {
+        const previewIndex = newPreviewUrls.indexOf(url);
+        return previewIndex >= 0 ? downloadURLs[previewIndex] : url;
+      }));
       
       toast.success(`✅ Загружено ${files.length} изображений в галерею!`);
-      
-      // Очищаем превью URL
-      newPreviewUrls.forEach(url => URL.revokeObjectURL(url));
     } catch (error) {
         console.error('Ошибка загрузки изображений галереи:', error);
         const msg = (error as any)?.message || String(error);
         toast.error(`❌ Ошибка загрузки изображений: ${msg}`);
+        setImagePreviewUrls(prev => prev.filter(url => !newPreviewUrls.includes(url)));
     } finally {
+      newPreviewUrls.forEach(url => URL.revokeObjectURL(url));
       setIsUploading(false);
       setUploadProgress({});
     }

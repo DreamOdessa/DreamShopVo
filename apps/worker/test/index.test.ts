@@ -1,15 +1,18 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { type Env, fetchRequest } from "../src/index";
+import { fetchRequest, type WorkerEnv } from "../src/index";
 
-function createEnv(overrides: Partial<Env> = {}): Env {
+function createEnv(overrides: Partial<WorkerEnv> = {}): WorkerEnv {
   return {
+    ALLOWED_ORIGINS: "",
     PRODUCT_MEDIA: {
       delete: vi.fn(),
       get: vi.fn().mockResolvedValue(null),
       head: vi.fn().mockResolvedValue(null),
       put: vi.fn(),
     } as unknown as R2Bucket,
+    SUPABASE_PUBLISHABLE_KEY: "",
+    SUPABASE_URL: "",
     ...overrides,
   };
 }

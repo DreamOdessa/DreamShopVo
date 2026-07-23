@@ -11,13 +11,7 @@ const IMAGE_EXTENSIONS = {
 
 type SupportedImageType = keyof typeof IMAGE_EXTENSIONS;
 
-export interface Env {
-  PRODUCT_MEDIA: R2Bucket;
-  SUPABASE_URL?: string;
-  SUPABASE_PUBLISHABLE_KEY?: string;
-  ALLOWED_ORIGINS?: string;
-  R2_PUBLIC_BASE_URL?: string;
-}
+export type WorkerEnv = Cloudflare.Env;
 
 type ErrorCode =
   | "forbidden"
@@ -40,7 +34,7 @@ class HttpError extends Error {
 
 function json(
   request: Request,
-  env: Env,
+  env: WorkerEnv,
   body: unknown,
   status = 200,
   extraHeaders?: HeadersInit,
@@ -58,7 +52,7 @@ function applySecurityHeaders(headers: Headers) {
   headers.set("X-Content-Type-Options", "nosniff");
 }
 
-function allowedOrigins(env: Env) {
+function allowedOrigins(env: WorkerEnv) {
   return new Set(
     (env.ALLOWED_ORIGINS ?? "")
       .split(",")
@@ -67,7 +61,7 @@ function allowedOrigins(env: Env) {
   );
 }
 
-function applyCorsHeaders(request: Request, env: Env, headers: Headers) {
+function applyCorsHeaders(request: Request, env: WorkerEnv, headers: Headers) {
   const origin = request.headers.get("Origin");
 
   if (origin && allowedOrigins(env).has(origin)) {
@@ -76,7 +70,7 @@ function applyCorsHeaders(request: Request, env: Env, headers: Headers) {
   }
 }
 
-function handleOptions(request: Request, env: Env) {
+function handleOptions(request: Request, env: WorkerEnv) {
   const origin = request.headers.get("Origin");
 
   if (!origin || !allowedOrigins(env).has(origin)) {
@@ -111,7 +105,7 @@ function getBearerToken(request: Request) {
   return token;
 }
 
-async function requireAdmin(request: Request, env: Env): Promise<User> {
+async function requireAdmin(request: Request, env: WorkerEnv): Promise<User> {
   if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY) {
     throw new HttpError(
       503,
@@ -172,7 +166,7 @@ function createMediaKey(contentType: SupportedImageType) {
   return `products/${year}/${month}/${crypto.randomUUID()}.${extension}`;
 }
 
-async function uploadMedia(request: Request, env: Env) {
+async function uploadMedia(request: Request, env: WorkerEnv) {
   const contentType = request.headers.get("Content-Type")?.split(";")[0].trim();
 
   if (!contentType || !(contentType in IMAGE_EXTENSIONS)) {
@@ -213,15 +207,12 @@ async function uploadMedia(request: Request, env: Env) {
     },
   });
 
-  const mediaBaseUrl = env.R2_PUBLIC_BASE_URL?.replace(/\/+$/, "") ?? "";
-  const url = mediaBaseUrl
-    ? `${mediaBaseUrl}/${key}`
-    : new URL(`/media/${key}`, request.url).toString();
+  const url = new URL(`/media/${key}`, request.url).toString();
 
   return json(request, env, { key, url }, 201);
 }
 
-async function serveMedia(request: Request, env: Env, key: string) {
+async function serveMedia(request: Request, env: WorkerEnv, key: string) {
   const object =
     request.method === "HEAD"
       ? await env.PRODUCT_MEDIA.head(key)
@@ -244,7 +235,7 @@ async function serveMedia(request: Request, env: Env, key: string) {
   });
 }
 
-async function deleteMedia(request: Request, env: Env, key: string) {
+async function deleteMedia(request: Request, env: WorkerEnv, key: string) {
   await requireAdmin(request, env);
 
   const object = await env.PRODUCT_MEDIA.head(key);
@@ -264,7 +255,7 @@ async function deleteMedia(request: Request, env: Env, key: string) {
   });
 }
 
-async function handleRequest(request: Request, env: Env) {
+async function handleRequest(request: Request, env: WorkerEnv) {
   if (request.method === "OPTIONS") {
     return handleOptions(request, env);
   }
@@ -307,7 +298,10 @@ async function handleRequest(request: Request, env: Env) {
   throw new HttpError(404, "not_found", "Route was not found.");
 }
 
-export async function fetchRequest(request: Request, env: Env): Promise<Response> {
+export async function fetchRequest(
+  request: Request,
+  env: WorkerEnv,
+): Promise<Response> {
   try {
     return await handleRequest(request, env);
   } catch (error) {
@@ -329,4 +323,4 @@ export default {
   fetch(request, env): Promise<Response> {
     return fetchRequest(request, env);
   },
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<WorkerEnv>;

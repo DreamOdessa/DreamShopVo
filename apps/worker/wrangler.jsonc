@@ -8,6 +8,13 @@
     "enabled": true,
     "head_sampling_rate": 1
   },
+  "secrets": {
+    "required": [
+      "SUPABASE_URL",
+      "SUPABASE_PUBLISHABLE_KEY",
+      "ALLOWED_ORIGINS"
+    ]
+  },
   "r2_buckets": [
     {
       "binding": "PRODUCT_MEDIA",

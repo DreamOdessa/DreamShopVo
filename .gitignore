@@ -9,6 +9,11 @@ node_modules/
 # Production
 /build
 /functions/lib/
+**/.next/
+**/.wrangler/
+**/.dev.vars
+**/dist/
+**/*.tsbuildinfo
 
 # Misc
 .DS_Store

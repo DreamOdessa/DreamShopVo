@@ -1,0 +1,1 @@
+-- Catalog data will be migrated separately after the schema is verified.

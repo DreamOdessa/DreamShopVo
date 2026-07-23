@@ -1,0 +1,4 @@
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+R2_PUBLIC_BASE_URL=http://localhost:8787/media

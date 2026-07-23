@@ -50,6 +50,6 @@ pids
 
 # OS
 Thumbs.db
-test
+/test
 .vercel
 .env*.local

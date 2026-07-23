@@ -7,9 +7,17 @@
       "config": {
         "distDir": "build"
       }
+    },
+    {
+      "src": "api/**/*.ts",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
+    {
+      "src": "/api/nova-poshta",
+      "dest": "/api/nova-poshta.ts"
+    },
     {
       "src": "/",
       "dest": "/index.html",

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="uk">
   <head>
     <meta charset="utf-8" />
     <!-- Favicon для всех браузеров и платформ -->
@@ -10,47 +10,19 @@
     <!-- Apple Touch Icon (используется при добавлении на Home Screen) -->
     <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#158b9d" />
+    <meta name="theme-color" content="#dceff0" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="googlebot" content="noindex, nofollow, noarchive" />
     <meta
       name="description"
-      content="DreamShop - магазин органічних фруктових чіпсів, сиропів та натуральних продуктів в Україні."
+      content="DreamShop тимчасово недоступний через технічні роботи."
     />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <link rel="preload" as="image" href="%PUBLIC_URL%/background-first.PNG" fetchpriority="high" />
-    <link rel="preload" as="image" href="%PUBLIC_URL%/logo.png" fetchpriority="high" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- Preconnect/DNS Prefetch для ускорения Firebase и статических ресурсов -->
-    <link rel="preconnect" href="https://firestore.googleapis.com">
-    <link rel="dns-prefetch" href="https://firestore.googleapis.com">
-    <link rel="preconnect" href="https://res.cloudinary.com">
-    <link rel="dns-prefetch" href="https://res.cloudinary.com">
-    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-    <link rel="dns-prefetch" href="https://www.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
-    <title>DreamShop - Органічні фруктові чіпси та натуральні продукти</title>
-      <script>
-        // Отключаем автоматическую загрузку Firebase config
-        // чтобы избежать 404 на /__/firebase/init.json
-        window.FIREBASE_APPCHECK_DEBUG_TOKEN = false;
-      </script>
+    <link rel="preload" as="image" href="%PUBLIC_URL%/logo-name.PNG" fetchpriority="high" />
+    <title>DreamShop - Технічні роботи</title>
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <noscript>DreamShop тимчасово недоступний через технічні роботи.</noscript>
     <div id="root"></div>
-    <script>
-      // Регистрация Service Worker для PWA
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/service-worker.js')
-            .then(registration => {
-              console.log('SW registered: ', registration);
-            })
-            .catch(registrationError => {
-              console.log('SW registration failed: ', registrationError);
-            });
-        });
-      }
-    </script>
   </body>
 </html>

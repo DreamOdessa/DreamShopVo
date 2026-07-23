@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { fetchRequest, type WorkerEnv } from "../src/index";
+import { normalizeTelegramPhone } from "../src/telegram";
 
 function createEnv(overrides: Partial<WorkerEnv> = {}): WorkerEnv {
   return {
@@ -11,8 +12,12 @@ function createEnv(overrides: Partial<WorkerEnv> = {}): WorkerEnv {
       head: vi.fn().mockResolvedValue(null),
       put: vi.fn(),
     } as unknown as R2Bucket,
+    SITE_URL: "https://shop.example.test",
     SUPABASE_PUBLISHABLE_KEY: "",
+    SUPABASE_SECRET_KEY: "",
     SUPABASE_URL: "",
+    TELEGRAM_BOT_TOKEN: "",
+    TELEGRAM_WEBHOOK_SECRET: "",
     ...overrides,
   };
 }
@@ -28,6 +33,7 @@ describe("DreamShop Worker", () => {
       createEnv({
         SUPABASE_URL: "https://project.supabase.co",
         SUPABASE_PUBLISHABLE_KEY: "publishable",
+        SUPABASE_SECRET_KEY: "secret",
       }),
     );
 
@@ -37,6 +43,7 @@ describe("DreamShop Worker", () => {
       services: {
         media: true,
         supabase: true,
+        telegram: false,
       },
     });
   });
@@ -110,5 +117,68 @@ describe("DreamShop Worker", () => {
       "https://shop.example.test",
     );
     expect(denied.status).toBe(403);
+  });
+
+  it("rejects Telegram webhooks without the configured secret header", async () => {
+    const response = await fetchRequest(
+      new Request("https://api.example.test/telegram/webhook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ update_id: 1 }),
+      }),
+      createEnv({
+        TELEGRAM_WEBHOOK_SECRET: "configured-secret",
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: "unauthorized" });
+  });
+
+  it("accepts authenticated Telegram updates that do not contain a message", async () => {
+    const response = await fetchRequest(
+      new Request("https://api.example.test/telegram/webhook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Telegram-Bot-Api-Secret-Token": "configured-secret",
+        },
+        body: JSON.stringify({ update_id: 1 }),
+      }),
+      createEnv({
+        TELEGRAM_WEBHOOK_SECRET: "configured-secret",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
+  });
+
+  it("normalizes Telegram phone numbers to E.164", () => {
+    expect(normalizeTelegramPhone("+38 (067) 123-45-67")).toBe(
+      "+380671234567",
+    );
+    expect(normalizeTelegramPhone("123")).toBeNull();
+  });
+
+  it("rejects malformed Telegram registration tokens before database access", async () => {
+    const response = await fetchRequest(
+      new Request("https://api.example.test/auth/telegram/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password: "long-enough-password",
+          token: "invalid",
+        }),
+      }),
+      createEnv(),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: "invalid_request" });
   });
 });

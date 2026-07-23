@@ -41,18 +41,20 @@ export function AuthForm({ mode }: AuthFormProps) {
       ) : null}
 
       <label className="auth-field">
-        <span>Email</span>
+        <span>{mode === "login" ? "Email або телефон" : "Email"}</span>
         <span className="auth-input-wrap">
           <Mail aria-hidden size={18} strokeWidth={1.8} />
           <input
             autoCapitalize="none"
-            autoComplete="email"
-            inputMode="email"
+            autoComplete={mode === "login" ? "username" : "email"}
+            inputMode={mode === "login" ? "text" : "email"}
             maxLength={254}
-            name="email"
-            placeholder="name@example.com"
+            name={mode === "login" ? "identifier" : "email"}
+            placeholder={
+              mode === "login" ? "Email або +380…" : "name@example.com"
+            }
             required
-            type="email"
+            type={mode === "login" ? "text" : "email"}
           />
         </span>
       </label>

@@ -82,3 +82,42 @@ where table_schema = 'public'
     'integration_outbox'
   )
   and grantee in ('anon', 'authenticated');
+
+select 1 / case
+  when has_function_privilege(
+    'authenticated',
+    'public.consume_telegram_registration_challenge(bytea)',
+    'EXECUTE'
+  ) = false then 1
+  else 0
+end as clients_cannot_consume_telegram_challenges;
+
+select 1 / case
+  when has_function_privilege(
+    'authenticated',
+    'public.create_telegram_registration_challenge(bytea,bigint,bigint,text,timestamp with time zone)',
+    'EXECUTE'
+  ) = false then 1
+  else 0
+end as clients_cannot_create_telegram_challenges;
+
+begin;
+set local role service_role;
+select public.create_telegram_registration_challenge(
+  decode(repeat('ab', 32), 'hex'),
+  123456789,
+  123456789,
+  '+380000000000',
+  now() + interval '10 minutes'
+);
+select 1 / case when count(*) = 1 then 1 else 0 end
+  as service_role_consumes_challenge_once
+from public.consume_telegram_registration_challenge(
+  decode(repeat('ab', 32), 'hex')
+);
+select 1 / case when count(*) = 0 then 1 else 0 end
+  as consumed_challenge_cannot_be_reused
+from public.consume_telegram_registration_challenge(
+  decode(repeat('ab', 32), 'hex')
+);
+rollback;

@@ -25,6 +25,16 @@ function validatePassword(password: string) {
   return password.length >= 10 && password.length <= 72;
 }
 
+function normalizePhone(value: string) {
+  const digits = value.replace(/\D/g, "");
+
+  if (digits.length < 10 || digits.length > 15) {
+    return null;
+  }
+
+  return `+${digits}`;
+}
+
 function errorState(message: string): AuthActionState {
   return { message, status: "error" };
 }
@@ -33,15 +43,20 @@ export async function signIn(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const email = valueFrom(formData, "email").toLowerCase();
+  const identifier = valueFrom(formData, "identifier");
   const password = valueFrom(formData, "password", false);
+  const email = identifier.includes("@") ? identifier.toLowerCase() : null;
+  const phone = email ? null : normalizePhone(identifier);
 
-  if (!validEmail(email) || !password) {
-    return errorState("Перевірте адресу електронної пошти та пароль.");
+  if ((!email && !phone) || (email && !validEmail(email)) || !password) {
+    return errorState("Перевірте email або номер телефону та пароль.");
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const credentials = email
+    ? { email, password }
+    : { password, phone: phone as string };
+  const { error } = await supabase.auth.signInWithPassword(credentials);
 
   if (error) {
     return errorState("Не вдалося увійти. Перевірте дані або підтвердьте email.");
@@ -115,6 +130,6 @@ export async function signInWithGoogle() {
 export async function signOut() {
   const supabase = await createClient();
 
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
   redirect("/auth");
 }

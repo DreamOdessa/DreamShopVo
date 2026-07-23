@@ -26,6 +26,9 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
   const params = await searchParams;
   const mode = params.mode === "register" ? "register" : "login";
   const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
+  const telegramUsername =
+    process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.trim() ?? "";
+  const telegramEnabled = /^[A-Za-z0-9_]{5,32}$/.test(telegramUsername);
 
   return (
     <main className="auth-page">
@@ -85,15 +88,26 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
               Продовжити з Google
             </button>
           </form>
-          <button
-            aria-disabled="true"
-            className="auth-provider-button"
-            disabled
-            type="button"
-          >
-            <Send aria-hidden size={19} strokeWidth={1.8} />
-            Продовжити з Telegram
-          </button>
+          {telegramEnabled ? (
+            <a
+              className="auth-provider-button"
+              href={`https://t.me/${telegramUsername}?start=register`}
+              rel="noreferrer"
+            >
+              <Send aria-hidden size={19} strokeWidth={1.8} />
+              Продовжити з Telegram
+            </a>
+          ) : (
+            <button
+              aria-disabled="true"
+              className="auth-provider-button"
+              disabled
+              type="button"
+            >
+              <Send aria-hidden size={19} strokeWidth={1.8} />
+              Продовжити з Telegram
+            </button>
+          )}
         </div>
 
         <div className="auth-divider">

@@ -12,7 +12,11 @@
     "required": [
       "SUPABASE_URL",
       "SUPABASE_PUBLISHABLE_KEY",
-      "ALLOWED_ORIGINS"
+      "SUPABASE_SECRET_KEY",
+      "ALLOWED_ORIGINS",
+      "TELEGRAM_BOT_TOKEN",
+      "TELEGRAM_WEBHOOK_SECRET",
+      "SITE_URL"
     ]
   },
   "r2_buckets": [

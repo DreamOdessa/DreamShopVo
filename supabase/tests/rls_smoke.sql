@@ -84,20 +84,30 @@ where table_schema = 'public'
   and grantee in ('anon', 'authenticated');
 
 select 1 / case
-  when has_function_privilege(
-    'authenticated',
-    'public.consume_telegram_registration_challenge(bytea)',
-    'EXECUTE'
-  ) = false then 1
+  when not has_function_privilege(
+      'anon',
+      'public.consume_telegram_registration_challenge(bytea)',
+      'EXECUTE'
+    )
+    and not has_function_privilege(
+      'authenticated',
+      'public.consume_telegram_registration_challenge(bytea)',
+      'EXECUTE'
+    ) then 1
   else 0
 end as clients_cannot_consume_telegram_challenges;
 
 select 1 / case
-  when has_function_privilege(
-    'authenticated',
-    'public.create_telegram_registration_challenge(bytea,bigint,bigint,text,timestamp with time zone)',
-    'EXECUTE'
-  ) = false then 1
+  when not has_function_privilege(
+      'anon',
+      'public.create_telegram_registration_challenge(bytea,bigint,bigint,text,timestamp with time zone)',
+      'EXECUTE'
+    )
+    and not has_function_privilege(
+      'authenticated',
+      'public.create_telegram_registration_challenge(bytea,bigint,bigint,text,timestamp with time zone)',
+      'EXECUTE'
+    ) then 1
   else 0
 end as clients_cannot_create_telegram_challenges;
 

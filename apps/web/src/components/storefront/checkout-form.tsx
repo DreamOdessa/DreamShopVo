@@ -3,7 +3,7 @@
 import { LoaderCircle, PackageOpen } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 import { createOrder } from "../../app/(store)/checkout/actions";
 import { initialCheckoutState } from "../../app/(store)/checkout/checkout-state";
@@ -43,7 +43,12 @@ export function CheckoutForm({
     createOrder,
     initialCheckoutState,
   );
+  const [checkoutToken, setCheckoutToken] = useState("");
   const router = useRouter();
+
+  useEffect(() => {
+    setCheckoutToken(crypto.randomUUID());
+  }, []);
 
   useEffect(() => {
     if (state.status === "success" && state.orderId) {
@@ -83,6 +88,7 @@ export function CheckoutForm({
           })),
         )}
       />
+      <input name="checkoutToken" type="hidden" value={checkoutToken} />
 
       <div className="checkout-fields">
         <section className="checkout-section" aria-labelledby="recipient-title">
@@ -230,7 +236,7 @@ export function CheckoutForm({
 
         <button
           className="store-primary-action"
-          disabled={pending}
+          disabled={pending || !checkoutToken}
           type="submit"
         >
           {pending ? (

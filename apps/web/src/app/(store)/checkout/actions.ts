@@ -13,10 +13,11 @@ const DELIVERY_METHODS = new Set([
 ]);
 const PAYMENT_METHODS = new Set([
   "cash_on_delivery",
-  "card_online",
   "card_on_delivery",
   "bank_transfer",
 ]);
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type DeliveryMethod = "address" | "post_office" | "schedule" | "taxi";
 
@@ -57,7 +58,7 @@ function parseItems(value: string) {
 
       if (
         typeof record.productId !== "string" ||
-        !/^[0-9a-f-]{36}$/i.test(record.productId) ||
+        !UUID_PATTERN.test(record.productId) ||
         !Number.isInteger(quantity) ||
         quantity < 1 ||
         quantity > 99
@@ -95,6 +96,7 @@ export async function createOrder(
   const establishmentName = valueFrom(formData, "establishmentName");
   const paymentMethod = valueFrom(formData, "paymentMethod");
   const note = valueFrom(formData, "note");
+  const checkoutToken = valueFrom(formData, "checkoutToken");
 
   if (!items) {
     return errorState("Кошик порожній або містить некоректні дані.");
@@ -112,6 +114,7 @@ export async function createOrder(
     deliveryDetails.length > 500 ||
     establishmentName.length > 160 ||
     note.length > 1000 ||
+    !UUID_PATTERN.test(checkoutToken) ||
     !DELIVERY_METHODS.has(deliveryMethod) ||
     !PAYMENT_METHODS.has(paymentMethod)
   ) {
@@ -129,6 +132,7 @@ export async function createOrder(
   const { data, error } = await supabase.rpc("create_order", {
     p_contact_for_clarification:
       formData.get("contactForClarification") === "on",
+    p_checkout_token: checkoutToken,
     p_customer_first_name: firstName,
     p_customer_last_name: lastName,
     p_customer_note: note || null,
@@ -150,8 +154,12 @@ export async function createOrder(
   )?.[0];
 
   if (error || !order) {
+    const errorMessage = error?.message ?? "";
+
     return errorState(
-      error?.message.includes("unavailable")
+      errorMessage.includes("Online card payments")
+        ? "Онлайн-оплата карткою поки недоступна."
+        : errorMessage.includes("unavailable")
         ? "Один із товарів уже недоступний. Оновіть кошик."
         : "Не вдалося створити замовлення. Спробуйте ще раз.",
     );

@@ -125,13 +125,73 @@ from public.create_order(
   true,
   'cash_on_delivery',
   false,
-  null
+  null,
+  '40000000-0000-4000-8000-000000000001'
+);
+select 1 / case
+  when count(*) = 1 then 1
+  else 0
+end as repeated_checkout_returns_existing_order
+from public.create_order(
+  jsonb_build_array(
+    jsonb_build_object(
+      'productId',
+      (select id from public.products where slug = 'visible'),
+      'quantity',
+      2
+    )
+  ),
+  'Customer',
+  'Example',
+  '+380671234567',
+  'Odesa',
+  'post_office',
+  'Відділення 1',
+  null,
+  true,
+  'cash_on_delivery',
+  false,
+  null,
+  '40000000-0000-4000-8000-000000000001'
 );
 select 1 / case
   when count(*) = 1 and min(total) = 20 then 1
   else 0
 end as customer_reads_own_order
 from public.orders;
+do $$
+begin
+  begin
+    perform *
+    from public.create_order(
+      jsonb_build_array(
+        jsonb_build_object(
+          'productId',
+          (select id from public.products where slug = 'visible'),
+          'quantity',
+          1
+        )
+      ),
+      'Customer',
+      'Example',
+      '+380671234567',
+      'Odesa',
+      'post_office',
+      'Відділення 1',
+      null,
+      true,
+      'card_online',
+      false,
+      null,
+      '40000000-0000-4000-8000-000000000002'
+    );
+
+    raise exception 'Unavailable online payment method was accepted';
+  exception
+    when sqlstate '0A000' then null;
+  end;
+end;
+$$;
 rollback;
 
 insert into public.orders (
@@ -279,16 +339,23 @@ end as clients_cannot_create_telegram_challenges;
 select 1 / case
   when not has_function_privilege(
       'anon',
-      'public.create_order(jsonb,text,text,text,text,public.delivery_method,text,text,boolean,public.payment_method,boolean,text)',
+      'public.create_order(jsonb,text,text,text,text,public.delivery_method,text,text,boolean,public.payment_method,boolean,text,uuid)',
       'EXECUTE'
     )
     and has_function_privilege(
       'authenticated',
-      'public.create_order(jsonb,text,text,text,text,public.delivery_method,text,text,boolean,public.payment_method,boolean,text)',
+      'public.create_order(jsonb,text,text,text,text,public.delivery_method,text,text,boolean,public.payment_method,boolean,text,uuid)',
       'EXECUTE'
     ) then 1
   else 0
 end as only_authenticated_clients_can_create_orders;
+
+select 1 / case
+  when to_regprocedure(
+    'public.create_order(jsonb,text,text,text,text,public.delivery_method,text,text,boolean,public.payment_method,boolean,text)'
+  ) is null then 1
+  else 0
+end as legacy_order_function_is_removed;
 
 select 1 / case
   when not has_function_privilege(

@@ -13,6 +13,8 @@ import {
 import {
   MAX_CART_LINES,
   MAX_CART_QUANTITY,
+  mergeCartItems,
+  type CartAddition,
   type CartItem,
   type CartProduct,
 } from "../../lib/cart";
@@ -21,6 +23,7 @@ const STORAGE_KEY = "dreamshop_cart_v1";
 
 type CartContextValue = {
   addItem: (product: CartProduct) => void;
+  addItems: (additions: CartAddition[]) => void;
   clear: () => void;
   hydrated: boolean;
   itemCount: number;
@@ -121,37 +124,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [hydrated, items]);
 
-  const addItem = useCallback((product: CartProduct) => {
-    if (!product.inStock) {
-      return;
-    }
-
-    setItems((current) => {
-      const existing = current.find((item) => item.id === product.id);
-
-      if (existing) {
-        return current.map((item) =>
-          item.id === product.id
-            ? {
-                ...item,
-                ...product,
-                quantity: Math.min(
-                  item.quantity + 1,
-                  MAX_CART_QUANTITY,
-                  product.stockQuantity ?? MAX_CART_QUANTITY,
-                ),
-              }
-            : item,
-        );
-      }
-
-      if (current.length >= MAX_CART_LINES) {
-        return current;
-      }
-
-      return [...current, { ...product, quantity: 1 }];
-    });
+  const addItems = useCallback((additions: CartAddition[]) => {
+    setItems((current) => mergeCartItems(current, additions));
   }, []);
+
+  const addItem = useCallback(
+    (product: CartProduct) => {
+      addItems([{ product, quantity: 1 }]);
+    },
+    [addItems],
+  );
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
     if (!Number.isFinite(quantity)) {
@@ -185,6 +167,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       addItem,
+      addItems,
       clear,
       hydrated,
       itemCount: items.reduce((count, item) => count + item.quantity, 0),
@@ -192,7 +175,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       removeItem,
       updateQuantity,
     }),
-    [addItem, clear, hydrated, items, removeItem, updateQuantity],
+    [addItem, addItems, clear, hydrated, items, removeItem, updateQuantity],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

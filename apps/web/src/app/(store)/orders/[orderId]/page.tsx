@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { createClient } from "../../../../lib/supabase/server";
+import { MAX_CART_QUANTITY, type CartItem } from "../../../../lib/cart";
 import { publicMediaUrl } from "../../../../lib/media-url";
 import {
   isOrderStatus,
@@ -12,6 +13,21 @@ import {
   type OrderStatus,
 } from "../../../../lib/orders";
 import { CancelOrderForm } from "./cancel-order-form";
+import { RepeatOrderButton } from "../../../../components/storefront/repeat-order-button";
+
+type CurrentProduct = {
+  id: string;
+  in_stock: boolean;
+  is_active: boolean;
+  media: Array<{
+    object_key: string;
+    sort_order: number;
+  }> | null;
+  name: string;
+  price: number;
+  slug: string;
+  stock_quantity: number | null;
+};
 
 export const metadata: Metadata = {
   title: "Замовлення - DreamShop",
@@ -26,6 +42,7 @@ type OrderItem = {
   product_image_object_key: string | null;
   product_name: string;
   product_slug: string | null;
+  product: CurrentProduct | null;
   quantity: number;
   unit_price: number;
 };
@@ -89,7 +106,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id,order_number,status,total,customer_first_name,customer_last_name,delivery_city,delivery_method,delivery_details,payment_method,tracking_number,items:order_items(id,product_name,product_slug,product_image_object_key,unit_price,quantity)",
+      "id,order_number,status,total,customer_first_name,customer_last_name,delivery_city,delivery_method,delivery_details,payment_method,tracking_number,items:order_items(id,product_name,product_slug,product_image_object_key,unit_price,quantity,product:products!order_items_product_id_fkey(id,name,slug,price,in_stock,stock_quantity,is_active,media:product_media(object_key,sort_order)))",
     )
     .eq("id", orderId)
     .maybeSingle();
@@ -103,6 +120,47 @@ export default async function OrderPage({ params }: OrderPageProps) {
   if (!isOrderStatus(order.status)) {
     notFound();
   }
+
+  const repeatItems = order.items.flatMap((item): CartItem[] => {
+    const product = item.product;
+
+    if (
+      !product ||
+      !product.is_active ||
+      !product.in_stock ||
+      product.stock_quantity === 0
+    ) {
+      return [];
+    }
+
+    const quantity = Math.min(
+      item.quantity,
+      product.stock_quantity ?? MAX_CART_QUANTITY,
+      MAX_CART_QUANTITY,
+    );
+
+    if (quantity < 1) {
+      return [];
+    }
+
+    const mainImage = product.media?.find(
+      ({ sort_order }) => sort_order === 0,
+    );
+
+    return [
+      {
+        id: product.id,
+        imageObjectKey: mainImage?.object_key ?? null,
+        inStock: true,
+        name: product.name,
+        price: product.price,
+        quantity,
+        slug: product.slug,
+        stockQuantity: product.stock_quantity,
+      },
+    ];
+  });
+  const unavailableItemCount = order.items.length - repeatItems.length;
 
   return (
     <main className="store-main order-page">
@@ -217,6 +275,10 @@ export default async function OrderPage({ params }: OrderPageProps) {
               orderNumber={order.order_number}
             />
           ) : null}
+          <RepeatOrderButton
+            items={repeatItems}
+            unavailableItemCount={unavailableItemCount}
+          />
           <Link className="store-primary-action" href="/catalog">
             Повернутися до каталогу
           </Link>

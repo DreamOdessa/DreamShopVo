@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
+import { CatalogToolbar } from "../../../components/storefront/catalog-toolbar";
 import { CategoryCard } from "../../../components/storefront/category-card";
 import { CategoryNav } from "../../../components/storefront/category-nav";
 import { ProductCard } from "../../../components/storefront/product-card";
@@ -7,6 +9,11 @@ import {
   getCatalogCategories,
   getCatalogProducts,
 } from "../../../lib/catalog";
+import {
+  catalogReturnPath,
+  normalizeCatalogSearch,
+  normalizeCatalogSort,
+} from "../../../lib/catalog-filters";
 import { getWishlistState } from "../../../lib/wishlist";
 
 export const metadata: Metadata = {
@@ -15,13 +22,26 @@ export const metadata: Metadata = {
     "Натуральні фруктові чипси та смаколики DreamShop в Одесі.",
 };
 
-export default async function CatalogPage() {
+type CatalogPageProps = {
+  searchParams: Promise<{
+    q?: string | string[];
+    sort?: string | string[];
+  }>;
+};
+
+export default async function CatalogPage({
+  searchParams,
+}: CatalogPageProps) {
+  const params = await searchParams;
+  const search = normalizeCatalogSearch(params.q);
+  const sort = normalizeCatalogSort(params.sort);
   const [categories, products, wishlist] = await Promise.all([
     getCatalogCategories(),
-    getCatalogProducts(),
+    getCatalogProducts(undefined, search, sort),
     getWishlistState(),
   ]);
   const wishlistIds = new Set(wishlist.productIds);
+  const returnPath = catalogReturnPath("/catalog", search, sort);
 
   return (
     <main className="store-main">
@@ -32,6 +52,7 @@ export default async function CatalogPage() {
       </header>
 
       <CategoryNav categories={categories} />
+      <CatalogToolbar action="/catalog" search={search} sort={sort} />
 
       {categories.length ? (
         <section className="catalog-section" aria-labelledby="category-list-title">
@@ -52,7 +73,9 @@ export default async function CatalogPage() {
 
       <section className="catalog-section" aria-labelledby="product-list-title">
         <div className="catalog-section-heading">
-          <h2 id="product-list-title">Усі товари</h2>
+          <h2 id="product-list-title">
+            {search ? "Результати пошуку" : "Усі товари"}
+          </h2>
           <span>{products.length}</span>
         </div>
 
@@ -63,13 +86,19 @@ export default async function CatalogPage() {
                 eager={index === 0}
                 key={product.id}
                 product={product}
+                returnPath={returnPath}
                 wishlisted={wishlistIds.has(product.id)}
               />
             ))}
           </div>
         ) : (
           <div className="catalog-empty">
-            <p>Активних товарів поки немає.</p>
+            <p>
+              {search
+                ? `За запитом «${search}» товарів не знайдено.`
+                : "Активних товарів поки немає."}
+            </p>
+            {search ? <Link href="/catalog">Скинути пошук</Link> : null}
           </div>
         )}
       </section>

@@ -1,5 +1,6 @@
 import { cache } from "react";
 
+import type { CatalogSort } from "./catalog-filters";
 import { createClient } from "./supabase/server";
 
 export type CatalogMedia = {
@@ -160,7 +161,15 @@ export const getCatalogCategory = cache(async (slug: string) => {
   return data ? mapCategory(data as unknown as CategoryRow) : null;
 });
 
-export const getCatalogProducts = cache(async (categoryId?: string) => {
+function escapedSearchPattern(value: string) {
+  return `%${value.replace(/[\\%_]/g, "\\$&")}%`;
+}
+
+export const getCatalogProducts = cache(async (
+  categoryId?: string,
+  search = "",
+  sort: CatalogSort = "featured",
+) => {
   const supabase = await createClient();
   let query = supabase
     .from("products")
@@ -168,12 +177,32 @@ export const getCatalogProducts = cache(async (categoryId?: string) => {
       "id,name,slug,description,price,original_price,weight,in_stock,organic,category:categories!products_category_id_fkey(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)",
     )
     .eq("is_active", true)
-    .order("sort_order")
-    .order("created_at", { ascending: false })
     .limit(120);
 
   if (categoryId) {
     query = query.eq("category_id", categoryId);
+  }
+
+  if (search) {
+    query = query.ilike("name", escapedSearchPattern(search));
+  }
+
+  query = query.order("in_stock", { ascending: false });
+
+  if (sort === "newest") {
+    query = query
+      .order("created_at", { ascending: false })
+      .order("sort_order");
+  } else if (sort === "price-asc") {
+    query = query.order("price").order("name");
+  } else if (sort === "price-desc") {
+    query = query
+      .order("price", { ascending: false })
+      .order("name");
+  } else {
+    query = query
+      .order("sort_order")
+      .order("created_at", { ascending: false });
   }
 
   const { data, error } = await query;

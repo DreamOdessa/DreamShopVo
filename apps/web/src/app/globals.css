@@ -2955,6 +2955,25 @@ input:focus-visible {
   gap: 1rem;
 }
 
+.cart-item.is-unavailable {
+  background: #fff8f6;
+}
+
+.cart-item.is-unavailable .cart-item-copy span,
+.cart-item.is-unavailable .cart-item-total {
+  color: #9a443d;
+}
+
+.cart-sync-notice {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.85rem;
+  border-left: 3px solid #4c8993;
+  background: #eef7f8;
+  color: #355e65;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
 .cart-item-media {
   position: relative;
   display: grid;

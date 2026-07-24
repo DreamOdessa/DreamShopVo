@@ -14,6 +14,7 @@ import {
   MAX_CART_LINES,
   MAX_CART_QUANTITY,
   mergeCartItems,
+  reconcileCartItems,
   type CartAddition,
   type CartItem,
   type CartProduct,
@@ -29,6 +30,7 @@ type CartContextValue = {
   itemCount: number;
   items: CartItem[];
   removeItem: (productId: string) => void;
+  syncItems: (products: CartProduct[]) => void;
   updateQuantity: (productId: string, quantity: number) => void;
 };
 
@@ -163,6 +165,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems((current) => current.filter((item) => item.id !== productId));
   }, []);
 
+  const syncItems = useCallback((products: CartProduct[]) => {
+    setItems((current) => reconcileCartItems(current, products));
+  }, []);
+
   const clear = useCallback(() => setItems([]), []);
   const value = useMemo(
     () => ({
@@ -173,9 +179,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
       itemCount: items.reduce((count, item) => count + item.quantity, 0),
       items,
       removeItem,
+      syncItems,
       updateQuantity,
     }),
-    [addItem, addItems, clear, hydrated, items, removeItem, updateQuantity],
+    [
+      addItem,
+      addItems,
+      clear,
+      hydrated,
+      items,
+      removeItem,
+      syncItems,
+      updateQuantity,
+    ],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

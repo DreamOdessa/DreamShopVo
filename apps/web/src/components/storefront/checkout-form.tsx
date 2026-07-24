@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, PackageOpen } from "lucide-react";
+import { LoaderCircle, PackageOpen, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
@@ -10,6 +10,7 @@ import { initialCheckoutState } from "../../app/(store)/checkout/checkout-state"
 import { cartSubtotal } from "../../lib/cart";
 import { useCart } from "./cart-provider";
 import { NovaPoshtaFields } from "./nova-poshta-fields";
+import { useCartInventorySync } from "./use-cart-inventory-sync";
 
 type CheckoutFormProps = {
   apiUrl: string;
@@ -39,6 +40,7 @@ export function CheckoutForm({
   initialProfile,
 }: CheckoutFormProps) {
   const { clear, hydrated, items } = useCart();
+  const inventory = useCartInventorySync();
   const [state, formAction, pending] = useActionState(
     createOrder,
     initialCheckoutState,
@@ -57,8 +59,30 @@ export function CheckoutForm({
     }
   }, [clear, router, state.orderId, state.status]);
 
-  if (!hydrated) {
+  if (
+    !hydrated ||
+    inventory.status === "idle" ||
+    inventory.status === "loading"
+  ) {
     return <div className="cart-loading" aria-label="Завантаження кошика" />;
+  }
+
+  if (inventory.status === "error") {
+    return (
+      <section className="cart-empty checkout-empty">
+        <RefreshCw aria-hidden size={38} strokeWidth={1.4} />
+        <h2>Не вдалося перевірити кошик</h2>
+        <p>Оформлення призупинено, щоб не використати застарілі ціни.</p>
+        <button
+          className="store-primary-action"
+          onClick={inventory.retry}
+          type="button"
+        >
+          <RefreshCw aria-hidden size={18} strokeWidth={1.8} />
+          Спробувати ще раз
+        </button>
+      </section>
+    );
   }
 
   if (!items.length) {
@@ -69,6 +93,19 @@ export function CheckoutForm({
         <p>Спочатку додайте хоча б один товар до кошика.</p>
         <Link className="store-primary-action" href="/catalog">
           Перейти до каталогу
+        </Link>
+      </section>
+    );
+  }
+
+  if (items.some((item) => !item.inStock)) {
+    return (
+      <section className="cart-empty checkout-empty">
+        <PackageOpen aria-hidden size={38} strokeWidth={1.4} />
+        <h2>У кошику є недоступні товари</h2>
+        <p>Поверніться до кошика та приберіть їх перед оформленням.</p>
+        <Link className="store-primary-action" href="/cart">
+          Повернутися до кошика
         </Link>
       </section>
     );

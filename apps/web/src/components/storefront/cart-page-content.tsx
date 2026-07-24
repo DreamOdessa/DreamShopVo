@@ -1,12 +1,19 @@
 "use client";
 
-import { Minus, PackageOpen, Plus, Trash2 } from "lucide-react";
+import {
+  Minus,
+  PackageOpen,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 import { cartSubtotal } from "../../lib/cart";
 import { publicMediaUrl } from "../../lib/media-url";
 import { useCart } from "./cart-provider";
+import { useCartInventorySync } from "./use-cart-inventory-sync";
 
 const priceFormatter = new Intl.NumberFormat("uk-UA", {
   currency: "UAH",
@@ -21,9 +28,32 @@ export function CartPageContent() {
     removeItem,
     updateQuantity,
   } = useCart();
+  const inventory = useCartInventorySync();
 
-  if (!hydrated) {
+  if (
+    !hydrated ||
+    inventory.status === "idle" ||
+    inventory.status === "loading"
+  ) {
     return <div className="cart-loading" aria-label="Завантаження кошика" />;
+  }
+
+  if (inventory.status === "error") {
+    return (
+      <section className="cart-empty" aria-labelledby="cart-sync-title">
+        <RefreshCw aria-hidden size={38} strokeWidth={1.4} />
+        <h1 id="cart-sync-title">Не вдалося оновити кошик</h1>
+        <p>Перевірте з’єднання та спробуйте ще раз.</p>
+        <button
+          className="store-primary-action"
+          onClick={inventory.retry}
+          type="button"
+        >
+          <RefreshCw aria-hidden size={18} strokeWidth={1.8} />
+          Спробувати ще раз
+        </button>
+      </section>
+    );
   }
 
   if (!items.length) {
@@ -40,6 +70,7 @@ export function CartPageContent() {
   }
 
   const subtotal = cartSubtotal(items);
+  const hasUnavailableItems = items.some((item) => !item.inStock);
 
   return (
     <>
@@ -49,10 +80,19 @@ export function CartPageContent() {
         <span>{items.length} товарних позицій</span>
       </div>
 
+      {inventory.changed ? (
+        <p className="cart-sync-notice" role="status">
+          Ціни або наявність товарів у кошику оновлено.
+        </p>
+      ) : null}
+
       <div className="cart-layout">
         <section className="cart-items" aria-label="Товари у кошику">
           {items.map((item) => (
-            <article className="cart-item" key={item.id}>
+            <article
+              className={`cart-item${item.inStock ? "" : " is-unavailable"}`}
+              key={item.id}
+            >
               <Link
                 className="cart-item-media"
                 href={`/product/${item.slug}`}
@@ -72,7 +112,11 @@ export function CartPageContent() {
 
               <div className="cart-item-copy">
                 <Link href={`/product/${item.slug}`}>{item.name}</Link>
-                <span>{priceFormatter.format(item.price)} за одиницю</span>
+                <span>
+                  {item.inStock
+                    ? `${priceFormatter.format(item.price)} за одиницю`
+                    : "Товар більше недоступний"}
+                </span>
               </div>
 
               <div
@@ -81,7 +125,7 @@ export function CartPageContent() {
               >
                 <button
                   aria-label="Зменшити кількість"
-                  disabled={item.quantity <= 1}
+                  disabled={!item.inStock || item.quantity <= 1}
                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
                   type="button"
                 >
@@ -92,6 +136,7 @@ export function CartPageContent() {
                   inputMode="numeric"
                   max={item.stockQuantity ?? 99}
                   min={1}
+                  disabled={!item.inStock}
                   onChange={(event) =>
                     updateQuantity(item.id, Number(event.target.value))
                   }
@@ -101,6 +146,7 @@ export function CartPageContent() {
                 <button
                   aria-label="Збільшити кількість"
                   disabled={
+                    !item.inStock ||
                     item.quantity >= (item.stockQuantity ?? 99)
                   }
                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
@@ -111,7 +157,9 @@ export function CartPageContent() {
               </div>
 
               <strong className="cart-item-total">
-                {priceFormatter.format(item.price * item.quantity)}
+                {item.inStock
+                  ? priceFormatter.format(item.price * item.quantity)
+                  : "Недоступний"}
               </strong>
 
               <button
@@ -143,9 +191,15 @@ export function CartPageContent() {
             <span>До сплати</span>
             <strong>{priceFormatter.format(subtotal)}</strong>
           </div>
-          <Link className="store-primary-action" href="/checkout">
-            Оформити замовлення
-          </Link>
+          {hasUnavailableItems ? (
+            <button className="store-primary-action" disabled type="button">
+              Приберіть недоступні товари
+            </button>
+          ) : (
+            <Link className="store-primary-action" href="/checkout">
+              Оформити замовлення
+            </Link>
+          )}
           <Link className="cart-continue" href="/catalog">
             Продовжити покупки
           </Link>

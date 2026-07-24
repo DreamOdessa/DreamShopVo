@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { fetchRequest, type WorkerEnv } from "../src/index";
-import { isSupportedImageBytes } from "../src/media";
+import { getMediaKey, isSupportedImageBytes } from "../src/media";
 import {
   normalizeTelegramPhone,
   telegramLoginEmail,
@@ -117,6 +117,19 @@ describe("DreamShop Worker", () => {
     expect(response.status).toBe(404);
   });
 
+  it("accepts category media keys and rejects private prefixes", async () => {
+    const categoryKey = "categories/2026/07/example.webp";
+
+    expect(getMediaKey(`/media/${categoryKey}`, "/media/")).toBe(categoryKey);
+
+    const privateResponse = await fetchRequest(
+      new Request("https://api.example.test/media/private/example.webp"),
+      createEnv(),
+    );
+
+    expect(privateResponse.status).toBe(404);
+  });
+
   it("allows CORS preflight only for an exact configured origin", async () => {
     const env = createEnv({
       ALLOWED_ORIGINS: "https://shop.example.test",
@@ -139,6 +152,9 @@ describe("DreamShop Worker", () => {
     expect(allowed.status).toBe(204);
     expect(allowed.headers.get("Access-Control-Allow-Origin")).toBe(
       "https://shop.example.test",
+    );
+    expect(allowed.headers.get("Access-Control-Allow-Headers")).toContain(
+      "X-Media-Scope",
     );
     expect(denied.status).toBe(403);
   });

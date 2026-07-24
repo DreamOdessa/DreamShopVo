@@ -11,15 +11,6 @@ import type { AdminActionState } from "./action-state";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const MEDIA_KEY_PATTERN =
-  /^products\/\d{4}\/\d{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.(?:avif|jpg|png|webp)$/i;
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
-const IMAGE_EXTENSIONS = {
-  "image/avif": "avif",
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-} as const;
 
 type CategoryValues = {
   description: string;
@@ -49,21 +40,6 @@ type ValidatedValues<T> =
   | { error: AdminActionState; values?: never }
   | { error?: never; values: T };
 
-export type ProductMediaInput = {
-  altText: string;
-  mimeType: string;
-  objectKey: string;
-  productId: string;
-  sizeBytes: number;
-};
-
-export type ProductMediaActionResult = {
-  key?: string;
-  message: string;
-  oldKey?: string;
-  status: "error" | "success";
-};
-
 function stringValue(formData: FormData, name: string) {
   const value = formData.get(name);
 
@@ -89,10 +65,6 @@ function numericValue(value: string) {
 }
 
 function errorState(message: string): AdminActionState {
-  return { message, status: "error" };
-}
-
-function mediaError(message: string): ProductMediaActionResult {
   return { message, status: "error" };
 }
 
@@ -241,23 +213,6 @@ function validateProduct(formData: FormData): ValidatedValues<ProductValues> {
   };
 }
 
-function validMediaInput(input: ProductMediaInput) {
-  const extension = IMAGE_EXTENSIONS[
-    input.mimeType as keyof typeof IMAGE_EXTENSIONS
-  ];
-
-  return (
-    UUID_PATTERN.test(input.productId) &&
-    MEDIA_KEY_PATTERN.test(input.objectKey) &&
-    Boolean(extension) &&
-    input.objectKey.toLowerCase().endsWith(`.${extension}`) &&
-    Number.isInteger(input.sizeBytes) &&
-    input.sizeBytes > 0 &&
-    input.sizeBytes <= MAX_IMAGE_BYTES &&
-    input.altText.trim().length <= 300
-  );
-}
-
 function mediaUrl(key: string) {
   const encodedKey = key.split("/").map(encodeURIComponent).join("/");
 
@@ -368,6 +323,23 @@ export async function deleteCategory(
     return errorState("Сесія адміністратора недійсна. Увійдіть повторно.");
   }
 
+  const [{ data: sessionData }, mediaResult] = await Promise.all([
+    context.supabase.auth.getSession(),
+    context.supabase
+      .from("category_media")
+      .select("object_key")
+      .eq("category_id", categoryId),
+  ]);
+  const accessToken = sessionData.session?.access_token;
+
+  if (!accessToken) {
+    return errorState("Сесія адміністратора завершилася. Увійдіть повторно.");
+  }
+
+  if (mediaResult.error) {
+    return databaseErrorState(mediaResult.error.code);
+  }
+
   const { error } = await context.supabase
     .from("categories")
     .delete()
@@ -375,6 +347,20 @@ export async function deleteCategory(
 
   if (error) {
     return databaseErrorState(error.code);
+  }
+
+  const cleanupResults = await Promise.allSettled(
+    (mediaResult.data ?? []).map(({ object_key }) =>
+      deleteStoredMedia(object_key, accessToken),
+    ),
+  );
+
+  if (
+    cleanupResults.some(
+      (result) => result.status === "rejected" || !result.value,
+    )
+  ) {
+    console.error("Category media cleanup requires a retry.", { categoryId });
   }
 
   revalidatePath("/admin");
@@ -516,144 +502,4 @@ export async function deleteProduct(
 
   revalidatePath("/admin");
   redirect("/admin");
-}
-
-export async function registerProductMainImage(
-  input: ProductMediaInput,
-): Promise<ProductMediaActionResult> {
-  if (!validMediaInput(input)) {
-    return mediaError("Файл має некоректні параметри.");
-  }
-
-  const context = await verifiedAdmin();
-
-  if (!context) {
-    return mediaError("Сесія адміністратора недійсна. Увійдіть повторно.");
-  }
-
-  const { data: product, error: productError } = await context.supabase
-    .from("products")
-    .select("id")
-    .eq("id", input.productId)
-    .maybeSingle();
-
-  if (productError || !product) {
-    return mediaError("Товар не знайдено.");
-  }
-
-  const { data: current, error: currentError } = await context.supabase
-    .from("product_media")
-    .select("id,object_key")
-    .eq("product_id", input.productId)
-    .eq("kind", "main")
-    .maybeSingle();
-
-  if (currentError) {
-    return mediaError("Не вдалося перевірити поточне фото.");
-  }
-
-  const values = {
-    alt_text: input.altText.trim(),
-    mime_type: input.mimeType,
-    object_key: input.objectKey,
-    size_bytes: input.sizeBytes,
-  };
-
-  if (current) {
-    const { data, error } = await context.supabase
-      .from("product_media")
-      .update(values)
-      .eq("id", current.id)
-      .eq("object_key", current.object_key)
-      .select("id")
-      .maybeSingle();
-
-    if (error || !data) {
-      return mediaError(
-        "Фото товару вже змінилося. Оновіть сторінку та повторіть спробу.",
-      );
-    }
-
-    revalidatePath("/admin");
-    revalidatePath(`/admin/products/${input.productId}`);
-
-    return {
-      message: "Головне фото замінено.",
-      oldKey: current.object_key,
-      status: "success",
-    };
-  }
-
-  const { error } = await context.supabase.from("product_media").insert({
-    ...values,
-    kind: "main",
-    product_id: input.productId,
-    sort_order: 0,
-  });
-
-  if (error) {
-    return mediaError(
-      error.code === "23505"
-        ? "Фото товару вже додано. Оновіть сторінку."
-        : "Не вдалося прив'язати фото до товару.",
-    );
-  }
-
-  revalidatePath("/admin");
-  revalidatePath(`/admin/products/${input.productId}`);
-
-  return {
-    message: "Головне фото додано.",
-    status: "success",
-  };
-}
-
-export async function removeProductMainImage(
-  productId: string,
-): Promise<ProductMediaActionResult> {
-  if (!UUID_PATTERN.test(productId)) {
-    return mediaError("Товар не знайдено.");
-  }
-
-  const context = await verifiedAdmin();
-
-  if (!context) {
-    return mediaError("Сесія адміністратора недійсна. Увійдіть повторно.");
-  }
-
-  const { data: current, error: currentError } = await context.supabase
-    .from("product_media")
-    .select("id,object_key")
-    .eq("product_id", productId)
-    .eq("kind", "main")
-    .maybeSingle();
-
-  if (currentError) {
-    return mediaError("Не вдалося перевірити поточне фото.");
-  }
-
-  if (!current) {
-    return mediaError("Головне фото вже видалено.");
-  }
-
-  const { data, error } = await context.supabase
-    .from("product_media")
-    .delete()
-    .eq("id", current.id)
-    .eq("object_key", current.object_key)
-    .select("id")
-    .maybeSingle();
-
-  if (error || !data) {
-    return mediaError("Фото вже змінилося. Оновіть сторінку.");
-  }
-
-  revalidatePath("/admin");
-  revalidatePath(`/admin/products/${productId}`);
-
-  return {
-    key: current.object_key,
-    message: "Головне фото видалено.",
-    status: "success",
-  };
 }

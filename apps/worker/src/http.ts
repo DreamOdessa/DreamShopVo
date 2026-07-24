@@ -73,7 +73,7 @@ export function handleOptions(request: Request, env: WorkerEnv) {
   return new Response(null, {
     status: 204,
     headers: {
-      "Access-Control-Allow-Headers": "Authorization, Content-Type",
+      "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Media-Scope",
       "Access-Control-Allow-Methods": "DELETE, GET, HEAD, OPTIONS, POST",
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Max-Age": "86400",

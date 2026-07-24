@@ -17,6 +17,7 @@ const IMAGE_EXTENSIONS = {
 } as const;
 
 type SupportedImageType = keyof typeof IMAGE_EXTENSIONS;
+type MediaScope = "categories" | "products";
 
 function bytesMatch(bytes: Uint8Array, offset: number, expected: number[]) {
   return expected.every((value, index) => bytes[offset + index] === value);
@@ -83,7 +84,7 @@ export function getMediaKey(pathname: string, prefix: string) {
   }
 
   if (
-    !key.startsWith("products/") ||
+    (!key.startsWith("products/") && !key.startsWith("categories/")) ||
     key.length > 300 ||
     key.includes("..") ||
     key.includes("\\") ||
@@ -95,17 +96,31 @@ export function getMediaKey(pathname: string, prefix: string) {
   return key;
 }
 
-function createMediaKey(contentType: SupportedImageType) {
+function mediaScope(request: Request): MediaScope {
+  const scope = request.headers.get("X-Media-Scope")?.trim() || "products";
+
+  if (scope !== "products" && scope !== "categories") {
+    throw new HttpError(400, "invalid_request", "Media scope is invalid.");
+  }
+
+  return scope;
+}
+
+function createMediaKey(
+  contentType: SupportedImageType,
+  scope: MediaScope,
+) {
   const now = new Date();
   const year = now.getUTCFullYear();
   const month = String(now.getUTCMonth() + 1).padStart(2, "0");
   const extension = IMAGE_EXTENSIONS[contentType];
 
-  return `products/${year}/${month}/${crypto.randomUUID()}.${extension}`;
+  return `${scope}/${year}/${month}/${crypto.randomUUID()}.${extension}`;
 }
 
 export async function uploadMedia(request: Request, env: WorkerEnv) {
   const contentType = request.headers.get("Content-Type")?.split(";")[0].trim();
+  const scope = mediaScope(request);
 
   if (!contentType || !(contentType in IMAGE_EXTENSIONS)) {
     throw new HttpError(
@@ -144,7 +159,7 @@ export async function uploadMedia(request: Request, env: WorkerEnv) {
     );
   }
 
-  const key = createMediaKey(contentType as SupportedImageType);
+  const key = createMediaKey(contentType as SupportedImageType, scope);
   await env.PRODUCT_MEDIA.put(key, bytes, {
     httpMetadata: {
       contentType,

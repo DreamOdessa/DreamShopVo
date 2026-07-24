@@ -1,11 +1,13 @@
-import { ArrowLeft, FolderTree, PackageOpen } from "lucide-react";
+import { ArrowLeft, FolderTree, ImageIcon, PackageOpen } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { getAdminContext } from "../../../../lib/auth/admin";
+import { getApiUrl } from "../../../../lib/env";
 
+import { CategoryImageManager } from "../../category-image-manager";
 import { CategoryEditForm } from "../../category-edit-form";
 
 export const metadata: Metadata = {
@@ -30,6 +32,17 @@ type CategoryPageProps = {
   params: Promise<{ id: string }>;
 };
 
+type MediaRow = {
+  alt_text: string;
+  object_key: string;
+};
+
+function publicMediaUrl(apiUrl: string, key: string) {
+  const encodedKey = key.split("/").map(encodeURIComponent).join("/");
+
+  return `${apiUrl}/media/${encodedKey}`;
+}
+
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { isAdmin, supabase, userId } = await getAdminContext();
 
@@ -42,19 +55,33 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   }
 
   const { id } = await params;
-  const { data, error } = await supabase
-    .from("categories")
-    .select(
-      "id,name,slug,description,is_active,show_in_showcase,sort_order",
-    )
-    .eq("id", id)
-    .maybeSingle();
+  const [categoryResult, mediaResult] = await Promise.all([
+    supabase
+      .from("categories")
+      .select(
+        "id,name,slug,description,is_active,show_in_showcase,sort_order",
+      )
+      .eq("id", id)
+      .maybeSingle(),
+    supabase
+      .from("category_media")
+      .select("object_key,alt_text")
+      .eq("category_id", id)
+      .eq("kind", "cover")
+      .maybeSingle(),
+  ]);
 
-  if (error || !data) {
+  if (categoryResult.error || !categoryResult.data) {
     notFound();
   }
 
-  const category = data as CategoryRow;
+  if (mediaResult.error) {
+    throw new Error("Unable to load category cover.");
+  }
+
+  const category = categoryResult.data as CategoryRow;
+  const media = mediaResult.data as MediaRow | null;
+  const apiUrl = getApiUrl();
 
   return (
     <main className="admin-page">
@@ -92,6 +119,26 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               <h1>{category.name}</h1>
             </div>
           </header>
+
+          <section className="admin-section" aria-labelledby="category-media">
+            <div className="admin-section-title">
+              <ImageIcon aria-hidden size={21} strokeWidth={1.8} />
+              <h2 id="category-media">Обкладинка</h2>
+            </div>
+            <CategoryImageManager
+              apiUrl={apiUrl}
+              categoryId={category.id}
+              categoryName={category.name}
+              currentImage={
+                media
+                  ? {
+                      altText: media.alt_text,
+                      url: publicMediaUrl(apiUrl, media.object_key),
+                    }
+                  : null
+              }
+            />
+          </section>
 
           <section className="admin-section" aria-labelledby="category-edit">
             <div className="admin-section-title">

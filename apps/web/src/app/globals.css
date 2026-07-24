@@ -1005,11 +1005,32 @@ input:focus-visible {
   opacity: 0.48;
 }
 
-.admin-media-layout {
+.admin-media-slots {
   display: grid;
-  grid-template-columns: minmax(220px, 340px) minmax(0, 1fr);
-  gap: 1.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
   align-items: start;
+}
+
+.admin-media-slots-single {
+  width: min(100%, 420px);
+  grid-template-columns: 1fr;
+}
+
+.admin-media-slot {
+  display: grid;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid #d2dfdd;
+  border-radius: 7px;
+  gap: 1rem;
+  background: #fff;
+}
+
+.admin-media-slot h3 {
+  margin: 0;
+  color: #355e65;
+  font-size: 0.86rem;
 }
 
 .admin-media-preview {
@@ -1067,12 +1088,27 @@ input:focus-visible {
   gap: 0.75rem;
 }
 
+.admin-media-delete {
+  width: 42px;
+  padding: 0;
+}
+
 .admin-row-button:focus-visible,
 .admin-submit-button:focus-visible,
 .admin-danger-button:focus-visible,
 .admin-file-input:focus-visible {
   outline: 3px solid rgba(43, 152, 170, 0.28);
   outline-offset: 2px;
+}
+
+@media (max-width: 1050px) {
+  .admin-media-slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-media-slots-single {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1217,11 +1253,15 @@ input:focus-visible {
     width: 100%;
   }
 
-  .admin-media-layout {
+  .admin-media-slots {
     grid-template-columns: 1fr;
   }
 
   .admin-media-preview {
     max-width: 360px;
+  }
+
+  .admin-media-delete {
+    width: 42px;
   }
 }

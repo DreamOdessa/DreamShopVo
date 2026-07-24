@@ -7,6 +7,7 @@ import { notFound, redirect } from "next/navigation";
 import { getAdminContext } from "../../../../lib/auth/admin";
 import { getApiUrl } from "../../../../lib/env";
 
+import type { ProductImageSlot } from "../../media-actions";
 import { ProductEditForm } from "../../product-edit-form";
 import { ProductImageManager } from "../../product-image-manager";
 
@@ -42,6 +43,7 @@ type CategoryRow = {
 type MediaRow = {
   alt_text: string;
   object_key: string;
+  sort_order: number;
 };
 
 type ProductPageProps = {
@@ -77,10 +79,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
     supabase.from("categories").select("id,name").order("sort_order").order("name"),
     supabase
       .from("product_media")
-      .select("object_key,alt_text")
+      .select("object_key,alt_text,sort_order")
       .eq("product_id", id)
-      .eq("kind", "main")
-      .maybeSingle(),
+      .in("sort_order", [0, 1, 2])
+      .order("sort_order"),
   ]);
 
   if (productResult.error || !productResult.data) {
@@ -93,7 +95,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const product = productResult.data as ProductRow;
   const categories = (categoriesResult.data ?? []) as CategoryRow[];
-  const media = mediaResult.data as MediaRow | null;
+  const media = (mediaResult.data ?? []) as MediaRow[];
   const apiUrl = getApiUrl();
 
   return (
@@ -136,23 +138,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <section className="admin-section" aria-labelledby="product-media">
             <div className="admin-section-title">
               <ImageIcon aria-hidden size={21} strokeWidth={1.8} />
-              <h2 id="product-media">Головне фото</h2>
+              <h2 id="product-media">Фотографії товару</h2>
             </div>
-            <div className="admin-tool admin-edit-tool">
-              <ProductImageManager
-                apiUrl={apiUrl}
-                currentImage={
-                  media
-                    ? {
-                        altText: media.alt_text,
-                        url: publicMediaUrl(apiUrl, media.object_key),
-                      }
-                    : null
-                }
-                productId={product.id}
-                productName={product.name}
-              />
-            </div>
+            <ProductImageManager
+              apiUrl={apiUrl}
+              images={media.map((image) => ({
+                altText: image.alt_text,
+                slot: image.sort_order as ProductImageSlot,
+                url: publicMediaUrl(apiUrl, image.object_key),
+              }))}
+              productId={product.id}
+              productName={product.name}
+            />
           </section>
 
           <section className="admin-section" aria-labelledby="product-edit">

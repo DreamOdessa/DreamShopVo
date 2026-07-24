@@ -175,6 +175,15 @@ export default async function AdminOrdersPage({
     ),
   ]);
 
+  if (currentPage > 1 && ordersResult.error?.code === "PGRST103") {
+    redirect(
+      ordersHref({
+        query: searchQuery,
+        status: activeStatus,
+      }),
+    );
+  }
+
   if (
     ordersResult.error ||
     countResults.some((result) => Boolean(result.error))

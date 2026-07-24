@@ -1,12 +1,12 @@
 import { LayoutDashboard, LogOut, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signOut } from "../auth/actions";
 import { createClient } from "../../lib/supabase/server";
 
+import { openAdmin } from "./actions";
 import { ProfileForm } from "./profile-form";
 
 export const metadata: Metadata = {
@@ -60,14 +60,16 @@ export default async function AccountPage() {
         />
         <div className="account-header-actions">
           {profile?.role === "admin" ? (
-            <Link
-              aria-label="Адмін-панель"
-              className="icon-button"
-              href="/admin"
-              title="Адмін-панель"
-            >
-              <LayoutDashboard aria-hidden size={20} strokeWidth={1.8} />
-            </Link>
+            <form action={openAdmin}>
+              <button
+                aria-label="Адмін-панель"
+                className="icon-button"
+                title="Адмін-панель"
+                type="submit"
+              >
+                <LayoutDashboard aria-hidden size={20} strokeWidth={1.8} />
+              </button>
+            </form>
           ) : null}
           <form action={signOut}>
             <button

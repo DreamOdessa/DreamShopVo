@@ -41,6 +41,7 @@ type Order = {
   order_number: number;
   payment_method: string;
   status: OrderStatus;
+  tracking_number: string | null;
   total: number;
 };
 
@@ -88,7 +89,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id,order_number,status,total,customer_first_name,customer_last_name,delivery_city,delivery_method,delivery_details,payment_method,items:order_items(id,product_name,product_slug,product_image_object_key,unit_price,quantity)",
+      "id,order_number,status,total,customer_first_name,customer_last_name,delivery_city,delivery_method,delivery_details,payment_method,tracking_number,items:order_items(id,product_name,product_slug,product_image_object_key,unit_price,quantity)",
     )
     .eq("id", orderId)
     .maybeSingle();
@@ -195,6 +196,14 @@ export default async function OrderPage({ params }: OrderPageProps) {
                 {paymentLabels[order.payment_method] ?? order.payment_method}
               </dd>
             </div>
+            {order.tracking_number ? (
+              <div>
+                <dt>ТТН Нової пошти</dt>
+                <dd className="order-tracking-number">
+                  {order.tracking_number}
+                </dd>
+              </div>
+            ) : null}
             <div>
               <dt>Разом</dt>
               <dd>

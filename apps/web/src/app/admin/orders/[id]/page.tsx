@@ -14,6 +14,7 @@ import {
 
 import { AdminNavigation } from "../../admin-navigation";
 import { OrderStatusForm } from "../order-status-form";
+import { OrderTrackingForm } from "../order-tracking-form";
 
 export const metadata: Metadata = {
   title: "Деталі замовлення - DreamShop Admin",
@@ -59,6 +60,7 @@ type Order = {
   payment_method: string;
   status: OrderStatus;
   subtotal: number;
+  tracking_number: string | null;
   total: number;
 };
 
@@ -106,7 +108,7 @@ export default async function AdminOrderPage({
     supabase
       .from("orders")
       .select(
-        "id,order_number,status,subtotal,total,customer_first_name,customer_last_name,customer_phone,delivery_city,delivery_method,delivery_details,establishment_name,is_private_person,payment_method,contact_for_clarification,customer_note,created_at,items:order_items(id,product_name,product_image_object_key,unit_price,quantity)",
+        "id,order_number,status,subtotal,total,customer_first_name,customer_last_name,customer_phone,delivery_city,delivery_method,delivery_details,establishment_name,is_private_person,payment_method,contact_for_clarification,customer_note,tracking_number,created_at,items:order_items(id,product_name,product_image_object_key,unit_price,quantity)",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -254,6 +256,14 @@ export default async function AdminOrderPage({
                         order.payment_method}
                     </dd>
                   </div>
+                  {order.tracking_number ? (
+                    <div>
+                      <dt>ТТН Нової пошти</dt>
+                      <dd className="order-tracking-number">
+                        {order.tracking_number}
+                      </dd>
+                    </div>
+                  ) : null}
                   {order.establishment_name ? (
                     <div>
                       <dt>Заклад</dt>
@@ -273,8 +283,22 @@ export default async function AdminOrderPage({
             <aside className="admin-order-sidebar">
               <section>
                 <h2>Змінити статус</h2>
-                <OrderStatusForm orderId={order.id} status={order.status} />
+                <OrderStatusForm
+                  deliveryMethod={order.delivery_method}
+                  orderId={order.id}
+                  status={order.status}
+                />
               </section>
+              {order.status === "shipped" &&
+              order.delivery_method === "post_office" ? (
+                <section>
+                  <h2>ТТН відправлення</h2>
+                  <OrderTrackingForm
+                    orderId={order.id}
+                    trackingNumber={order.tracking_number}
+                  />
+                </section>
+              ) : null}
               <section>
                 <h2>
                   <Clock3 aria-hidden size={18} strokeWidth={1.8} />

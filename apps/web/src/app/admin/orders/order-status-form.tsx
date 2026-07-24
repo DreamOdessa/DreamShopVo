@@ -1,7 +1,7 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import {
   orderStatusLabels,
@@ -13,16 +13,24 @@ import { initialAdminActionState } from "../action-state";
 import { updateOrderStatus } from "./actions";
 
 type OrderStatusFormProps = {
+  deliveryMethod: string;
   orderId: string;
   status: OrderStatus;
 };
 
-export function OrderStatusForm({ orderId, status }: OrderStatusFormProps) {
+export function OrderStatusForm({
+  deliveryMethod,
+  orderId,
+  status,
+}: OrderStatusFormProps) {
   const [state, formAction, pending] = useActionState(
     updateOrderStatus,
     initialAdminActionState,
   );
   const availableStatuses = orderStatusTransitions[status];
+  const [nextStatus, setNextStatus] = useState<OrderStatus>(
+    availableStatuses[0] ?? status,
+  );
 
   if (!availableStatuses.length) {
     return (
@@ -37,7 +45,13 @@ export function OrderStatusForm({ orderId, status }: OrderStatusFormProps) {
       <input name="orderId" type="hidden" value={orderId} />
       <label>
         <span>Новий статус</span>
-        <select defaultValue={availableStatuses[0]} name="status">
+        <select
+          name="status"
+          onChange={(event) =>
+            setNextStatus(event.target.value as OrderStatus)
+          }
+          value={nextStatus}
+        >
           {availableStatuses.map((nextStatus) => (
             <option key={nextStatus} value={nextStatus}>
               {orderStatusLabels[nextStatus]}
@@ -45,6 +59,22 @@ export function OrderStatusForm({ orderId, status }: OrderStatusFormProps) {
           ))}
         </select>
       </label>
+      {nextStatus === "shipped" && deliveryMethod === "post_office" ? (
+        <label>
+          <span>ТТН Нової пошти</span>
+          <input
+            autoComplete="off"
+            inputMode="numeric"
+            maxLength={14}
+            minLength={14}
+            name="trackingNumber"
+            pattern="[0-9]{14}"
+            placeholder="14 цифр"
+            required
+            type="text"
+          />
+        </label>
+      ) : null}
       <button className="admin-submit-button" disabled={pending} type="submit">
         {pending ? (
           <LoaderCircle aria-hidden className="auth-spinner" size={17} />

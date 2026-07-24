@@ -1605,6 +1605,7 @@ input:focus-visible {
   font-weight: 700;
 }
 
+.admin-order-status-form input,
 .admin-order-status-form select {
   min-height: 42px;
   padding: 0 0.75rem;
@@ -1614,6 +1615,11 @@ input:focus-visible {
   color: #234d55;
   font: inherit;
   font-size: 0.8rem;
+}
+
+.order-tracking-number {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
 .admin-message {

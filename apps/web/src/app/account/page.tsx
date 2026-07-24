@@ -105,14 +105,8 @@ const notificationDateFormatter = new Intl.DateTimeFormat("uk-UA", {
   timeZone: "Europe/Kyiv",
 });
 
-function nonEmptyClaim(claims: unknown, key: "email" | "phone") {
-  if (!claims || typeof claims !== "object") {
-    return null;
-  }
-
-  const value = Reflect.get(claims, key);
-
-  return typeof value === "string" && value.trim() ? value : null;
+function isTelegramAuthEmail(email: string | null | undefined) {
+  return email?.endsWith("@auth.dreamshop.invalid") ?? false;
 }
 
 export default async function AccountPage() {
@@ -178,8 +172,12 @@ export default async function AccountPage() {
     (notification) => !notification.read_at,
   ).length;
   const savedAddress = addressResult.data as SavedAddress | null;
-  const verifiedPhone = nonEmptyClaim(claimsData.claims, "phone");
-  const verifiedEmail = nonEmptyClaim(claimsData.claims, "email");
+  const telegramVerified =
+    Boolean(profile?.phone) &&
+    (!profile?.email || isTelegramAuthEmail(profile.email));
+  const visibleEmail = isTelegramAuthEmail(profile?.email)
+    ? null
+    : profile?.email;
   const contactPhone = profile?.contact_phone ?? profile?.phone ?? "";
 
   return (
@@ -246,9 +244,9 @@ export default async function AccountPage() {
           </div>
           <span className="account-status">
             <ShieldCheck aria-hidden size={18} strokeWidth={1.8} />
-            {verifiedPhone
+            {telegramVerified
               ? "Telegram підтверджено"
-              : verifiedEmail
+              : visibleEmail
                 ? "Email підтверджено"
                 : "Акаунт підтверджено"}
           </span>
@@ -257,7 +255,7 @@ export default async function AccountPage() {
         <dl className="account-details">
           <div>
             <dt>Email</dt>
-            <dd>{profile?.email ?? "Не вказано"}</dd>
+            <dd>{visibleEmail ?? "Не вказано"}</dd>
           </div>
           <div>
             <dt>Контактний телефон</dt>

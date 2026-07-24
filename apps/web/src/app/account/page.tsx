@@ -42,6 +42,7 @@ export const metadata: Metadata = {
 
 type Profile = {
   contact_phone: string | null;
+  discount_percent: number;
   email: string | null;
   first_name: string;
   last_name: string | null;
@@ -51,6 +52,7 @@ type Profile = {
 
 type AccountOrder = {
   created_at: string;
+  discount_amount: number;
   id: string;
   items: Array<{
     id: string;
@@ -124,13 +126,15 @@ export default async function AccountPage() {
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("first_name,last_name,email,phone,contact_phone,role")
+      .select(
+        "first_name,last_name,email,phone,contact_phone,discount_percent,role",
+      )
       .eq("id", userId)
       .maybeSingle(),
     supabase
       .from("orders")
       .select(
-        "id,order_number,status,total,created_at,items:order_items(id,product_name,quantity)",
+        "id,order_number,status,total,discount_amount,created_at,items:order_items(id,product_name,quantity)",
       )
       .order("created_at", { ascending: false })
       .limit(20),
@@ -261,6 +265,14 @@ export default async function AccountPage() {
           <div>
             <dt>Роль</dt>
             <dd>{profile?.role ?? "customer"}</dd>
+          </div>
+          <div>
+            <dt>Персональна знижка</dt>
+            <dd>
+              {Number(profile?.discount_percent ?? 0) > 0
+                ? `${Number(profile?.discount_percent)}%`
+                : "Не призначено"}
+            </dd>
           </div>
         </dl>
 
@@ -411,7 +423,15 @@ export default async function AccountPage() {
                       {order.items?.length ?? 0} позицій
                     </span>
                   </div>
-                  <strong>{priceFormatter.format(order.total)}</strong>
+                  <div className="account-order-price">
+                    <strong>{priceFormatter.format(order.total)}</strong>
+                    {order.discount_amount > 0 ? (
+                      <span>
+                        Заощаджено{" "}
+                        {priceFormatter.format(order.discount_amount)}
+                      </span>
+                    ) : null}
+                  </div>
                   <span
                     className={`account-order-status account-order-status-${order.status}`}
                   >

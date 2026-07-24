@@ -116,6 +116,20 @@ begin
   end;
 end;
 $$;
+do $$
+begin
+  begin
+    perform *
+    from public.get_admin_customer_summary(
+      '00000000-0000-4000-8000-000000000001'
+    );
+
+    raise exception 'Customer read protected customer statistics';
+  exception
+    when insufficient_privilege then null;
+  end;
+end;
+$$;
 insert into public.wishlist_items (user_id, product_id)
 values (
   '00000000-0000-4000-8000-000000000001',
@@ -452,6 +466,17 @@ select 1 / case
 end as admin_advances_order_through_valid_statuses
 from public.orders
 where id = '20000000-0000-4000-8000-000000000001';
+select 1 / case
+  when order_count = 2
+    and delivered_order_count = 1
+    and delivered_total = 10
+    and discount_total = 0
+    and last_order_at is not null then 1
+  else 0
+end as admin_reads_customer_summary
+from public.get_admin_customer_summary(
+  '00000000-0000-4000-8000-000000000001'
+);
 select 1 / case
   when count(*) = 3 then 1
   else 0

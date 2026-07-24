@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   Search,
   UserRound,
   UsersRound,
@@ -271,6 +272,16 @@ export default async function AdminCustomersPage({
                         discountPercent={Number(customer.discount_percent)}
                       />
                     </div>
+                    <Link
+                      className="admin-row-button"
+                      href={`/admin/customers/${customer.id}`}
+                      title={`Відкрити картку ${customer.first_name}`}
+                    >
+                      <ArrowUpRight aria-hidden size={17} strokeWidth={1.8} />
+                      <span className="sr-only">
+                        Відкрити картку {customer.first_name}
+                      </span>
+                    </Link>
                   </article>
                 );
               })

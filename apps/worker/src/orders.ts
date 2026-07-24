@@ -7,6 +7,12 @@ type ClaimedEvent = {
   id: number;
 };
 
+type OrderEventType = "order.cancelled" | "order.created";
+
+type ClaimedOrderEvent = ClaimedEvent & {
+  eventType: OrderEventType;
+};
+
 type OrderRow = {
   contact_for_clarification: boolean;
   customer_first_name: string;
@@ -41,6 +47,11 @@ const paymentLabels: Record<string, string> = {
   cash_on_delivery: "Післяплата",
 };
 
+const orderEventTypes: OrderEventType[] = [
+  "order.created",
+  "order.cancelled",
+];
+
 function serviceClient(env: WorkerEnv) {
   return createClient(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
     auth: {
@@ -73,7 +84,11 @@ function money(value: number) {
   }).format(value);
 }
 
-function orderMessage(order: OrderRow, items: OrderItemRow[]) {
+export function formatOrderNotification(
+  eventType: OrderEventType,
+  order: OrderRow,
+  items: OrderItemRow[],
+) {
   const itemLines = items.slice(0, 15).map(
     (item) =>
       `• ${escapeHtml(truncate(item.product_name, 120))} × ${
@@ -86,7 +101,9 @@ function orderMessage(order: OrderRow, items: OrderItemRow[]) {
   }
 
   const lines = [
-    `<b>Нове замовлення №${escapeHtml(order.order_number)}</b>`,
+    eventType === "order.cancelled"
+      ? `<b>Замовлення №${escapeHtml(order.order_number)} скасовано</b>`
+      : `<b>Нове замовлення №${escapeHtml(order.order_number)}</b>`,
     "",
     ...itemLines,
     "",
@@ -120,6 +137,7 @@ function orderMessage(order: OrderRow, items: OrderItemRow[]) {
 
 async function sendOrderMessage(
   env: WorkerEnv,
+  eventType: OrderEventType,
   order: OrderRow,
   items: OrderItemRow[],
 ) {
@@ -130,7 +148,7 @@ async function sendOrderMessage(
         chat_id: env.TELEGRAM_ORDER_CHAT_ID,
         disable_web_page_preview: true,
         parse_mode: "HTML",
-        text: orderMessage(order, items),
+        text: formatOrderNotification(eventType, order, items),
       }),
       headers: {
         "Content-Type": "application/json",
@@ -155,16 +173,26 @@ export async function processOrderOutbox(env: WorkerEnv) {
   }
 
   const supabase = serviceClient(env);
-  const { data, error } = await supabase.rpc("claim_integration_events", {
-    p_event_type: "order.created",
-    p_limit: 10,
-  });
+  const events: ClaimedOrderEvent[] = [];
 
-  if (error) {
-    throw new Error("Unable to claim order events.");
+  for (const eventType of orderEventTypes) {
+    const { data, error } = await supabase.rpc("claim_integration_events", {
+      p_event_type: eventType,
+      p_limit: 10,
+    });
+
+    if (error) {
+      throw new Error("Unable to claim order events.");
+    }
+
+    events.push(
+      ...((data ?? []) as ClaimedEvent[]).map((event) => ({
+        ...event,
+        eventType,
+      })),
+    );
   }
 
-  const events = (data ?? []) as ClaimedEvent[];
   let processed = 0;
 
   for (const event of events) {
@@ -195,6 +223,7 @@ export async function processOrderOutbox(env: WorkerEnv) {
 
       await sendOrderMessage(
         env,
+        event.eventType,
         order as OrderRow,
         items as OrderItemRow[],
       );
@@ -219,7 +248,10 @@ export async function processOrderOutbox(env: WorkerEnv) {
         .from("integration_outbox")
         .update({
           available_at: retryAt,
-          last_error: "order_notification_failed",
+          last_error:
+            event.eventType === "order.cancelled"
+              ? "order_cancellation_notification_failed"
+              : "order_notification_failed",
         })
         .eq("id", event.id);
     }

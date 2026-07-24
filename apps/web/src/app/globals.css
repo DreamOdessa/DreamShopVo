@@ -3401,6 +3401,42 @@ input:focus-visible {
   text-align: left;
 }
 
+.order-cancel-form {
+  display: grid;
+  margin-top: 1rem;
+  gap: 0.5rem;
+}
+
+.order-cancel-button {
+  display: inline-flex;
+  min-height: 42px;
+  border: 1px solid #c98f88;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  background: #fff;
+  color: #8f3f38;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.order-cancel-button:hover {
+  border-color: #a75b53;
+  background: #fff7f5;
+}
+
+.order-cancel-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.order-cancel-form .checkout-message {
+  margin: 0;
+}
+
 .store-footer {
   margin: 0;
   padding: 0;

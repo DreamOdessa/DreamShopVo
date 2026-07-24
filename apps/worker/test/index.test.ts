@@ -3,7 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fetchRequest, type WorkerEnv } from "../src/index";
 import { getMediaKey, isSupportedImageBytes } from "../src/media";
 import { classifyWarehouse } from "../src/nova-poshta";
-import { processOrderOutbox } from "../src/orders";
+import {
+  formatOrderNotification,
+  processOrderOutbox,
+} from "../src/orders";
 import {
   normalizeTelegramPhone,
   telegramLoginEmail,
@@ -71,6 +74,60 @@ describe("DreamShop Worker", () => {
       ),
     ).resolves.toEqual({ processed: 0 });
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("claims created and cancelled order events", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
+      async () =>
+        new Response("[]", {
+          headers: { "Content-Type": "application/json" },
+          status: 200,
+        }),
+    );
+
+    await expect(
+      processOrderOutbox(
+        createEnv({
+          SUPABASE_SECRET_KEY: "secret",
+          SUPABASE_URL: "https://project.supabase.co",
+          TELEGRAM_BOT_TOKEN: "token",
+          TELEGRAM_ORDER_CHAT_ID: "-100123456789",
+        }),
+      ),
+    ).resolves.toEqual({ processed: 0 });
+
+    const eventTypes = fetchSpy.mock.calls.map(([, init]) => {
+      const body = JSON.parse(String(init?.body)) as {
+        p_event_type: string;
+      };
+
+      return body.p_event_type;
+    });
+
+    expect(eventTypes).toEqual(["order.created", "order.cancelled"]);
+  });
+
+  it("formats a distinct Telegram message for a cancelled order", () => {
+    const message = formatOrderNotification(
+      "order.cancelled",
+      {
+        contact_for_clarification: false,
+        customer_first_name: "Іван",
+        customer_last_name: "Тест",
+        customer_note: null,
+        customer_phone: "+380671234567",
+        delivery_city: "Одеса",
+        delivery_details: "Відділення 1",
+        delivery_method: "post_office",
+        order_number: 42,
+        payment_method: "cash_on_delivery",
+        total: 300,
+      },
+      [{ product_name: "Манго", quantity: 1, unit_price: 300 }],
+    );
+
+    expect(message).toContain("<b>Замовлення №42 скасовано</b>");
+    expect(message).toContain("Манго");
   });
 
   it("rejects an admin upload without a bearer token", async () => {

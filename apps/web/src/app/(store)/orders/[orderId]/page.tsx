@@ -11,9 +11,10 @@ import {
   orderStatusLabels,
   type OrderStatus,
 } from "../../../../lib/orders";
+import { CancelOrderForm } from "./cancel-order-form";
 
 export const metadata: Metadata = {
-  title: "Замовлення створено - DreamShop",
+  title: "Замовлення - DreamShop",
   robots: {
     follow: false,
     index: false,
@@ -201,6 +202,12 @@ export default async function OrderPage({ params }: OrderPageProps) {
               </dd>
             </div>
           </dl>
+          {order.status === "pending" ? (
+            <CancelOrderForm
+              orderId={order.id}
+              orderNumber={order.order_number}
+            />
+          ) : null}
           <Link className="store-primary-action" href="/catalog">
             Повернутися до каталогу
           </Link>

@@ -221,6 +221,43 @@ begin
   end;
 end;
 $$;
+select 1 / case
+  when count(*) = 1 and bool_and(status = 'cancelled') then 1
+  else 0
+end as customer_cancels_own_pending_order
+from public.cancel_own_order(
+  (
+    select id
+    from public.orders
+    where checkout_token = '40000000-0000-4000-8000-000000000001'
+  )
+);
+select 1 / case
+  when stock_quantity = 2 then 1
+  else 0
+end as customer_cancellation_restores_inventory
+from public.products
+where slug = 'visible';
+do $$
+begin
+  begin
+    perform *
+    from public.cancel_own_order(
+      (
+        select id
+        from public.orders
+        where checkout_token = '40000000-0000-4000-8000-000000000001'
+      )
+    );
+
+    raise exception using
+      errcode = 'XX000',
+      message = 'Cancelled order was cancelled twice';
+  exception
+    when check_violation then null;
+  end;
+end;
+$$;
 do $$
 begin
   begin
@@ -470,6 +507,20 @@ select 1 / case
 end as only_authenticated_clients_can_create_orders;
 
 select 1 / case
+  when not has_function_privilege(
+      'anon',
+      'public.cancel_own_order(uuid)',
+      'EXECUTE'
+    )
+    and has_function_privilege(
+      'authenticated',
+      'public.cancel_own_order(uuid)',
+      'EXECUTE'
+    ) then 1
+  else 0
+end as only_authenticated_clients_can_cancel_own_orders;
+
+select 1 / case
   when to_regprocedure(
     'public.create_order(jsonb,text,text,text,text,public.delivery_method,text,text,boolean,public.payment_method,boolean,text)'
   ) is null then 1
@@ -495,6 +546,16 @@ select 1 / case
     and not has_function_privilege(
       'authenticated',
       'public.restore_cancelled_order_inventory()',
+      'EXECUTE'
+    )
+    and not has_function_privilege(
+      'anon',
+      'public.enqueue_cancelled_order_event()',
+      'EXECUTE'
+    )
+    and not has_function_privilege(
+      'authenticated',
+      'public.enqueue_cancelled_order_event()',
       'EXECUTE'
     ) then 1
   else 0

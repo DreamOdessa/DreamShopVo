@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 
 import { getAdminContext } from "../../lib/auth/admin";
 
+import { AdminNavigation } from "./admin-navigation";
 import { CategoryForm } from "./category-form";
 import { ProductForm } from "./product-form";
 
@@ -95,12 +96,7 @@ export default async function AdminPage() {
       </header>
 
       <div className="admin-layout">
-        <nav aria-label="Адміністративна навігація" className="admin-nav">
-          <span aria-current="page">
-            <PackageOpen aria-hidden size={18} strokeWidth={1.8} />
-            Каталог
-          </span>
-        </nav>
+        <AdminNavigation active="catalog" />
 
         <div className="admin-content">
           <header className="admin-page-heading">

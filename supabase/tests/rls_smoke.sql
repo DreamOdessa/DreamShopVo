@@ -90,6 +90,33 @@ end as customer_reads_own_order
 from public.orders;
 rollback;
 
+insert into public.orders (
+  id,
+  user_id,
+  subtotal,
+  total,
+  customer_first_name,
+  customer_last_name,
+  customer_phone,
+  delivery_city,
+  delivery_method,
+  delivery_details,
+  payment_method
+)
+values (
+  '20000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001',
+  10,
+  10,
+  'Customer',
+  'Example',
+  '+380671234567',
+  'Odesa',
+  'post_office',
+  'Відділення 1',
+  'cash_on_delivery'
+);
+
 begin;
 set local request.jwt.claims = '{"app_metadata":{"role":"admin"}}';
 set local role authenticated;
@@ -97,6 +124,40 @@ select 1 / case when public.is_admin() then 1 else 0 end as admin_is_admin;
 select 1 / case when count(*) = 2 then 1 else 0 end
   as admin_sees_draft_products
 from public.products;
+update public.orders
+set status = 'processing'
+where id = '20000000-0000-4000-8000-000000000001';
+update public.orders
+set status = 'shipped'
+where id = '20000000-0000-4000-8000-000000000001';
+update public.orders
+set status = 'delivered'
+where id = '20000000-0000-4000-8000-000000000001';
+select 1 / case
+  when status = 'delivered' then 1
+  else 0
+end as admin_advances_order_through_valid_statuses
+from public.orders
+where id = '20000000-0000-4000-8000-000000000001';
+select 1 / case
+  when count(*) = 3 then 1
+  else 0
+end as status_changes_notify_customer
+from public.notifications
+where order_id = '20000000-0000-4000-8000-000000000001';
+do $$
+begin
+  begin
+    update public.orders
+    set status = 'processing'
+    where id = '20000000-0000-4000-8000-000000000001';
+
+    raise exception 'Invalid terminal status transition was accepted';
+  exception
+    when check_violation then null;
+  end;
+end;
+$$;
 rollback;
 
 select 1 / case

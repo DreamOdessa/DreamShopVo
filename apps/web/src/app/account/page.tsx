@@ -1,9 +1,21 @@
-import { LayoutDashboard, LogOut, ShieldCheck } from "lucide-react";
+import {
+  ArrowUpRight,
+  LayoutDashboard,
+  LogOut,
+  PackageOpen,
+  ShieldCheck,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signOut } from "../auth/actions";
+import {
+  isOrderStatus,
+  orderStatusLabels,
+  type OrderStatus,
+} from "../../lib/orders";
 import { createClient } from "../../lib/supabase/server";
 
 import { openAdmin } from "./actions";
@@ -25,6 +37,30 @@ type Profile = {
   role: "admin" | "customer" | "tester";
 };
 
+type AccountOrder = {
+  created_at: string;
+  id: string;
+  items: Array<{
+    id: string;
+    product_name: string;
+    quantity: number;
+  }> | null;
+  order_number: number;
+  status: OrderStatus;
+  total: number;
+};
+
+const priceFormatter = new Intl.NumberFormat("uk-UA", {
+  currency: "UAH",
+  maximumFractionDigits: 2,
+  style: "currency",
+});
+
+const dateFormatter = new Intl.DateTimeFormat("uk-UA", {
+  dateStyle: "medium",
+  timeZone: "Europe/Kyiv",
+});
+
 export default async function AccountPage() {
   const supabase = await createClient();
   const { data: claimsData, error: claimsError } =
@@ -35,17 +71,29 @@ export default async function AccountPage() {
     redirect("/auth");
   }
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("first_name,last_name,email,phone,role")
-    .eq("id", userId)
-    .maybeSingle();
+  const [profileResult, ordersResult] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("first_name,last_name,email,phone,role")
+      .eq("id", userId)
+      .maybeSingle(),
+    supabase
+      .from("orders")
+      .select(
+        "id,order_number,status,total,created_at,items:order_items(id,product_name,quantity)",
+      )
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
 
-  if (error) {
-    throw new Error("Unable to load the authenticated profile.");
+  if (profileResult.error || ordersResult.error) {
+    throw new Error("Unable to load the authenticated account.");
   }
 
-  const profile = data as Profile | null;
+  const profile = profileResult.data as Profile | null;
+  const orders = (ordersResult.data ?? [])
+    .filter((order) => isOrderStatus(order.status))
+    .map((order) => order as unknown as AccountOrder);
 
   return (
     <main className="account-page">
@@ -127,6 +175,50 @@ export default async function AccountPage() {
             firstName={profile?.first_name ?? ""}
             lastName={profile?.last_name ?? ""}
           />
+        </section>
+
+        <section className="account-orders-section" aria-labelledby="orders-title">
+          <div className="account-section-heading">
+            <h2 id="orders-title">Мої замовлення</h2>
+            <p>Останні замовлення та їх поточний статус.</p>
+          </div>
+          <div className="account-orders-list">
+            {orders.length ? (
+              orders.map((order) => (
+                <article className="account-order-row" key={order.id}>
+                  <div>
+                    <strong>Замовлення №{order.order_number}</strong>
+                    <span>
+                      {dateFormatter.format(new Date(order.created_at))} ·{" "}
+                      {order.items?.length ?? 0} позицій
+                    </span>
+                  </div>
+                  <strong>{priceFormatter.format(order.total)}</strong>
+                  <span
+                    className={`account-order-status account-order-status-${order.status}`}
+                  >
+                    {orderStatusLabels[order.status]}
+                  </span>
+                  <Link
+                    className="admin-row-button"
+                    href={`/orders/${order.id}`}
+                    title={`Відкрити замовлення №${order.order_number}`}
+                  >
+                    <ArrowUpRight aria-hidden size={17} strokeWidth={1.8} />
+                    <span className="sr-only">
+                      Відкрити замовлення №{order.order_number}
+                    </span>
+                  </Link>
+                </article>
+              ))
+            ) : (
+              <div className="account-orders-empty">
+                <PackageOpen aria-hidden size={26} strokeWidth={1.5} />
+                <p>Ви ще не робили замовлень.</p>
+                <Link href="/catalog">Перейти до каталогу</Link>
+              </div>
+            )}
+          </div>
         </section>
       </section>
     </main>

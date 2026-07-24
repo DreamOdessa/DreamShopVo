@@ -1,4 +1,4 @@
-import { CheckCircle2, PackageOpen } from "lucide-react";
+import { CheckCircle2, CircleX, PackageOpen } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -6,6 +6,11 @@ import { notFound, redirect } from "next/navigation";
 
 import { createClient } from "../../../../lib/supabase/server";
 import { publicMediaUrl } from "../../../../lib/media-url";
+import {
+  isOrderStatus,
+  orderStatusLabels,
+  type OrderStatus,
+} from "../../../../lib/orders";
 
 export const metadata: Metadata = {
   title: "Замовлення створено - DreamShop",
@@ -34,7 +39,7 @@ type Order = {
   items: OrderItem[];
   order_number: number;
   payment_method: string;
-  status: string;
+  status: OrderStatus;
   total: number;
 };
 
@@ -62,6 +67,14 @@ const paymentLabels: Record<string, string> = {
   cash_on_delivery: "Післяплата",
 };
 
+const orderHeadings: Record<OrderStatus, string> = {
+  cancelled: "Замовлення скасовано",
+  delivered: "Замовлення доставлено",
+  pending: "Дякуємо, замовлення прийнято",
+  processing: "Замовлення в обробці",
+  shipped: "Замовлення відправлено",
+};
+
 export default async function OrderPage({ params }: OrderPageProps) {
   const { orderId } = await params;
   const supabase = await createClient();
@@ -85,13 +98,29 @@ export default async function OrderPage({ params }: OrderPageProps) {
 
   const order = data as unknown as Order;
 
+  if (!isOrderStatus(order.status)) {
+    notFound();
+  }
+
   return (
     <main className="store-main order-page">
-      <section className="order-confirmation" aria-labelledby="order-title">
-        <CheckCircle2 aria-hidden size={42} strokeWidth={1.7} />
+      <section
+        className={`order-confirmation order-confirmation-${order.status}`}
+        aria-labelledby="order-title"
+      >
+        {order.status === "cancelled" ? (
+          <CircleX aria-hidden size={42} strokeWidth={1.7} />
+        ) : (
+          <CheckCircle2 aria-hidden size={42} strokeWidth={1.7} />
+        )}
         <p>Замовлення №{order.order_number}</p>
-        <h1 id="order-title">Дякуємо, замовлення прийнято</h1>
-        <span>
+        <h1 id="order-title">{orderHeadings[order.status]}</h1>
+        <span
+          className={`account-order-status account-order-status-${order.status}`}
+        >
+          {orderStatusLabels[order.status]}
+        </span>
+        <span className="order-confirmation-note">
           Ми зв’яжемося з вами, якщо для відправлення потрібне уточнення.
         </span>
       </section>

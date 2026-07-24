@@ -1,4 +1,4 @@
-import { ArrowLeft, FolderTree, ImageIcon, PackageOpen } from "lucide-react";
+import { ArrowLeft, FolderTree, ImageIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,6 +7,7 @@ import { notFound, redirect } from "next/navigation";
 import { getAdminContext } from "../../../../lib/auth/admin";
 import { getApiUrl } from "../../../../lib/env";
 
+import { AdminNavigation } from "../../admin-navigation";
 import { CategoryImageManager } from "../../category-image-manager";
 import { CategoryEditForm } from "../../category-edit-form";
 
@@ -105,12 +106,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       </header>
 
       <div className="admin-layout">
-        <nav aria-label="Адміністративна навігація" className="admin-nav">
-          <Link href="/admin">
-            <PackageOpen aria-hidden size={18} strokeWidth={1.8} />
-            Каталог
-          </Link>
-        </nav>
+        <AdminNavigation active="catalog" />
 
         <div className="admin-content">
           <header className="admin-page-heading">

@@ -1,4 +1,4 @@
-import { ArrowLeft, ImageIcon, PackageOpen, Settings2 } from "lucide-react";
+import { ArrowLeft, ImageIcon, Settings2 } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -7,6 +7,7 @@ import { notFound, redirect } from "next/navigation";
 import { getAdminContext } from "../../../../lib/auth/admin";
 import { getApiUrl } from "../../../../lib/env";
 
+import { AdminNavigation } from "../../admin-navigation";
 import type { ProductImageSlot } from "../../media-actions";
 import { ProductEditForm } from "../../product-edit-form";
 import { ProductImageManager } from "../../product-image-manager";
@@ -120,12 +121,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </header>
 
       <div className="admin-layout">
-        <nav aria-label="Адміністративна навігація" className="admin-nav">
-          <Link href="/admin">
-            <PackageOpen aria-hidden size={18} strokeWidth={1.8} />
-            Каталог
-          </Link>
-        </nav>
+        <AdminNavigation active="catalog" />
 
         <div className="admin-content">
           <header className="admin-page-heading">

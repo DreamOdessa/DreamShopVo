@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { signOut } from "../auth/actions";
 import { createClient } from "../../lib/supabase/server";
 
+import { ProfileForm } from "./profile-form";
+
 export const metadata: Metadata = {
   title: "Мій акаунт - DreamShop",
   robots: {
@@ -92,6 +94,20 @@ export default async function AccountPage() {
             <dd>{profile?.role ?? "customer"}</dd>
           </div>
         </dl>
+
+        <section
+          className="account-profile-section"
+          aria-labelledby="profile-title"
+        >
+          <div className="account-section-heading">
+            <h2 id="profile-title">Особисті дані</h2>
+            <p>Вони будуть використані для оформлення замовлень.</p>
+          </div>
+          <ProfileForm
+            firstName={profile?.first_name ?? ""}
+            lastName={profile?.last_name ?? ""}
+          />
+        </section>
       </section>
     </main>
   );

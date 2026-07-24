@@ -530,6 +530,67 @@ input:focus-visible {
   font-weight: 650;
 }
 
+.account-profile-section {
+  display: grid;
+  margin-top: 3rem;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.3fr);
+  gap: 3rem;
+}
+
+.account-section-heading h2 {
+  margin: 0;
+  color: #173f48;
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+.account-section-heading p {
+  max-width: 280px;
+  margin: 0.65rem 0 0;
+  color: #6a7f82;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.profile-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.profile-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.profile-save-button {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 42px;
+  padding: 0 1rem;
+  border: 1px solid #0c5363;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  background: #0c5363;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 720;
+}
+
+.profile-save-button:hover:not(:disabled) {
+  border-color: #083f4b;
+  background: #083f4b;
+}
+
+.profile-save-button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -594,5 +655,18 @@ input:focus-visible {
 
   .account-details div:last-child {
     border-bottom: 0;
+  }
+
+  .account-profile-section {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .account-section-heading p {
+    max-width: none;
+  }
+
+  .profile-fields {
+    grid-template-columns: 1fr;
   }
 }

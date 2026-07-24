@@ -59,6 +59,12 @@ function escapeHtml(value: string | number) {
     .replace(/"/g, "&quot;");
 }
 
+function truncate(value: string, maxLength: number) {
+  return value.length > maxLength
+    ? `${value.slice(0, maxLength - 1)}…`
+    : value;
+}
+
 function money(value: number) {
   return new Intl.NumberFormat("uk-UA", {
     currency: "UAH",
@@ -68,15 +74,15 @@ function money(value: number) {
 }
 
 function orderMessage(order: OrderRow, items: OrderItemRow[]) {
-  const itemLines = items.slice(0, 30).map(
+  const itemLines = items.slice(0, 15).map(
     (item) =>
-      `• ${escapeHtml(item.product_name)} × ${item.quantity} — ${escapeHtml(
-        money(item.unit_price * item.quantity),
-      )}`,
+      `• ${escapeHtml(truncate(item.product_name, 120))} × ${
+        item.quantity
+      } — ${escapeHtml(money(item.unit_price * item.quantity))}`,
   );
 
-  if (items.length > 30) {
-    itemLines.push(`• Ще позицій: ${items.length - 30}`);
+  if (items.length > 15) {
+    itemLines.push(`• Ще позицій: ${items.length - 15}`);
   }
 
   const lines = [
@@ -93,7 +99,7 @@ function orderMessage(order: OrderRow, items: OrderItemRow[]) {
       deliveryLabels[order.delivery_method] ?? order.delivery_method,
     )}`,
     `<b>Місто:</b> ${escapeHtml(order.delivery_city)}`,
-    `<b>Деталі:</b> ${escapeHtml(order.delivery_details)}`,
+    `<b>Деталі:</b> ${escapeHtml(truncate(order.delivery_details, 300))}`,
     `<b>Оплата:</b> ${escapeHtml(
       paymentLabels[order.payment_method] ?? order.payment_method,
     )}`,
@@ -104,10 +110,12 @@ function orderMessage(order: OrderRow, items: OrderItemRow[]) {
   }
 
   if (order.customer_note) {
-    lines.push(`<b>Коментар:</b> ${escapeHtml(order.customer_note)}`);
+    lines.push(
+      `<b>Коментар:</b> ${escapeHtml(truncate(order.customer_note, 500))}`,
+    );
   }
 
-  return lines.join("\n").slice(0, 4000);
+  return lines.join("\n");
 }
 
 async function sendOrderMessage(

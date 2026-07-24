@@ -95,7 +95,7 @@ export function TelegramPasswordForm() {
         {pending ? (
           <LoaderCircle aria-hidden className="auth-spinner" size={18} />
         ) : null}
-        Завершити реєстрацію
+        Зберегти пароль
       </button>
     </form>
   );

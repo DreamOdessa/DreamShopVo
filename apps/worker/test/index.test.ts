@@ -8,6 +8,7 @@ import {
   processOrderOutbox,
 } from "../src/orders";
 import {
+  isMatchingTelegramIdentity,
   normalizeTelegramPhone,
   telegramLoginEmail,
 } from "../src/telegram";
@@ -315,6 +316,142 @@ describe("DreamShop Worker", () => {
       /^telegram-[a-f0-9]{64}@auth\.dreamshop\.invalid$/,
     );
     expect(first).not.toContain(phone);
+  });
+
+  it("accepts password recovery only for the matching Telegram identity", () => {
+    const email =
+      "telegram-1234567890abcdef@auth.dreamshop.invalid";
+
+    expect(
+      isMatchingTelegramIdentity(
+        {
+          email,
+          user_metadata: { auth_source: "telegram" },
+        },
+        email,
+      ),
+    ).toBe(true);
+    expect(
+      isMatchingTelegramIdentity(
+        {
+          email,
+          user_metadata: { auth_source: "email" },
+        },
+        email,
+      ),
+    ).toBe(false);
+    expect(
+      isMatchingTelegramIdentity(
+        {
+          email: "customer@example.com",
+          user_metadata: { auth_source: "telegram" },
+        },
+        email,
+      ),
+    ).toBe(false);
+  });
+
+  it("recovers an existing Telegram account without creating a duplicate user", async () => {
+    const token = "a".repeat(43);
+    const phone = "+380671234567";
+    const email = await telegramLoginEmail(phone);
+    const userId = "00000000-0000-4000-8000-000000000001";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
+      async (input, init) => {
+        const url = input instanceof Request ? input.url : String(input);
+        const method =
+          input instanceof Request ? input.method : (init?.method ?? "GET");
+
+        if (url.includes("/rest/v1/rpc/consume_telegram_registration_challenge")) {
+          return Response.json([
+            {
+              challenge_id: "10000000-0000-4000-8000-000000000001",
+              phone,
+              telegram_chat_id: "123",
+              telegram_user_id: "456",
+            },
+          ]);
+        }
+
+        if (url.includes("/rest/v1/profiles?")) {
+          return Response.json({ id: userId });
+        }
+
+        if (
+          url.endsWith(`/auth/v1/admin/users/${userId}`) &&
+          method === "GET"
+        ) {
+          return Response.json({
+            id: userId,
+            email,
+            user_metadata: { auth_source: "telegram" },
+          });
+        }
+
+        if (
+          url.endsWith(`/auth/v1/admin/users/${userId}`) &&
+          method === "PUT"
+        ) {
+          return Response.json({
+            id: userId,
+            email,
+            user_metadata: {
+              auth_source: "telegram",
+              telegram_chat_id: "123",
+              telegram_user_id: "456",
+            },
+          });
+        }
+
+        if (url.includes("/auth/v1/token?grant_type=password")) {
+          return Response.json({
+            access_token: "access-token",
+            expires_in: 3600,
+            refresh_token: "refresh-token",
+            token_type: "bearer",
+            user: {
+              id: userId,
+              email,
+            },
+          });
+        }
+
+        throw new Error(`Unexpected request: ${method} ${url}`);
+      },
+    );
+
+    const response = await fetchRequest(
+      new Request("https://api.example.test/auth/telegram/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password: "new-secure-password",
+          token,
+        }),
+      }),
+      createEnv({
+        SUPABASE_PUBLISHABLE_KEY: "publishable",
+        SUPABASE_SECRET_KEY: "secret",
+        SUPABASE_URL: "https://project.supabase.co",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      access_token: "access-token",
+      refresh_token: "refresh-token",
+    });
+    expect(
+      fetchSpy.mock.calls.some(([input, init]) => {
+        const url = input instanceof Request ? input.url : String(input);
+        const method =
+          input instanceof Request ? input.method : (init?.method ?? "GET");
+
+        return url.endsWith("/auth/v1/admin/users") && method === "POST";
+      }),
+    ).toBe(false);
   });
 
   it("rejects malformed Telegram registration tokens before database access", async () => {

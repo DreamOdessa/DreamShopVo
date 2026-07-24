@@ -1,3 +1,4 @@
+import { Send } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,6 +25,9 @@ export default async function ForgotPasswordPage({
 }: ForgotPasswordPageProps) {
   const params = await searchParams;
   const nextPath = safeNextPath(params.next);
+  const telegramUsername =
+    process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.trim() ?? "";
+  const telegramEnabled = /^[A-Za-z0-9_]{5,32}$/.test(telegramUsername);
 
   return (
     <main className="auth-page">
@@ -42,10 +46,27 @@ export default async function ForgotPasswordPage({
         <div className="auth-heading">
           <h1 id="forgot-password-title">Відновлення пароля</h1>
           <p>
-            Вкажіть email акаунта. Ми надішлемо захищене посилання для створення
-            нового пароля.
+            Відновіть доступ через підтверджений Telegram або електронну пошту.
           </p>
         </div>
+
+        {telegramEnabled ? (
+          <>
+            <div className="auth-provider-list">
+              <a
+                className="auth-provider-button"
+                href={`https://t.me/${telegramUsername}?start=recover`}
+                rel="noreferrer"
+              >
+                <Send aria-hidden size={19} strokeWidth={1.8} />
+                Відновити через Telegram
+              </a>
+            </div>
+            <div className="auth-divider">
+              <span>або через email</span>
+            </div>
+          </>
+        ) : null}
 
         <ForgotPasswordForm nextPath={nextPath} />
 

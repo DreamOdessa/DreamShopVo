@@ -56,25 +56,27 @@ export async function completeTelegramRegistration(
       },
     );
   } catch {
-    return errorState("Сервіс реєстрації тимчасово недоступний.");
+    return errorState("Сервіс Telegram тимчасово недоступний.");
   }
 
   if (!response.ok) {
     if (response.status === 409) {
-      return errorState("Акаунт із цим номером уже існує.");
+      return errorState(
+        "Цей номер пов’язаний з іншим способом входу.",
+      );
     }
 
     if (response.status === 400) {
       return errorState("Посилання недійсне або вже використане.");
     }
 
-    return errorState("Сервіс реєстрації тимчасово недоступний.");
+    return errorState("Сервіс Telegram тимчасово недоступний.");
   }
 
   const tokens = sessionTokens(await response.json());
 
   if (!tokens) {
-    return errorState("Сервіс реєстрації повернув некоректну відповідь.");
+    return errorState("Сервіс Telegram повернув некоректну відповідь.");
   }
 
   const supabase = await createClient();

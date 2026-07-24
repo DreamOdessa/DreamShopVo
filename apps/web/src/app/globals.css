@@ -2693,6 +2693,64 @@ input:focus-visible {
   outline: 3px solid rgba(28, 127, 145, 0.14);
 }
 
+.checkout-input-wrap {
+  position: relative;
+  display: block;
+}
+
+.checkout-input-wrap > svg:first-child {
+  position: absolute;
+  top: 50%;
+  left: 0.78rem;
+  z-index: 1;
+  color: #648287;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.checkout-input-wrap > input {
+  padding-right: 2.5rem;
+  padding-left: 2.45rem;
+}
+
+.checkout-input-spinner {
+  position: absolute;
+  top: calc(50% - 8px);
+  right: 0.8rem;
+  color: #176b78;
+  pointer-events: none;
+}
+
+.checkout-delivery-status {
+  display: flex;
+  min-height: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  color: #667e82;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.checkout-inline-action {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  background: transparent;
+  color: #176b78;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 720;
+}
+
+.checkout-inline-action:focus-visible {
+  border-radius: 2px;
+  outline: 3px solid rgba(28, 127, 145, 0.18);
+  outline-offset: 3px;
+}
+
 .checkout-check {
   display: flex;
   min-height: 32px;

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { CheckoutForm } from "../../../components/storefront/checkout-form";
+import { getApiUrl } from "../../../lib/env";
 import { createClient } from "../../../lib/supabase/server";
 
 export const metadata: Metadata = {
@@ -44,6 +45,7 @@ export default async function CheckoutPage() {
       </div>
 
       <CheckoutForm
+        apiUrl={getApiUrl()}
         initialProfile={{
           firstName: profile?.first_name ?? "",
           lastName: profile?.last_name ?? "",

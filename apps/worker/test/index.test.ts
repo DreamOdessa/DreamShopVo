@@ -11,6 +11,7 @@ import {
 function createEnv(overrides: Partial<WorkerEnv> = {}): WorkerEnv {
   return {
     ALLOWED_ORIGINS: "",
+    NOVA_POSHTA_API_KEY: "",
     PRODUCT_MEDIA: {
       delete: vi.fn(),
       get: vi.fn().mockResolvedValue(null),
@@ -48,6 +49,7 @@ describe("DreamShop Worker", () => {
       status: "ok",
       services: {
         media: true,
+        novaPoshta: false,
         supabase: true,
         telegram: false,
         telegramOrders: false,
@@ -87,6 +89,24 @@ describe("DreamShop Worker", () => {
 
     expect(response.status).toBe(401);
     expect(await response.json()).toMatchObject({ error: "unauthorized" });
+  });
+
+  it("rejects delivery lookup without a bearer token", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const response = await fetchRequest(
+      new Request(
+        "https://api.example.test/delivery/nova-poshta/cities?q=Одеса",
+      ),
+      createEnv({
+        NOVA_POSHTA_API_KEY: "configured",
+        SUPABASE_PUBLISHABLE_KEY: "publishable",
+        SUPABASE_URL: "https://project.supabase.co",
+      }),
+    );
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: "unauthorized" });
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it("rejects unsupported upload types before writing to R2", async () => {

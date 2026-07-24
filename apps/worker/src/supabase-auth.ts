@@ -19,7 +19,7 @@ function getBearerToken(request: Request) {
   return token;
 }
 
-export async function requireAdmin(
+export async function requireUser(
   request: Request,
   env: WorkerEnv,
 ): Promise<User> {
@@ -37,9 +37,18 @@ export async function requireAdmin(
     throw new HttpError(401, "unauthorized", "The session is invalid or expired.");
   }
 
-  if (data.user.app_metadata?.role !== "admin") {
+  return data.user;
+}
+
+export async function requireAdmin(
+  request: Request,
+  env: WorkerEnv,
+): Promise<User> {
+  const user = await requireUser(request, env);
+
+  if (user.app_metadata?.role !== "admin") {
     throw new HttpError(403, "forbidden", "Administrator access is required.");
   }
 
-  return data.user;
+  return user;
 }

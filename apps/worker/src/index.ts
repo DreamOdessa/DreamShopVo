@@ -11,6 +11,10 @@ import {
   handleTelegramWebhook,
   signInWithTelegramPhone,
 } from "./telegram";
+import {
+  getNovaPoshtaWarehouses,
+  searchNovaPoshtaCities,
+} from "./nova-poshta";
 import type { WorkerEnv } from "./types";
 
 export type { WorkerEnv } from "./types";
@@ -27,6 +31,7 @@ async function handleRequest(request: Request, env: WorkerEnv) {
       status: "ok",
       services: {
         media: Boolean(env.PRODUCT_MEDIA),
+        novaPoshta: Boolean(env.NOVA_POSHTA_API_KEY),
         supabase: Boolean(
           env.SUPABASE_URL &&
             env.SUPABASE_PUBLISHABLE_KEY &&
@@ -76,12 +81,28 @@ async function handleRequest(request: Request, env: WorkerEnv) {
   }
 
   if (
+    pathname === "/delivery/nova-poshta/cities" &&
+    request.method === "GET"
+  ) {
+    return searchNovaPoshtaCities(request, env);
+  }
+
+  if (
+    pathname === "/delivery/nova-poshta/warehouses" &&
+    request.method === "GET"
+  ) {
+    return getNovaPoshtaWarehouses(request, env);
+  }
+
+  if (
     pathname === "/admin/media" ||
     pathname.startsWith("/media/") ||
     pathname.startsWith("/admin/media/") ||
     pathname === "/telegram/webhook" ||
     pathname === "/auth/telegram/complete" ||
-    pathname === "/auth/phone/login"
+    pathname === "/auth/phone/login" ||
+    pathname === "/delivery/nova-poshta/cities" ||
+    pathname === "/delivery/nova-poshta/warehouses"
   ) {
     throw new HttpError(405, "method_not_allowed", "Method is not allowed.");
   }

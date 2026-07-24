@@ -9,8 +9,10 @@ import { createOrder } from "../../app/(store)/checkout/actions";
 import { initialCheckoutState } from "../../app/(store)/checkout/checkout-state";
 import { cartSubtotal } from "../../lib/cart";
 import { useCart } from "./cart-provider";
+import { NovaPoshtaFields } from "./nova-poshta-fields";
 
 type CheckoutFormProps = {
+  apiUrl: string;
   initialProfile: {
     firstName: string;
     lastName: string;
@@ -24,7 +26,7 @@ const priceFormatter = new Intl.NumberFormat("uk-UA", {
   style: "currency",
 });
 
-export function CheckoutForm({ initialProfile }: CheckoutFormProps) {
+export function CheckoutForm({ apiUrl, initialProfile }: CheckoutFormProps) {
   const { clear, hydrated, items } = useCart();
   const [state, formAction, pending] = useActionState(
     createOrder,
@@ -122,36 +124,7 @@ export function CheckoutForm({ initialProfile }: CheckoutFormProps) {
             <h2 id="delivery-title">Доставка</h2>
           </div>
           <div className="checkout-field-grid">
-            <label className="checkout-field">
-              <span>Місто</span>
-              <input
-                autoComplete="address-level2"
-                maxLength={120}
-                minLength={2}
-                name="city"
-                required
-              />
-            </label>
-            <label className="checkout-field">
-              <span>Спосіб доставки</span>
-              <select defaultValue="post_office" name="deliveryMethod">
-                <option value="post_office">Відділення пошти</option>
-                <option value="address">Адресна доставка</option>
-                <option value="schedule">За розкладом</option>
-                <option value="taxi">Таксі</option>
-              </select>
-            </label>
-            <label className="checkout-field checkout-field-wide">
-              <span>Відділення або адреса</span>
-              <textarea
-                maxLength={500}
-                minLength={2}
-                name="deliveryDetails"
-                placeholder="Наприклад: Нова пошта, відділення №12"
-                required
-                rows={3}
-              />
-            </label>
+            <NovaPoshtaFields apiUrl={apiUrl} />
             <label className="checkout-field checkout-field-wide">
               <span>Назва закладу (необов’язково)</span>
               <input maxLength={160} name="establishmentName" />

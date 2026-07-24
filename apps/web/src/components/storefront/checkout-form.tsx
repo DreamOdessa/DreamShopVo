@@ -13,6 +13,13 @@ import { NovaPoshtaFields } from "./nova-poshta-fields";
 
 type CheckoutFormProps = {
   apiUrl: string;
+  initialAddress: {
+    city: string;
+    deliveryDetails: string;
+    deliveryMethod: "address" | "post_office" | "schedule" | "taxi";
+    establishmentName: string;
+    isPrivatePerson: boolean;
+  } | null;
   initialProfile: {
     firstName: string;
     lastName: string;
@@ -26,7 +33,11 @@ const priceFormatter = new Intl.NumberFormat("uk-UA", {
   style: "currency",
 });
 
-export function CheckoutForm({ apiUrl, initialProfile }: CheckoutFormProps) {
+export function CheckoutForm({
+  apiUrl,
+  initialAddress,
+  initialProfile,
+}: CheckoutFormProps) {
   const { clear, hydrated, items } = useCart();
   const [state, formAction, pending] = useActionState(
     createOrder,
@@ -124,14 +135,29 @@ export function CheckoutForm({ apiUrl, initialProfile }: CheckoutFormProps) {
             <h2 id="delivery-title">Доставка</h2>
           </div>
           <div className="checkout-field-grid">
-            <NovaPoshtaFields apiUrl={apiUrl} />
+            <NovaPoshtaFields
+              apiUrl={apiUrl}
+              initialAddress={initialAddress}
+            />
             <label className="checkout-field checkout-field-wide">
               <span>Назва закладу (необов’язково)</span>
-              <input maxLength={160} name="establishmentName" />
+              <input
+                defaultValue={initialAddress?.establishmentName ?? ""}
+                maxLength={160}
+                name="establishmentName"
+              />
             </label>
             <label className="checkout-check">
-              <input defaultChecked name="isPrivatePerson" type="checkbox" />
+              <input
+                defaultChecked={initialAddress?.isPrivatePerson ?? true}
+                name="isPrivatePerson"
+                type="checkbox"
+              />
               <span>Приватна особа</span>
+            </label>
+            <label className="checkout-check">
+              <input defaultChecked name="saveAddress" type="checkbox" />
+              <span>Зберегти дані доставки</span>
             </label>
           </div>
         </section>

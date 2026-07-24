@@ -125,6 +125,33 @@ export async function markAllNotificationsRead() {
   revalidatePath("/account");
 }
 
+export async function deleteSavedAddress(formData: FormData) {
+  const addressId = normalizedValue(formData, "addressId");
+
+  if (!isUuid(addressId)) {
+    return;
+  }
+
+  const { supabase, userId } = await authenticatedUser();
+
+  if (!userId) {
+    redirect("/auth");
+  }
+
+  const { error } = await supabase
+    .from("customer_addresses")
+    .delete()
+    .eq("id", addressId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error("Unable to delete the saved address.");
+  }
+
+  revalidatePath("/account");
+  revalidatePath("/checkout");
+}
+
 export async function openAdmin() {
   const supabase = await createClient();
   const { error } = await supabase.auth.refreshSession();

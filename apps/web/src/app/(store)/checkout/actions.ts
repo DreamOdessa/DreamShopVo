@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import type { CheckoutState } from "./checkout-state";
 import { createClient } from "../../../lib/supabase/server";
 
@@ -15,6 +17,8 @@ const PAYMENT_METHODS = new Set([
   "card_on_delivery",
   "bank_transfer",
 ]);
+
+type DeliveryMethod = "address" | "post_office" | "schedule" | "taxi";
 
 function valueFrom(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -151,6 +155,42 @@ export async function createOrder(
         ? "Один із товарів уже недоступний. Оновіть кошик."
         : "Не вдалося створити замовлення. Спробуйте ще раз.",
     );
+  }
+
+  if (formData.get("saveAddress") === "on") {
+    const userId = claimsData.claims.sub;
+    const address = {
+      city,
+      delivery_details: deliveryDetails,
+      delivery_method: deliveryMethod as DeliveryMethod,
+      establishment_name: establishmentName || null,
+      first_name: firstName,
+      is_default: true,
+      is_private_person: formData.get("isPrivatePerson") === "on",
+      label: "Основна",
+      last_name: lastName,
+      phone,
+      user_id: userId,
+    };
+    const { data: existingAddress } = await supabase
+      .from("customer_addresses")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("is_default", true)
+      .maybeSingle();
+
+    if (existingAddress?.id) {
+      await supabase
+        .from("customer_addresses")
+        .update(address)
+        .eq("id", existingAddress.id)
+        .eq("user_id", userId);
+    } else {
+      await supabase.from("customer_addresses").insert(address);
+    }
+
+    revalidatePath("/account");
+    revalidatePath("/checkout");
   }
 
   return {

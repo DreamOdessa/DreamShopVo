@@ -70,6 +70,38 @@ end as customer_manages_own_wishlist
 from public.wishlist_items;
 delete from public.wishlist_items
 where user_id = '00000000-0000-4000-8000-000000000001';
+insert into public.customer_addresses (
+  id,
+  user_id,
+  first_name,
+  last_name,
+  phone,
+  city,
+  delivery_method,
+  delivery_details,
+  is_default
+)
+values (
+  '30000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000001',
+  'Customer',
+  'Example',
+  '+380671234567',
+  'Odesa',
+  'post_office',
+  'Відділення 1',
+  true
+);
+update public.customer_addresses
+set delivery_details = 'Відділення 2'
+where id = '30000000-0000-4000-8000-000000000001';
+select 1 / case
+  when count(*) = 1 and min(delivery_details) = 'Відділення 2' then 1
+  else 0
+end as customer_manages_own_address
+from public.customer_addresses;
+delete from public.customer_addresses
+where id = '30000000-0000-4000-8000-000000000001';
 select 1 / case
   when count(*) = 1 then 1
   else 0

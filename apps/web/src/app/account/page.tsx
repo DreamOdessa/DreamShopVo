@@ -6,6 +6,7 @@ import {
   CheckCheck,
   LayoutDashboard,
   LogOut,
+  MapPin,
   PackageOpen,
   ShieldCheck,
 } from "lucide-react";
@@ -27,6 +28,7 @@ import {
   markNotificationRead,
   openAdmin,
 } from "./actions";
+import { DeleteAddressButton } from "./delete-address-button";
 import { ProfileForm } from "./profile-form";
 
 export const metadata: Metadata = {
@@ -67,6 +69,24 @@ type AccountNotification = {
   title: string;
 };
 
+type SavedAddress = {
+  city: string;
+  delivery_details: string;
+  delivery_method: "address" | "post_office" | "schedule" | "taxi";
+  first_name: string;
+  id: string;
+  label: string;
+  last_name: string;
+  phone: string;
+};
+
+const deliveryMethodLabels: Record<SavedAddress["delivery_method"], string> = {
+  address: "Адресна доставка",
+  post_office: "Нова пошта",
+  schedule: "За розкладом",
+  taxi: "Таксі",
+};
+
 const priceFormatter = new Intl.NumberFormat("uk-UA", {
   currency: "UAH",
   maximumFractionDigits: 2,
@@ -94,7 +114,12 @@ export default async function AccountPage() {
     redirect("/auth");
   }
 
-  const [profileResult, ordersResult, notificationsResult] = await Promise.all([
+  const [
+    profileResult,
+    ordersResult,
+    notificationsResult,
+    addressResult,
+  ] = await Promise.all([
     supabase
       .from("profiles")
       .select("first_name,last_name,email,phone,role")
@@ -113,12 +138,21 @@ export default async function AccountPage() {
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(20),
+    supabase
+      .from("customer_addresses")
+      .select(
+        "id,label,first_name,last_name,phone,city,delivery_method,delivery_details",
+      )
+      .eq("user_id", userId)
+      .eq("is_default", true)
+      .maybeSingle(),
   ]);
 
   if (
     profileResult.error ||
     ordersResult.error ||
-    notificationsResult.error
+    notificationsResult.error ||
+    addressResult.error
   ) {
     throw new Error("Unable to load the authenticated account.");
   }
@@ -132,6 +166,7 @@ export default async function AccountPage() {
   const unreadNotifications = notifications.filter(
     (notification) => !notification.read_at,
   ).length;
+  const savedAddress = addressResult.data as SavedAddress | null;
 
   return (
     <main className="account-page">
@@ -230,6 +265,40 @@ export default async function AccountPage() {
             firstName={profile?.first_name ?? ""}
             lastName={profile?.last_name ?? ""}
           />
+        </section>
+
+        <section
+          className="account-address-section"
+          aria-labelledby="address-title"
+        >
+          <div className="account-section-heading">
+            <h2 id="address-title">Збережена доставка</h2>
+            <p>Основні дані для швидкого повторного замовлення.</p>
+          </div>
+          {savedAddress ? (
+            <div className="account-address-details">
+              <span className="account-address-icon">
+                <MapPin aria-hidden size={20} strokeWidth={1.7} />
+              </span>
+              <div>
+                <strong>{savedAddress.label}</strong>
+                <p>
+                  {savedAddress.first_name} {savedAddress.last_name} ·{" "}
+                  {savedAddress.phone}
+                </p>
+                <p>
+                  {deliveryMethodLabels[savedAddress.delivery_method]} ·{" "}
+                  {savedAddress.city}, {savedAddress.delivery_details}
+                </p>
+              </div>
+              <DeleteAddressButton addressId={savedAddress.id} />
+            </div>
+          ) : (
+            <div className="account-address-empty">
+              <MapPin aria-hidden size={25} strokeWidth={1.5} />
+              <p>Дані доставки збережуться після оформлення замовлення.</p>
+            </div>
+          )}
         </section>
 
         <section

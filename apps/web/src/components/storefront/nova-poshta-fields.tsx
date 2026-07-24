@@ -18,10 +18,20 @@ type Warehouse = {
 };
 
 type PickupKind = "branch" | "locker";
+type DeliveryMethod = "address" | "post_office" | "schedule" | "taxi";
 
 type NovaPoshtaFieldsProps = {
   apiUrl: string;
+  initialAddress: {
+    city: string;
+    deliveryDetails: string;
+    deliveryMethod: DeliveryMethod;
+  } | null;
 };
+
+function isDeliveryMethod(value: string): value is DeliveryMethod {
+  return ["address", "post_office", "schedule", "taxi"].includes(value);
+}
 
 async function accessToken() {
   const supabase = createClient();
@@ -62,14 +72,21 @@ async function deliveryRequest<T>(
   return (await response.json()) as T;
 }
 
-export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
-  const [deliveryMethod, setDeliveryMethod] = useState("post_office");
-  const [manualEntry, setManualEntry] = useState(false);
-  const [cityQuery, setCityQuery] = useState("");
+export function NovaPoshtaFields({
+  apiUrl,
+  initialAddress,
+}: NovaPoshtaFieldsProps) {
+  const [deliveryMethod, setDeliveryMethod] = useState(
+    initialAddress?.deliveryMethod ?? "post_office",
+  );
+  const [manualEntry, setManualEntry] = useState(Boolean(initialAddress));
+  const [cityQuery, setCityQuery] = useState(initialAddress?.city ?? "");
   const [selectedCityRef, setSelectedCityRef] = useState("");
   const [cities, setCities] = useState<City[]>([]);
   const [pickupKind, setPickupKind] = useState<PickupKind>("branch");
-  const [warehouseQuery, setWarehouseQuery] = useState("");
+  const [warehouseQuery, setWarehouseQuery] = useState(
+    initialAddress?.deliveryDetails ?? "",
+  );
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [selectedWarehouseRef, setSelectedWarehouseRef] = useState("");
   const [cityLoading, setCityLoading] = useState(false);
@@ -213,6 +230,10 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
   }
 
   function changeDeliveryMethod(value: string) {
+    if (!isDeliveryMethod(value)) {
+      return;
+    }
+
     setDeliveryMethod(value);
     setManualEntry(false);
     setMessage("");
@@ -406,6 +427,7 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
                 : "Адреса або деталі доставки"}
             </span>
             <textarea
+              defaultValue={warehouseQuery}
               maxLength={500}
               minLength={2}
               name="deliveryDetails"

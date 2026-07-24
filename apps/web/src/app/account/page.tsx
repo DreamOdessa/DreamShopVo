@@ -1,5 +1,9 @@
 import {
   ArrowUpRight,
+  Bell,
+  BellOff,
+  Check,
+  CheckCheck,
   LayoutDashboard,
   LogOut,
   PackageOpen,
@@ -18,7 +22,11 @@ import {
 } from "../../lib/orders";
 import { createClient } from "../../lib/supabase/server";
 
-import { openAdmin } from "./actions";
+import {
+  markAllNotificationsRead,
+  markNotificationRead,
+  openAdmin,
+} from "./actions";
 import { ProfileForm } from "./profile-form";
 
 export const metadata: Metadata = {
@@ -50,6 +58,15 @@ type AccountOrder = {
   total: number;
 };
 
+type AccountNotification = {
+  body: string;
+  created_at: string;
+  id: string;
+  order_id: string | null;
+  read_at: string | null;
+  title: string;
+};
+
 const priceFormatter = new Intl.NumberFormat("uk-UA", {
   currency: "UAH",
   maximumFractionDigits: 2,
@@ -58,6 +75,12 @@ const priceFormatter = new Intl.NumberFormat("uk-UA", {
 
 const dateFormatter = new Intl.DateTimeFormat("uk-UA", {
   dateStyle: "medium",
+  timeZone: "Europe/Kyiv",
+});
+
+const notificationDateFormatter = new Intl.DateTimeFormat("uk-UA", {
+  dateStyle: "medium",
+  timeStyle: "short",
   timeZone: "Europe/Kyiv",
 });
 
@@ -71,7 +94,7 @@ export default async function AccountPage() {
     redirect("/auth");
   }
 
-  const [profileResult, ordersResult] = await Promise.all([
+  const [profileResult, ordersResult, notificationsResult] = await Promise.all([
     supabase
       .from("profiles")
       .select("first_name,last_name,email,phone,role")
@@ -84,9 +107,19 @@ export default async function AccountPage() {
       )
       .order("created_at", { ascending: false })
       .limit(20),
+    supabase
+      .from("notifications")
+      .select("id,title,body,order_id,read_at,created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
 
-  if (profileResult.error || ordersResult.error) {
+  if (
+    profileResult.error ||
+    ordersResult.error ||
+    notificationsResult.error
+  ) {
     throw new Error("Unable to load the authenticated account.");
   }
 
@@ -94,6 +127,11 @@ export default async function AccountPage() {
   const orders = (ordersResult.data ?? [])
     .filter((order) => isOrderStatus(order.status))
     .map((order) => order as unknown as AccountOrder);
+  const notifications = (notificationsResult.data ??
+    []) as AccountNotification[];
+  const unreadNotifications = notifications.filter(
+    (notification) => !notification.read_at,
+  ).length;
 
   return (
     <main className="account-page">
@@ -107,6 +145,23 @@ export default async function AccountPage() {
           priority
         />
         <div className="account-header-actions">
+          <Link
+            aria-label={
+              unreadNotifications
+                ? `Сповіщення: ${unreadNotifications} непрочитаних`
+                : "Сповіщення"
+            }
+            className="icon-button account-notification-link"
+            href="#notifications"
+            title="Сповіщення"
+          >
+            <Bell aria-hidden size={20} strokeWidth={1.8} />
+            {unreadNotifications ? (
+              <span aria-hidden className="account-notification-count">
+                {unreadNotifications > 99 ? "99+" : unreadNotifications}
+              </span>
+            ) : null}
+          </Link>
           {profile?.role === "admin" ? (
             <form action={openAdmin}>
               <button
@@ -175,6 +230,88 @@ export default async function AccountPage() {
             firstName={profile?.first_name ?? ""}
             lastName={profile?.last_name ?? ""}
           />
+        </section>
+
+        <section
+          className="account-notifications-section"
+          id="notifications"
+          aria-labelledby="notifications-title"
+        >
+          <div className="account-section-heading">
+            <h2 id="notifications-title">Сповіщення</h2>
+            <p>Оновлення щодо ваших замовлень.</p>
+            {unreadNotifications ? (
+              <form action={markAllNotificationsRead}>
+                <button className="account-mark-all-button" type="submit">
+                  <CheckCheck aria-hidden size={16} strokeWidth={1.8} />
+                  Позначити всі прочитаними
+                </button>
+              </form>
+            ) : null}
+          </div>
+          <div className="account-notifications-list">
+            {notifications.length ? (
+              notifications.map((notification) => (
+                <article
+                  className={`account-notification-row${
+                    notification.read_at ? "" : " is-unread"
+                  }`}
+                  key={notification.id}
+                >
+                  <span className="account-notification-icon">
+                    <Bell aria-hidden size={17} strokeWidth={1.8} />
+                  </span>
+                  <div className="account-notification-copy">
+                    <strong>{notification.title}</strong>
+                    <p>{notification.body}</p>
+                    <time dateTime={notification.created_at}>
+                      {notificationDateFormatter.format(
+                        new Date(notification.created_at),
+                      )}
+                    </time>
+                  </div>
+                  <div className="account-notification-actions">
+                    {notification.order_id ? (
+                      <Link
+                        className="admin-row-button"
+                        href={`/orders/${notification.order_id}`}
+                        title="Відкрити замовлення"
+                      >
+                        <ArrowUpRight
+                          aria-hidden
+                          size={17}
+                          strokeWidth={1.8}
+                        />
+                        <span className="sr-only">Відкрити замовлення</span>
+                      </Link>
+                    ) : null}
+                    {!notification.read_at ? (
+                      <form action={markNotificationRead}>
+                        <input
+                          name="notificationId"
+                          type="hidden"
+                          value={notification.id}
+                        />
+                        <button
+                          aria-label="Позначити сповіщення прочитаним"
+                          className="admin-row-button"
+                          title="Позначити прочитаним"
+                          type="submit"
+                        >
+                          <Check aria-hidden size={17} strokeWidth={1.8} />
+                        </button>
+                      </form>
+                    ) : null}
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="account-notifications-empty">
+                <BellOff aria-hidden size={25} strokeWidth={1.5} />
+                <p>Нових сповіщень поки немає.</p>
+              </div>
+            )}
+          </div>
         </section>
 
         <section className="account-orders-section" aria-labelledby="orders-title">

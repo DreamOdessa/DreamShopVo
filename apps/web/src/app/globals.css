@@ -451,6 +451,28 @@ input:focus-visible {
   gap: 0.65rem;
 }
 
+.account-notification-link {
+  position: relative;
+}
+
+.account-notification-count {
+  display: grid;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 2px solid #fff;
+  border-radius: 10px;
+  place-items: center;
+  background: #b33f35;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .icon-button {
   display: grid;
   width: 42px;
@@ -610,6 +632,7 @@ input:focus-visible {
   opacity: 0.72;
 }
 
+.account-notifications-section,
 .account-orders-section {
   display: grid;
   margin-top: 3rem;
@@ -617,6 +640,111 @@ input:focus-visible {
   grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.3fr);
   border-top: 1px solid #d4e1df;
   gap: 3rem;
+}
+
+.account-mark-all-button {
+  display: inline-flex;
+  margin-top: 1rem;
+  padding: 0;
+  border: 0;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  color: #176b78;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 720;
+  text-align: left;
+}
+
+.account-mark-all-button:hover {
+  color: #0c4f5b;
+  text-decoration: underline;
+}
+
+.account-notifications-list {
+  display: grid;
+  border-top: 1px solid #d4e1df;
+}
+
+.account-notification-row {
+  display: grid;
+  min-width: 0;
+  min-height: 86px;
+  padding: 0.9rem 0;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  border-bottom: 1px solid #d4e1df;
+  align-items: start;
+  gap: 0.8rem;
+}
+
+.account-notification-row.is-unread {
+  box-shadow: inset 3px 0 #277785;
+}
+
+.account-notification-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  place-items: center;
+  background: #e7f2f1;
+  color: #216674;
+}
+
+.account-notification-row.is-unread .account-notification-icon {
+  background: #d6ecea;
+  color: #0c5363;
+}
+
+.account-notification-copy {
+  min-width: 0;
+}
+
+.account-notification-copy strong {
+  color: #234d55;
+  font-size: 0.82rem;
+}
+
+.account-notification-copy p {
+  margin: 0.25rem 0 0;
+  color: #5f777a;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.account-notification-copy time {
+  display: block;
+  margin-top: 0.35rem;
+  color: #839294;
+  font-size: 0.68rem;
+}
+
+.account-notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.account-notification-actions form {
+  display: contents;
+}
+
+.account-notifications-empty {
+  display: grid;
+  min-height: 130px;
+  place-items: center;
+  align-content: center;
+  gap: 0.5rem;
+  color: #7b8c8e;
+  text-align: center;
+}
+
+.account-notifications-empty p {
+  margin: 0;
+  font-size: 0.8rem;
 }
 
 .account-orders-list {
@@ -1602,6 +1730,7 @@ input:focus-visible {
     gap: 1.5rem;
   }
 
+  .account-notifications-section,
   .account-orders-section {
     grid-template-columns: 1fr;
     gap: 1.5rem;

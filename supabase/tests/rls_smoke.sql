@@ -158,6 +158,31 @@ begin
   end;
 end;
 $$;
+set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
+set local request.jwt.claims =
+  '{"sub":"00000000-0000-4000-8000-000000000001","app_metadata":{"role":"customer"}}';
+select 1 / case
+  when count(*) = 3 then 1
+  else 0
+end as customer_reads_own_notifications
+from public.notifications;
+update public.notifications
+set read_at = now()
+where order_id = '20000000-0000-4000-8000-000000000001';
+select 1 / case
+  when count(*) = 3 and bool_and(read_at is not null) then 1
+  else 0
+end as customer_marks_own_notifications_read
+from public.notifications;
+select 1 / case
+  when has_column_privilege(
+    current_user,
+    'public.notifications',
+    'title',
+    'UPDATE'
+  ) = false then 1
+  else 0
+end as customer_cannot_edit_notification_content;
 rollback;
 
 select 1 / case

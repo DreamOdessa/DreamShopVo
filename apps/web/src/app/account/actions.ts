@@ -19,6 +19,24 @@ function errorState(message: string): ProfileActionState {
   return { message, status: "error" };
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
+}
+
+async function authenticatedUser() {
+  const supabase = await createClient();
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+  const userId = claimsData?.claims?.sub;
+
+  return {
+    supabase,
+    userId: claimsError ? undefined : userId,
+  };
+}
+
 export async function updateProfile(
   _previousState: ProfileActionState,
   formData: FormData,
@@ -34,12 +52,9 @@ export async function updateProfile(
     return errorState("Прізвище має містити не більше 80 символів.");
   }
 
-  const supabase = await createClient();
-  const { data: claimsData, error: claimsError } =
-    await supabase.auth.getClaims();
-  const userId = claimsData?.claims?.sub;
+  const { supabase, userId } = await authenticatedUser();
 
-  if (claimsError || !userId) {
+  if (!userId) {
     return errorState("Сесія завершилася. Увійдіть в акаунт повторно.");
   }
 
@@ -61,6 +76,53 @@ export async function updateProfile(
     message: "Профіль збережено.",
     status: "success",
   };
+}
+
+export async function markNotificationRead(formData: FormData) {
+  const notificationId = normalizedValue(formData, "notificationId");
+
+  if (!isUuid(notificationId)) {
+    return;
+  }
+
+  const { supabase, userId } = await authenticatedUser();
+
+  if (!userId) {
+    redirect("/auth");
+  }
+
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("id", notificationId)
+    .eq("user_id", userId)
+    .is("read_at", null);
+
+  if (error) {
+    throw new Error("Unable to update the notification.");
+  }
+
+  revalidatePath("/account");
+}
+
+export async function markAllNotificationsRead() {
+  const { supabase, userId } = await authenticatedUser();
+
+  if (!userId) {
+    redirect("/auth");
+  }
+
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .is("read_at", null);
+
+  if (error) {
+    throw new Error("Unable to update notifications.");
+  }
+
+  revalidatePath("/account");
 }
 
 export async function openAdmin() {

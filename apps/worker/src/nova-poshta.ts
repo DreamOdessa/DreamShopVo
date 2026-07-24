@@ -12,6 +12,8 @@ type NovaResponse = {
   success?: boolean;
 };
 
+type WarehouseKind = "branch" | "locker";
+
 function normalizedQuery(value: string | null, maxLength: number) {
   const normalized = value?.trim().replace(/\s+/g, " ") ?? "";
   return normalized.length <= maxLength ? normalized : "";
@@ -46,49 +48,55 @@ async function novaRequest(
     );
   }
 
-  let response: Response;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const response = await fetch(NOVA_POSHTA_API_URL, {
+        body: JSON.stringify({
+          apiKey: env.NOVA_POSHTA_API_KEY,
+          calledMethod,
+          methodProperties,
+          modelName,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        signal: AbortSignal.timeout(7000),
+      });
+      const payload = response.ok
+        ? ((await response.json()) as NovaResponse)
+        : null;
 
-  try {
-    response = await fetch(NOVA_POSHTA_API_URL, {
-      body: JSON.stringify({
-        apiKey: env.NOVA_POSHTA_API_KEY,
-        calledMethod,
-        methodProperties,
-        modelName,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-      signal: AbortSignal.timeout(7000),
-    });
-  } catch {
-    throw new HttpError(
-      503,
-      "service_unavailable",
-      "Delivery service is temporarily unavailable.",
-    );
+      if (payload?.success && Array.isArray(payload.data)) {
+        return payload.data;
+      }
+    } catch {
+      // Nova Poshta occasionally throttles consecutive directory requests.
+    }
+
+    if (attempt === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+    }
   }
 
-  if (!response.ok) {
-    throw new HttpError(
-      503,
-      "service_unavailable",
-      "Delivery service is temporarily unavailable.",
-    );
-  }
+  throw new HttpError(
+    503,
+    "service_unavailable",
+    "Delivery service is temporarily unavailable.",
+  );
+}
 
-  const payload = (await response.json()) as NovaResponse;
+export function classifyWarehouse(
+  description: string,
+  category: string,
+): WarehouseKind {
+  const source = `${category} ${description}`.toLocaleLowerCase("uk-UA");
 
-  if (!payload.success || !Array.isArray(payload.data)) {
-    throw new HttpError(
-      503,
-      "service_unavailable",
-      "Delivery service returned an invalid response.",
-    );
-  }
-
-  return payload.data;
+  return source.includes("поштомат") ||
+    source.includes("postomat") ||
+    source.includes("parcel locker")
+    ? "locker"
+    : "branch";
 }
 
 export async function searchNovaPoshtaCities(
@@ -138,14 +146,20 @@ export async function getNovaPoshtaWarehouses(
   const url = new URL(request.url);
   const cityRef = normalizedQuery(url.searchParams.get("cityRef"), 64);
   const query = normalizedQuery(url.searchParams.get("q"), 80);
+  const kind = url.searchParams.get("type") ?? "branch";
 
   if (!REF_PATTERN.test(cityRef)) {
     throw new HttpError(400, "invalid_request", "The city is invalid.");
   }
 
+  if (kind !== "branch" && kind !== "locker") {
+    throw new HttpError(400, "invalid_request", "The delivery point is invalid.");
+  }
+
+  const upstreamQuery = query || (kind === "locker" ? "Поштомат" : "");
   const data = await novaRequest(env, "AddressGeneral", "getWarehouses", {
     CityRef: cityRef,
-    FindByString: query,
+    FindByString: upstreamQuery,
     Language: "UA",
     Limit: "100",
     Page: "1",
@@ -155,14 +169,23 @@ export async function getNovaPoshtaWarehouses(
     .filter((warehouse): warehouse is Record<string, unknown> =>
       Boolean(warehouse),
     )
-    .map((warehouse) => ({
-      name:
+    .map((warehouse) => {
+      const name =
         stringValue(warehouse, "Description", 500) ||
-        stringValue(warehouse, "ShortAddress", 500),
-      number: stringValue(warehouse, "Number", 20),
-      ref: stringValue(warehouse, "Ref", 64),
-    }))
-    .filter(({ name, ref }) => name && REF_PATTERN.test(ref))
+        stringValue(warehouse, "ShortAddress", 500);
+      const category = stringValue(warehouse, "CategoryOfWarehouse", 80);
+
+      return {
+        kind: classifyWarehouse(name, category),
+        name,
+        number: stringValue(warehouse, "Number", 20),
+        ref: stringValue(warehouse, "Ref", 64),
+      };
+    })
+    .filter(
+      ({ kind: warehouseKind, name, ref }) =>
+        warehouseKind === kind && name && REF_PATTERN.test(ref),
+    )
     .slice(0, 100);
 
   return json(request, env, { warehouses });

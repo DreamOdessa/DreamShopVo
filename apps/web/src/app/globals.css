@@ -2721,6 +2721,62 @@ input:focus-visible {
   pointer-events: none;
 }
 
+.checkout-pickup-type {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.checkout-pickup-type legend {
+  margin-bottom: 0.45rem;
+  color: #3f6267;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.checkout-segmented {
+  display: grid;
+  width: min(100%, 440px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid #cbd9d6;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.checkout-segmented button {
+  display: flex;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0.65rem 0.8rem;
+  border: 0;
+  background: #fff;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  color: #557278;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.checkout-segmented button + button {
+  border-left: 1px solid #cbd9d6;
+}
+
+.checkout-segmented button.is-active {
+  background: #e5f1ef;
+  color: #176b78;
+}
+
+.checkout-segmented button:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid rgba(28, 127, 145, 0.18);
+  outline-offset: -3px;
+}
+
 .checkout-delivery-status {
   display: flex;
   min-height: 24px;

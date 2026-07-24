@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, MapPin } from "lucide-react";
+import { Building2, LoaderCircle, MapPin, Package, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { createClient } from "../../lib/supabase/client";
@@ -11,10 +11,13 @@ type City = {
 };
 
 type Warehouse = {
+  kind: PickupKind;
   name: string;
   number: string;
   ref: string;
 };
+
+type PickupKind = "branch" | "locker";
 
 type NovaPoshtaFieldsProps = {
   apiUrl: string;
@@ -65,6 +68,8 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
   const [cityQuery, setCityQuery] = useState("");
   const [selectedCityRef, setSelectedCityRef] = useState("");
   const [cities, setCities] = useState<City[]>([]);
+  const [pickupKind, setPickupKind] = useState<PickupKind>("branch");
+  const [warehouseQuery, setWarehouseQuery] = useState("");
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseRef, setWarehouseRef] = useState("");
   const [cityLoading, setCityLoading] = useState(false);
@@ -130,8 +135,7 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
     }
 
     const controller = new AbortController();
-
-    async function loadWarehouses() {
+    const timeout = window.setTimeout(async () => {
       setWarehousesLoading(true);
       setMessage("");
 
@@ -139,7 +143,11 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
         const data = await deliveryRequest<{ warehouses: Warehouse[] }>(
           apiUrl,
           "/delivery/nova-poshta/warehouses",
-          { cityRef: selectedCityRef },
+          {
+            cityRef: selectedCityRef,
+            q: warehouseQuery.trim(),
+            type: pickupKind,
+          },
           controller.signal,
         );
         const nextWarehouses = Array.isArray(data.warehouses)
@@ -149,8 +157,12 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
         setWarehouses(nextWarehouses);
         setMessage(
           nextWarehouses.length
-            ? "Оберіть потрібне відділення."
-            : "Для цього населеного пункту відділення не знайдені.",
+            ? pickupKind === "branch"
+              ? "Оберіть потрібне відділення."
+              : "Оберіть потрібний поштомат."
+            : pickupKind === "branch"
+              ? "Відділення за цим запитом не знайдені."
+              : "Поштомати за цим запитом не знайдені.",
         );
       } catch (error) {
         if (!controller.signal.aborted) {
@@ -158,7 +170,7 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
           setMessage(
             error instanceof Error && error.message === "auth_required"
               ? "Сесію завершено. Оновіть сторінку та увійдіть знову."
-              : "Не вдалося завантажити відділення. Скористайтеся ручним введенням.",
+              : "Не вдалося завантажити точки видачі. Скористайтеся ручним введенням.",
           );
         }
       } finally {
@@ -166,17 +178,23 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
           setWarehousesLoading(false);
         }
       }
-    }
-
-    void loadWarehouses();
+    }, 300);
 
     return () => {
+      window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [apiUrl, selectedCityRef, usesNovaPoshta]);
+  }, [
+    apiUrl,
+    pickupKind,
+    selectedCityRef,
+    usesNovaPoshta,
+    warehouseQuery,
+  ]);
 
   function selectCity(value: string) {
     setCityQuery(value);
+    setWarehouseQuery("");
     setWarehouseRef("");
     const selectedCity = cities.find((city) => city.name === value);
 
@@ -192,6 +210,14 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
     setMessage("");
   }
 
+  function changePickupKind(value: PickupKind) {
+    setPickupKind(value);
+    setWarehouseQuery("");
+    setWarehouseRef("");
+    setWarehouses([]);
+    setMessage("");
+  }
+
   return (
     <>
       <label className="checkout-field">
@@ -201,7 +227,7 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
           onChange={(event) => changeDeliveryMethod(event.target.value)}
           value={deliveryMethod}
         >
-          <option value="post_office">Нова пошта, відділення</option>
+          <option value="post_office">Нова пошта</option>
           <option value="address">Адресна доставка</option>
           <option value="schedule">За розкладом</option>
           <option value="taxi">Таксі</option>
@@ -241,8 +267,67 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
             </datalist>
           </label>
 
+          <fieldset className="checkout-pickup-type checkout-field-wide">
+            <legend>Куди доставити</legend>
+            <div className="checkout-segmented">
+              <button
+                aria-pressed={pickupKind === "branch"}
+                className={pickupKind === "branch" ? "is-active" : ""}
+                onClick={() => changePickupKind("branch")}
+                type="button"
+              >
+                <Building2 aria-hidden size={17} />
+                Відділення
+              </button>
+              <button
+                aria-pressed={pickupKind === "locker"}
+                className={pickupKind === "locker" ? "is-active" : ""}
+                onClick={() => changePickupKind("locker")}
+                type="button"
+              >
+                <Package aria-hidden size={17} />
+                Поштомат
+              </button>
+            </div>
+          </fieldset>
+
           <label className="checkout-field checkout-field-wide">
-            <span>Відділення</span>
+            <span>
+              {pickupKind === "branch"
+                ? "Знайти відділення"
+                : "Знайти поштомат"}
+            </span>
+            <span className="checkout-input-wrap">
+              <Search aria-hidden size={17} />
+              <input
+                disabled={!selectedCityRef}
+                maxLength={80}
+                onChange={(event) => {
+                  setWarehouseQuery(event.target.value);
+                  setWarehouseRef("");
+                }}
+                placeholder={
+                  selectedCityRef
+                    ? pickupKind === "branch"
+                      ? "Введіть номер або назву вулиці"
+                      : "Введіть номер поштомата або вулицю"
+                    : "Спочатку оберіть місто"
+                }
+                type="search"
+                value={warehouseQuery}
+              />
+              {warehousesLoading ? (
+                <LoaderCircle
+                  aria-hidden
+                  className="auth-spinner checkout-input-spinner"
+                  size={17}
+                />
+              ) : null}
+            </span>
+          </label>
+
+          <label className="checkout-field checkout-field-wide">
+            <span>{pickupKind === "branch" ? "Відділення" : "Поштомат"}</span>
             <select
               aria-describedby="nova-poshta-status"
               disabled={!selectedCityRef || warehousesLoading}
@@ -253,9 +338,11 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
             >
               <option value="">
                 {warehousesLoading
-                  ? "Завантаження відділень..."
+                  ? "Оновлення списку..."
                   : selectedCityRef
-                    ? "Оберіть відділення"
+                    ? pickupKind === "branch"
+                      ? "Оберіть відділення"
+                      : "Оберіть поштомат"
                     : "Спочатку оберіть місто зі списку"}
               </option>
               {warehouses.map((warehouse) => (
@@ -300,7 +387,9 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
           <label className="checkout-field checkout-field-wide">
             <span>
               {deliveryMethod === "post_office"
-                ? "Відділення"
+                ? pickupKind === "branch"
+                  ? "Відділення"
+                  : "Поштомат"
                 : "Адреса або деталі доставки"}
             </span>
             <textarea
@@ -309,7 +398,9 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
               name="deliveryDetails"
               placeholder={
                 deliveryMethod === "post_office"
-                  ? "Наприклад: Нова пошта, відділення №12"
+                  ? pickupKind === "branch"
+                    ? "Наприклад: Нова пошта, відділення №12"
+                    : "Наприклад: Нова пошта, поштомат №34188"
                   : "Вкажіть адресу та необхідні деталі"
               }
               required

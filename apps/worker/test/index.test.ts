@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { fetchRequest, type WorkerEnv } from "../src/index";
 import { getMediaKey, isSupportedImageBytes } from "../src/media";
+import { classifyWarehouse } from "../src/nova-poshta";
 import { processOrderOutbox } from "../src/orders";
 import {
   normalizeTelegramPhone,
@@ -107,6 +108,12 @@ describe("DreamShop Worker", () => {
     expect(response.status).toBe(401);
     expect(await response.json()).toMatchObject({ error: "unauthorized" });
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("separates Nova Poshta branches from parcel lockers", () => {
+    expect(classifyWarehouse("Відділення №12", "Branch")).toBe("branch");
+    expect(classifyWarehouse("Поштомат №34188", "Postomat")).toBe("locker");
+    expect(classifyWarehouse("Parcel locker 24", "")).toBe("locker");
   });
 
   it("rejects unsupported upload types before writing to R2", async () => {

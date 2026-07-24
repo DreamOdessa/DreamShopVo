@@ -1,7 +1,7 @@
 "use client";
 
 import { Building2, LoaderCircle, MapPin, Package, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { createClient } from "../../lib/supabase/client";
 
@@ -71,10 +71,11 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
   const [pickupKind, setPickupKind] = useState<PickupKind>("branch");
   const [warehouseQuery, setWarehouseQuery] = useState("");
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [warehouseRef, setWarehouseRef] = useState("");
+  const [selectedWarehouseRef, setSelectedWarehouseRef] = useState("");
   const [cityLoading, setCityLoading] = useState(false);
   const [warehousesLoading, setWarehousesLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const warehouseInputRef = useRef<HTMLInputElement>(null);
 
   const usesNovaPoshta = deliveryMethod === "post_office" && !manualEntry;
 
@@ -129,7 +130,12 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
   useEffect(() => {
     if (!usesNovaPoshta || !selectedCityRef) {
       setWarehouses([]);
-      setWarehouseRef("");
+      setSelectedWarehouseRef("");
+      setWarehousesLoading(false);
+      return;
+    }
+
+    if (selectedWarehouseRef) {
       setWarehousesLoading(false);
       return;
     }
@@ -145,7 +151,7 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
           "/delivery/nova-poshta/warehouses",
           {
             cityRef: selectedCityRef,
-            q: warehouseQuery.trim(),
+            q: warehouseQuery.trim().slice(0, 80),
             type: pickupKind,
           },
           controller.signal,
@@ -188,6 +194,7 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
     apiUrl,
     pickupKind,
     selectedCityRef,
+    selectedWarehouseRef,
     usesNovaPoshta,
     warehouseQuery,
   ]);
@@ -195,7 +202,8 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
   function selectCity(value: string) {
     setCityQuery(value);
     setWarehouseQuery("");
-    setWarehouseRef("");
+    setSelectedWarehouseRef("");
+    warehouseInputRef.current?.setCustomValidity("");
     const selectedCity = cities.find((city) => city.name === value);
 
     setSelectedCityRef(selectedCity?.ref ?? "");
@@ -213,9 +221,34 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
   function changePickupKind(value: PickupKind) {
     setPickupKind(value);
     setWarehouseQuery("");
-    setWarehouseRef("");
+    setSelectedWarehouseRef("");
     setWarehouses([]);
     setMessage("");
+    warehouseInputRef.current?.setCustomValidity("");
+  }
+
+  function selectWarehouse(value: string, input: HTMLInputElement) {
+    setWarehouseQuery(value);
+    const selectedWarehouse = warehouses.find(
+      (warehouse) => warehouse.name === value,
+    );
+
+    setSelectedWarehouseRef(selectedWarehouse?.ref ?? "");
+    input.setCustomValidity(
+      value && !selectedWarehouse
+        ? pickupKind === "branch"
+          ? "Оберіть відділення зі списку."
+          : "Оберіть поштомат зі списку."
+        : "",
+    );
+
+    if (selectedWarehouse) {
+      setMessage(
+        pickupKind === "branch"
+          ? "Відділення обрано."
+          : "Поштомат обрано.",
+      );
+    }
   }
 
   return (
@@ -292,28 +325,28 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
           </fieldset>
 
           <label className="checkout-field checkout-field-wide">
-            <span>
-              {pickupKind === "branch"
-                ? "Знайти відділення"
-                : "Знайти поштомат"}
-            </span>
+            <span>{pickupKind === "branch" ? "Відділення" : "Поштомат"}</span>
             <span className="checkout-input-wrap">
               <Search aria-hidden size={17} />
               <input
+                aria-describedby="nova-poshta-status"
                 disabled={!selectedCityRef}
-                maxLength={80}
-                onChange={(event) => {
-                  setWarehouseQuery(event.target.value);
-                  setWarehouseRef("");
-                }}
+                list="nova-poshta-warehouses"
+                maxLength={500}
+                minLength={2}
+                name="deliveryDetails"
+                onChange={(event) =>
+                  selectWarehouse(event.target.value, event.currentTarget)
+                }
                 placeholder={
                   selectedCityRef
                     ? pickupKind === "branch"
-                      ? "Введіть номер або назву вулиці"
+                      ? "Введіть номер або вулицю та оберіть зі списку"
                       : "Введіть номер поштомата або вулицю"
                     : "Спочатку оберіть місто"
                 }
-                type="search"
+                ref={warehouseInputRef}
+                required
                 value={warehouseQuery}
               />
               {warehousesLoading ? (
@@ -324,33 +357,13 @@ export function NovaPoshtaFields({ apiUrl }: NovaPoshtaFieldsProps) {
                 />
               ) : null}
             </span>
-          </label>
-
-          <label className="checkout-field checkout-field-wide">
-            <span>{pickupKind === "branch" ? "Відділення" : "Поштомат"}</span>
-            <select
-              aria-describedby="nova-poshta-status"
-              disabled={!selectedCityRef || warehousesLoading}
-              name="deliveryDetails"
-              onChange={(event) => setWarehouseRef(event.target.value)}
-              required
-              value={warehouseRef}
-            >
-              <option value="">
-                {warehousesLoading
-                  ? "Оновлення списку..."
-                  : selectedCityRef
-                    ? pickupKind === "branch"
-                      ? "Оберіть відділення"
-                      : "Оберіть поштомат"
-                    : "Спочатку оберіть місто зі списку"}
-              </option>
+            <datalist id="nova-poshta-warehouses">
               {warehouses.map((warehouse) => (
                 <option key={warehouse.ref} value={warehouse.name}>
                   {warehouse.name}
                 </option>
               ))}
-            </select>
+            </datalist>
           </label>
 
           <div

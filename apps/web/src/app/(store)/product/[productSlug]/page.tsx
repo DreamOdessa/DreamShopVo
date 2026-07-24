@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AddToCartButton } from "../../../../components/storefront/add-to-cart-button";
 import { ProductCard } from "../../../../components/storefront/product-card";
 import { ProductGallery } from "../../../../components/storefront/product-gallery";
 import {
@@ -140,6 +141,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.organic ? <span>Organic</span> : null}
             {product.weight ? <span>{product.weight}</span> : null}
           </div>
+
+          <AddToCartButton
+            product={{
+              id: product.id,
+              imageObjectKey:
+                product.images.find(({ sortOrder }) => sortOrder === 0)
+                  ?.objectKey ?? null,
+              inStock: product.inStock,
+              name: product.name,
+              price: product.price,
+              slug: product.slug,
+            }}
+          />
 
           {product.description ? (
             <div className="product-detail-description">

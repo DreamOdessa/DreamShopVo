@@ -58,6 +58,36 @@ select 1 / case
     then 1
   else 0
 end as customer_cannot_change_verified_phone;
+select 1 / case
+  when count(*) = 1 then 1
+  else 0
+end as customer_creates_order_through_validated_function
+from public.create_order(
+  jsonb_build_array(
+    jsonb_build_object(
+      'productId',
+      (select id from public.products where slug = 'visible'),
+      'quantity',
+      2
+    )
+  ),
+  'Customer',
+  'Example',
+  '+380671234567',
+  'Odesa',
+  'post_office',
+  'Відділення 1',
+  null,
+  true,
+  'cash_on_delivery',
+  false,
+  null
+);
+select 1 / case
+  when count(*) = 1 and min(total) = 20 then 1
+  else 0
+end as customer_reads_own_order
+from public.orders;
 rollback;
 
 begin;
@@ -115,6 +145,39 @@ select 1 / case
     ) then 1
   else 0
 end as clients_cannot_create_telegram_challenges;
+
+select 1 / case
+  when not has_function_privilege(
+      'anon',
+      'public.create_order(jsonb,text,text,text,text,public.delivery_method,text,text,boolean,public.payment_method,boolean,text)',
+      'EXECUTE'
+    )
+    and has_function_privilege(
+      'authenticated',
+      'public.create_order(jsonb,text,text,text,text,public.delivery_method,text,text,boolean,public.payment_method,boolean,text)',
+      'EXECUTE'
+    ) then 1
+  else 0
+end as only_authenticated_clients_can_create_orders;
+
+select 1 / case
+  when not has_function_privilege(
+      'anon',
+      'public.claim_integration_events(text,integer)',
+      'EXECUTE'
+    )
+    and not has_function_privilege(
+      'authenticated',
+      'public.claim_integration_events(text,integer)',
+      'EXECUTE'
+    )
+    and has_function_privilege(
+      'service_role',
+      'public.claim_integration_events(text,integer)',
+      'EXECUTE'
+    ) then 1
+  else 0
+end as only_service_role_can_claim_integration_events;
 
 begin;
 set local role service_role;

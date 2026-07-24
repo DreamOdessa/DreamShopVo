@@ -19,12 +19,18 @@ type AuthPageProps = {
   searchParams: Promise<{
     error?: string;
     mode?: string;
+    next?: string;
   }>;
 };
 
 export default async function AuthPage({ searchParams }: AuthPageProps) {
   const params = await searchParams;
   const mode = params.mode === "register" ? "register" : "login";
+  const nextPath =
+    params.next?.startsWith("/") && !params.next.startsWith("//")
+      ? params.next
+      : "/account";
+  const encodedNext = encodeURIComponent(nextPath);
   const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
   const telegramUsername =
     process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.trim() ?? "";
@@ -47,13 +53,13 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
         <div className="auth-tabs" aria-label="Вхід або реєстрація">
           <Link
             aria-current={mode === "login" ? "page" : undefined}
-            href="/auth"
+            href={`/auth?next=${encodedNext}`}
           >
             Вхід
           </Link>
           <Link
             aria-current={mode === "register" ? "page" : undefined}
-            href="/auth?mode=register"
+            href={`/auth?mode=register&next=${encodedNext}`}
           >
             Реєстрація
           </Link>
@@ -78,6 +84,7 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
 
         <div className="auth-provider-list">
           <form action={signInWithGoogle}>
+            <input name="next" type="hidden" value={nextPath} />
             <button
               aria-disabled={!googleEnabled}
               className="auth-provider-button"
@@ -114,7 +121,7 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
           <span>або через email</span>
         </div>
 
-        <AuthForm mode={mode} />
+        <AuthForm mode={mode} nextPath={nextPath} />
 
         <p className="auth-legal">
           Продовжуючи, ви погоджуєтеся з правилами магазину та обробкою

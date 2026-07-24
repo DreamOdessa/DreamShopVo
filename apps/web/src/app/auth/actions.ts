@@ -40,12 +40,19 @@ function errorState(message: string): AuthActionState {
   return { message, status: "error" };
 }
 
+function safeNextPath(value: string) {
+  return value.startsWith("/") && !value.startsWith("//")
+    ? value
+    : "/account";
+}
+
 export async function signIn(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
   const identifier = valueFrom(formData, "identifier");
   const password = valueFrom(formData, "password", false);
+  const next = safeNextPath(valueFrom(formData, "next"));
   const email = identifier.includes("@") ? identifier.toLowerCase() : null;
   const phone = email ? null : normalizePhone(identifier);
 
@@ -90,7 +97,7 @@ export async function signIn(
     return errorState("Не вдалося увійти. Перевірте дані або підтвердьте email.");
   }
 
-  redirect("/account");
+  redirect(next);
 }
 
 export async function signUp(
@@ -100,6 +107,7 @@ export async function signUp(
   const firstName = valueFrom(formData, "firstName");
   const email = valueFrom(formData, "email").toLowerCase();
   const password = valueFrom(formData, "password", false);
+  const next = safeNextPath(valueFrom(formData, "next"));
 
   if (firstName.length < 2 || firstName.length > 80) {
     return errorState("Вкажіть ім’я від 2 до 80 символів.");
@@ -121,7 +129,7 @@ export async function signUp(
       data: {
         first_name: firstName,
       },
-      emailRedirectTo: `${getSiteUrl()}/auth/callback?next=/account`,
+      emailRedirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
 
@@ -130,7 +138,7 @@ export async function signUp(
   }
 
   if (data.session) {
-    redirect("/account");
+    redirect(next);
   }
 
   return {
@@ -139,17 +147,20 @@ export async function signUp(
   };
 }
 
-export async function signInWithGoogle() {
+export async function signInWithGoogle(formData: FormData) {
+  const next = safeNextPath(valueFrom(formData, "next"));
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${getSiteUrl()}/auth/callback?next=/account`,
+      redirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
 
   if (error || !data.url) {
-    redirect("/auth?error=google");
+    redirect(
+      `/auth?error=google&next=${encodeURIComponent(next)}`,
+    );
   }
 
   redirect(data.url);

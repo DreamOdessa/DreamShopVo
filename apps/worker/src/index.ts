@@ -5,6 +5,7 @@ import {
   serveMedia,
   uploadMedia,
 } from "./media";
+import { processOrderOutbox } from "./orders";
 import {
   completeTelegramRegistration,
   handleTelegramWebhook,
@@ -35,6 +36,10 @@ async function handleRequest(request: Request, env: WorkerEnv) {
           env.TELEGRAM_BOT_TOKEN &&
             env.TELEGRAM_WEBHOOK_SECRET &&
             env.SITE_URL,
+        ),
+        telegramOrders: Boolean(
+          env.TELEGRAM_BOT_TOKEN &&
+            /^-?\d+$/.test(env.TELEGRAM_ORDER_CHAT_ID?.trim() ?? ""),
         ),
       },
     });
@@ -116,5 +121,8 @@ export async function fetchRequest(
 export default {
   fetch(request, env): Promise<Response> {
     return fetchRequest(request, env);
+  },
+  scheduled(_controller, env, context): void {
+    context.waitUntil(processOrderOutbox(env));
   },
 } satisfies ExportedHandler<WorkerEnv>;

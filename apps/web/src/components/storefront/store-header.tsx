@@ -2,6 +2,8 @@ import { CircleUserRound } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { CartLink } from "./cart-link";
+
 export function StoreHeader() {
   return (
     <header className="store-header">
@@ -21,10 +23,13 @@ export function StoreHeader() {
           <Link href="/catalog">Каталог</Link>
         </nav>
 
-        <Link className="icon-button" href="/account" title="Мій акаунт">
-          <CircleUserRound aria-hidden size={21} strokeWidth={1.8} />
-          <span className="sr-only">Мій акаунт</span>
-        </Link>
+        <div className="store-header-actions">
+          <CartLink />
+          <Link className="icon-button" href="/account" title="Мій акаунт">
+            <CircleUserRound aria-hidden size={21} strokeWidth={1.8} />
+            <span className="sr-only">Мій акаунт</span>
+          </Link>
+        </div>
       </div>
     </header>
   );

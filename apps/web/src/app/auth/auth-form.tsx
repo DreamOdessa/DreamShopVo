@@ -11,9 +11,10 @@ import { initialAuthState, type AuthActionState } from "./auth-state";
 
 type AuthFormProps = {
   mode: "login" | "register";
+  nextPath: string;
 };
 
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode, nextPath }: AuthFormProps) {
   const action = mode === "login" ? signIn : signUp;
   const [state, formAction, pending] = useActionState<AuthActionState, FormData>(
     action,
@@ -22,6 +23,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <form action={formAction} className="auth-form">
+      <input name="next" type="hidden" value={nextPath} />
       {mode === "register" ? (
         <label className="auth-field">
           <span>Ім’я</span>

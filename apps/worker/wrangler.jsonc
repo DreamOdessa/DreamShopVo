@@ -15,6 +15,7 @@
       "SUPABASE_SECRET_KEY",
       "ALLOWED_ORIGINS",
       "TELEGRAM_BOT_TOKEN",
+      "TELEGRAM_ORDER_CHAT_ID",
       "TELEGRAM_WEBHOOK_SECRET",
       "SITE_URL"
     ]
@@ -24,5 +25,10 @@
       "binding": "PRODUCT_MEDIA",
       "bucket_name": "dream-shop"
     }
-  ]
+  ],
+  "triggers": {
+    "crons": [
+      "* * * * *"
+    ]
+  }
 }

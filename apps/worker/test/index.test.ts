@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { fetchRequest, type WorkerEnv } from "../src/index";
 import { getMediaKey, isSupportedImageBytes } from "../src/media";
+import { processOrderOutbox } from "../src/orders";
 import {
   normalizeTelegramPhone,
   telegramLoginEmail,
@@ -21,6 +22,7 @@ function createEnv(overrides: Partial<WorkerEnv> = {}): WorkerEnv {
     SUPABASE_SECRET_KEY: "",
     SUPABASE_URL: "",
     TELEGRAM_BOT_TOKEN: "",
+    TELEGRAM_ORDER_CHAT_ID: "",
     TELEGRAM_WEBHOOK_SECRET: "",
     ...overrides,
   };
@@ -48,8 +50,24 @@ describe("DreamShop Worker", () => {
         media: true,
         supabase: true,
         telegram: false,
+        telegramOrders: false,
       },
     });
+  });
+
+  it("does not claim order events until the notification chat is configured", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+
+    await expect(
+      processOrderOutbox(
+        createEnv({
+          SUPABASE_SECRET_KEY: "secret",
+          SUPABASE_URL: "https://project.supabase.co",
+          TELEGRAM_BOT_TOKEN: "token",
+        }),
+      ),
+    ).resolves.toEqual({ processed: 0 });
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it("rejects an admin upload without a bearer token", async () => {

@@ -1,6 +1,7 @@
-import { LogOut, ShieldCheck } from "lucide-react";
+import { LayoutDashboard, LogOut, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { signOut } from "../auth/actions";
@@ -57,11 +58,28 @@ export default async function AccountPage() {
           height={144}
           priority
         />
-        <form action={signOut}>
-          <button aria-label="Вийти" className="icon-button" title="Вийти" type="submit">
-            <LogOut aria-hidden size={20} strokeWidth={1.8} />
-          </button>
-        </form>
+        <div className="account-header-actions">
+          {profile?.role === "admin" ? (
+            <Link
+              aria-label="Адмін-панель"
+              className="icon-button"
+              href="/admin"
+              title="Адмін-панель"
+            >
+              <LayoutDashboard aria-hidden size={20} strokeWidth={1.8} />
+            </Link>
+          ) : null}
+          <form action={signOut}>
+            <button
+              aria-label="Вийти"
+              className="icon-button"
+              title="Вийти"
+              type="submit"
+            >
+              <LogOut aria-hidden size={20} strokeWidth={1.8} />
+            </button>
+          </form>
+        </div>
       </header>
 
       <section className="account-content" aria-labelledby="account-title">

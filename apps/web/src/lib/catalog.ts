@@ -32,6 +32,7 @@ export type CatalogProduct = {
   originalPrice: number | null;
   price: number;
   slug: string;
+  stockQuantity: number | null;
   weight: string | null;
 };
 
@@ -67,6 +68,7 @@ type ProductRow = {
   original_price: number | null;
   price: number;
   slug: string;
+  stock_quantity: number | null;
   weight: string | null;
 };
 
@@ -97,12 +99,13 @@ function mapProduct(row: ProductRow): CatalogProduct | null {
     description: row.description,
     id: row.id,
     images: mapMedia(row.media),
-    inStock: row.in_stock,
+    inStock: row.in_stock && row.stock_quantity !== 0,
     name: row.name,
     organic: row.organic,
     originalPrice: row.original_price,
     price: row.price,
     slug: row.slug,
+    stockQuantity: row.stock_quantity,
     weight: row.weight,
   };
 }
@@ -174,7 +177,7 @@ export const getCatalogProducts = cache(async (
   let query = supabase
     .from("products")
     .select(
-      "id,name,slug,description,price,original_price,weight,in_stock,organic,category:categories!products_category_id_fkey(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)",
+      "id,name,slug,description,price,original_price,weight,in_stock,stock_quantity,organic,category:categories!products_category_id_fkey(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)",
     )
     .eq("is_active", true)
     .limit(120);
@@ -221,7 +224,7 @@ export const getCatalogProduct = cache(async (slug: string) => {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id,name,slug,description,price,original_price,weight,in_stock,organic,category:categories!products_category_id_fkey(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)",
+      "id,name,slug,description,price,original_price,weight,in_stock,stock_quantity,organic,category:categories!products_category_id_fkey(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)",
     )
     .eq("slug", slug)
     .eq("is_active", true)

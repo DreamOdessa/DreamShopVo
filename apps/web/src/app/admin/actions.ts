@@ -33,6 +33,7 @@ type ProductValues = {
   price: number;
   slug: string;
   sort_order: number;
+  stock_quantity: number | null;
   weight: string | null;
 };
 
@@ -148,6 +149,7 @@ function validateProduct(formData: FormData): ValidatedValues<ProductValues> {
   const originalPrice = numericValue(stringValue(formData, "originalPrice"));
   const weight = normalizedText(formData, "weight");
   const sortOrder = numericValue(stringValue(formData, "sortOrder"));
+  const stockQuantity = numericValue(stringValue(formData, "stockQuantity"));
 
   if (name.length < 2 || name.length > 160) {
     return {
@@ -195,6 +197,19 @@ function validateProduct(formData: FormData): ValidatedValues<ProductValues> {
     };
   }
 
+  if (
+    stockQuantity !== null &&
+    (!Number.isInteger(stockQuantity) ||
+      stockQuantity < 0 ||
+      stockQuantity > 1000000)
+  ) {
+    return {
+      error: errorState(
+        "Залишок має бути цілим числом від 0 до 1 000 000.",
+      ),
+    };
+  }
+
   return {
     values: {
       category_id: categoryId,
@@ -208,6 +223,7 @@ function validateProduct(formData: FormData): ValidatedValues<ProductValues> {
       price,
       slug,
       sort_order: sortOrder,
+      stock_quantity: stockQuantity,
       weight: weight || null,
     },
   };

@@ -126,6 +126,20 @@ export function ProductForm({ categories }: ProductFormProps) {
           </span>
         </label>
 
+        <label className="auth-field">
+          <span>Залишок, шт.</span>
+          <span className="auth-input-wrap">
+            <input
+              inputMode="numeric"
+              max={1000000}
+              min={0}
+              name="stockQuantity"
+              placeholder="Без обліку"
+              type="number"
+            />
+          </span>
+        </label>
+
         <label className="auth-field admin-field-wide">
           <span>Опис</span>
           <textarea

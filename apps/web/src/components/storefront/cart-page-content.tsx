@@ -90,7 +90,7 @@ export function CartPageContent() {
                 <input
                   aria-label="Кількість"
                   inputMode="numeric"
-                  max={99}
+                  max={item.stockQuantity ?? 99}
                   min={1}
                   onChange={(event) =>
                     updateQuantity(item.id, Number(event.target.value))
@@ -100,7 +100,9 @@ export function CartPageContent() {
                 />
                 <button
                   aria-label="Збільшити кількість"
-                  disabled={item.quantity >= 99}
+                  disabled={
+                    item.quantity >= (item.stockQuantity ?? 99)
+                  }
                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
                   type="button"
                 >

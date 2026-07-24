@@ -8,6 +8,7 @@ export type CartProduct = {
   name: string;
   price: number;
   slug: string;
+  stockQuantity: number | null;
 };
 
 export type CartItem = CartProduct & {

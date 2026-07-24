@@ -39,6 +39,10 @@ function validItem(value: unknown): CartItem | null {
   const item = value as Record<string, unknown>;
   const quantity = Number(item.quantity);
   const price = Number(item.price);
+  const stockQuantity =
+    item.stockQuantity === undefined || item.stockQuantity === null
+      ? null
+      : Number(item.stockQuantity);
 
   if (
     typeof item.id !== "string" ||
@@ -47,6 +51,10 @@ function validItem(value: unknown): CartItem | null {
     (item.imageObjectKey !== null &&
       typeof item.imageObjectKey !== "string") ||
     typeof item.inStock !== "boolean" ||
+    (stockQuantity !== null &&
+      (!Number.isInteger(stockQuantity) ||
+        stockQuantity < 0 ||
+        stockQuantity > 1000000)) ||
     !Number.isFinite(price) ||
     price < 0 ||
     !Number.isInteger(quantity) ||
@@ -61,8 +69,14 @@ function validItem(value: unknown): CartItem | null {
     inStock: item.inStock,
     name: item.name.slice(0, 200),
     price,
-    quantity: Math.min(quantity, MAX_CART_QUANTITY),
+    quantity: Math.min(
+      quantity,
+      stockQuantity === null
+        ? MAX_CART_QUANTITY
+        : Math.max(1, Math.min(stockQuantity, MAX_CART_QUANTITY)),
+    ),
     slug: item.slug.slice(0, 200),
+    stockQuantity,
   };
 }
 
@@ -124,6 +138,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 quantity: Math.min(
                   item.quantity + 1,
                   MAX_CART_QUANTITY,
+                  product.stockQuantity ?? MAX_CART_QUANTITY,
                 ),
               }
             : item,
@@ -143,15 +158,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const safeQuantity = Math.max(
-      1,
-      Math.min(Math.trunc(quantity), MAX_CART_QUANTITY),
-    );
-
     setItems((current) =>
       current.map((item) =>
         item.id === productId
-          ? { ...item, quantity: safeQuantity }
+          ? {
+              ...item,
+              quantity: Math.max(
+                1,
+                Math.min(
+                  Math.trunc(quantity),
+                  MAX_CART_QUANTITY,
+                  item.stockQuantity ?? MAX_CART_QUANTITY,
+                ),
+              ),
+            }
           : item,
       ),
     );

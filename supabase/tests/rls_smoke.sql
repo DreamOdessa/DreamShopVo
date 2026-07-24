@@ -18,10 +18,31 @@ values
   ('10000000-0000-4000-8000-000000000001', 'Active', 'active', true),
   ('10000000-0000-4000-8000-000000000002', 'Draft', 'draft', false);
 
-insert into public.products (category_id, name, slug, price, is_active)
+insert into public.products (
+  category_id,
+  name,
+  slug,
+  price,
+  is_active,
+  stock_quantity
+)
 values
-  ('10000000-0000-4000-8000-000000000001', 'Visible', 'visible', 10, true),
-  ('10000000-0000-4000-8000-000000000002', 'Hidden', 'hidden', 20, false);
+  (
+    '10000000-0000-4000-8000-000000000001',
+    'Visible',
+    'visible',
+    10,
+    true,
+    2
+  ),
+  (
+    '10000000-0000-4000-8000-000000000002',
+    'Hidden',
+    'hidden',
+    20,
+    false,
+    null
+  );
 
 begin;
 set local role anon;
@@ -159,6 +180,47 @@ select 1 / case
   else 0
 end as customer_reads_own_order
 from public.orders;
+select 1 / case
+  when stock_quantity = 0 then 1
+  else 0
+end as checkout_reserves_available_inventory
+from public.products
+where slug = 'visible';
+do $$
+begin
+  begin
+    perform *
+    from public.create_order(
+      jsonb_build_array(
+        jsonb_build_object(
+          'productId',
+          (select id from public.products where slug = 'visible'),
+          'quantity',
+          1
+        )
+      ),
+      'Customer',
+      'Example',
+      '+380671234567',
+      'Odesa',
+      'post_office',
+      'Відділення 1',
+      null,
+      true,
+      'cash_on_delivery',
+      false,
+      null,
+      '40000000-0000-4000-8000-000000000003'
+    );
+
+    raise exception using
+      errcode = 'XX000',
+      message = 'Checkout accepted more inventory than available';
+  exception
+    when sqlstate 'P0001' then null;
+  end;
+end;
+$$;
 do $$
 begin
   begin
@@ -221,6 +283,48 @@ values (
   'cash_on_delivery'
 );
 
+insert into public.orders (
+  id,
+  user_id,
+  subtotal,
+  total,
+  customer_first_name,
+  customer_last_name,
+  customer_phone,
+  delivery_city,
+  delivery_method,
+  delivery_details,
+  payment_method
+)
+values (
+  '20000000-0000-4000-8000-000000000002',
+  '00000000-0000-4000-8000-000000000001',
+  10,
+  10,
+  'Customer',
+  'Example',
+  '+380671234567',
+  'Odesa',
+  'post_office',
+  'Відділення 1',
+  'cash_on_delivery'
+);
+
+insert into public.order_items (
+  order_id,
+  product_id,
+  product_name,
+  unit_price,
+  quantity
+)
+values (
+  '20000000-0000-4000-8000-000000000002',
+  (select id from public.products where slug = 'visible'),
+  'Visible',
+  10,
+  1
+);
+
 begin;
 set local request.jwt.claims = '{"app_metadata":{"role":"admin"}}';
 set local role authenticated;
@@ -228,6 +332,21 @@ select 1 / case when public.is_admin() then 1 else 0 end as admin_is_admin;
 select 1 / case when count(*) = 2 then 1 else 0 end
   as admin_sees_draft_products
 from public.products;
+update public.orders
+set status = 'cancelled'
+where id = '20000000-0000-4000-8000-000000000002';
+select 1 / case
+  when stock_quantity = 2 then 1
+  else 0
+end as cancellation_restores_reserved_inventory
+from public.products
+where slug = 'visible';
+select 1 / case
+  when inventory_reserved = false then 1
+  else 0
+end as cancellation_cannot_restore_inventory_twice
+from public.orders
+where id = '20000000-0000-4000-8000-000000000002';
 update public.orders
 set status = 'processing'
 where id = '20000000-0000-4000-8000-000000000001';
@@ -356,6 +475,30 @@ select 1 / case
   ) is null then 1
   else 0
 end as legacy_order_function_is_removed;
+
+select 1 / case
+  when not has_function_privilege(
+      'anon',
+      'public.reserve_order_item_inventory()',
+      'EXECUTE'
+    )
+    and not has_function_privilege(
+      'authenticated',
+      'public.reserve_order_item_inventory()',
+      'EXECUTE'
+    )
+    and not has_function_privilege(
+      'anon',
+      'public.restore_cancelled_order_inventory()',
+      'EXECUTE'
+    )
+    and not has_function_privilege(
+      'authenticated',
+      'public.restore_cancelled_order_inventory()',
+      'EXECUTE'
+    ) then 1
+  else 0
+end as clients_cannot_call_inventory_triggers;
 
 select 1 / case
   when not has_function_privilege(

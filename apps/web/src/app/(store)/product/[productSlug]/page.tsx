@@ -143,6 +143,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
             >
               {product.inStock ? "У наявності" : "Немає в наявності"}
             </span>
+            {product.inStock &&
+            product.stockQuantity !== null &&
+            product.stockQuantity <= 5 ? (
+              <span>Залишилось: {product.stockQuantity}</span>
+            ) : null}
             {product.organic ? <span>Organic</span> : null}
             {product.weight ? <span>{product.weight}</span> : null}
           </div>
@@ -158,6 +163,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 name: product.name,
                 price: product.price,
                 slug: product.slug,
+                stockQuantity: product.stockQuantity,
               }}
             />
             <WishlistButton

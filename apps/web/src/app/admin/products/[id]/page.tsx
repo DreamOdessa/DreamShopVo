@@ -33,6 +33,7 @@ type ProductRow = {
   price: number;
   slug: string;
   sort_order: number;
+  stock_quantity: number | null;
   weight: string | null;
 };
 
@@ -73,7 +74,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     supabase
       .from("products")
       .select(
-        "id,category_id,name,slug,description,price,original_price,organic,in_stock,is_active,is_popular,weight,sort_order",
+        "id,category_id,name,slug,description,price,original_price,organic,in_stock,is_active,is_popular,weight,sort_order,stock_quantity",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -169,6 +170,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   price: product.price,
                   slug: product.slug,
                   sortOrder: product.sort_order,
+                  stockQuantity: product.stock_quantity,
                   weight: product.weight,
                 }}
               />

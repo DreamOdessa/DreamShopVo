@@ -27,6 +27,7 @@ type ProductEditFormProps = {
     price: number;
     slug: string;
     sortOrder: number;
+    stockQuantity: number | null;
     weight: string | null;
   };
 };
@@ -144,6 +145,21 @@ export function ProductEditForm({
                 min={0}
                 name="sortOrder"
                 required
+                type="number"
+              />
+            </span>
+          </label>
+
+          <label className="auth-field">
+            <span>Залишок, шт.</span>
+            <span className="auth-input-wrap">
+              <input
+                defaultValue={product.stockQuantity ?? ""}
+                inputMode="numeric"
+                max={1000000}
+                min={0}
+                name="stockQuantity"
+                placeholder="Без обліку"
                 type="number"
               />
             </span>

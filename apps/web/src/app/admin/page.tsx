@@ -34,6 +34,7 @@ type ProductRow = {
   name: string;
   price: number;
   slug: string;
+  stock_quantity: number | null;
 };
 
 const priceFormatter = new Intl.NumberFormat("uk-UA", {
@@ -62,7 +63,7 @@ export default async function AdminPage() {
     supabase
       .from("products")
       .select(
-        "id,name,slug,price,is_active,in_stock,category:categories!products_category_id_fkey(name)",
+        "id,name,slug,price,is_active,in_stock,stock_quantity,category:categories!products_category_id_fkey(name)",
       )
       .order("created_at", { ascending: false }),
   ]);
@@ -187,18 +188,25 @@ export default async function AdminPage() {
                         <strong>{product.name}</strong>
                         <span>
                           {product.category?.name ?? "Без категорії"} ·{" "}
-                          {priceFormatter.format(product.price)}
+                          {priceFormatter.format(product.price)} ·{" "}
+                          {product.stock_quantity === null
+                            ? "без обліку залишку"
+                            : `${product.stock_quantity} шт.`}
                         </span>
                       </div>
                       <div className="admin-list-actions">
                         <span
                           className={
-                            product.is_active && product.in_stock
+                            product.is_active &&
+                            product.in_stock &&
+                            product.stock_quantity !== 0
                               ? "admin-state admin-state-active"
                               : "admin-state"
                           }
                         >
-                          {product.is_active && product.in_stock
+                          {product.is_active &&
+                          product.in_stock &&
+                          product.stock_quantity !== 0
                             ? "У продажу"
                             : "Неактивний"}
                         </span>

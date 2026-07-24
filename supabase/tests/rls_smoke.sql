@@ -13,6 +13,19 @@ values (
   '{"first_name":"Customer"}'
 );
 
+insert into auth.users (
+  id,
+  email,
+  raw_app_meta_data,
+  raw_user_meta_data
+)
+values (
+  '00000000-0000-4000-8000-000000000002',
+  'admin@example.test',
+  '{"role":"admin"}',
+  '{"first_name":"Admin"}'
+);
+
 insert into public.categories (id, name, slug, is_active)
 values
   ('10000000-0000-4000-8000-000000000001', 'Active', 'active', true),
@@ -89,6 +102,20 @@ select 1 / case
     then 1
   else 0
 end as customer_can_change_contact_phone;
+do $$
+begin
+  begin
+    perform public.set_customer_discount(
+      '00000000-0000-4000-8000-000000000001',
+      10
+    );
+
+    raise exception 'Customer changed a protected discount';
+  exception
+    when insufficient_privilege then null;
+  end;
+end;
+$$;
 insert into public.wishlist_items (user_id, product_id)
 values (
   '00000000-0000-4000-8000-000000000001',
@@ -373,9 +400,23 @@ values (
 );
 
 begin;
+set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000002';
 set local request.jwt.claims = '{"app_metadata":{"role":"admin"}}';
 set local role authenticated;
 select 1 / case when public.is_admin() then 1 else 0 end as admin_is_admin;
+select 1 / case
+  when public.set_customer_discount(
+    '00000000-0000-4000-8000-000000000001',
+    12.5
+  ) = 12.5 then 1
+  else 0
+end as admin_sets_customer_discount;
+select 1 / case
+  when discount_percent = 12.5 then 1
+  else 0
+end as customer_discount_is_persisted
+from public.profiles
+where id = '00000000-0000-4000-8000-000000000001';
 select 1 / case when count(*) = 2 then 1 else 0 end
   as admin_sees_draft_products
 from public.products;

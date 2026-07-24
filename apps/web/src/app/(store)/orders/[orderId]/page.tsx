@@ -53,11 +53,14 @@ type Order = {
   delivery_city: string;
   delivery_details: string;
   delivery_method: string;
+  delivery_amount: number;
+  discount_amount: number;
   id: string;
   items: OrderItem[];
   order_number: number;
   payment_method: string;
   status: OrderStatus;
+  subtotal: number;
   tracking_number: string | null;
   total: number;
 };
@@ -106,7 +109,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id,order_number,status,total,customer_first_name,customer_last_name,delivery_city,delivery_method,delivery_details,payment_method,tracking_number,items:order_items(id,product_name,product_slug,product_image_object_key,unit_price,quantity,product:products!order_items_product_id_fkey(id,name,slug,price,in_stock,stock_quantity,is_active,media:product_media(object_key,sort_order)))",
+      "id,order_number,status,subtotal,discount_amount,delivery_amount,total,customer_first_name,customer_last_name,delivery_city,delivery_method,delivery_details,payment_method,tracking_number,items:order_items(id,product_name,product_slug,product_image_object_key,unit_price,quantity,product:products!order_items_product_id_fkey(id,name,slug,price,in_stock,stock_quantity,is_active,media:product_media(object_key,sort_order)))",
     )
     .eq("id", orderId)
     .maybeSingle();
@@ -260,6 +263,22 @@ export default async function OrderPage({ params }: OrderPageProps) {
                 <dd className="order-tracking-number">
                   {order.tracking_number}
                 </dd>
+              </div>
+            ) : null}
+            <div>
+              <dt>Товари</dt>
+              <dd>{priceFormatter.format(order.subtotal)}</dd>
+            </div>
+            {order.discount_amount > 0 ? (
+              <div className="order-discount">
+                <dt>Знижка</dt>
+                <dd>-{priceFormatter.format(order.discount_amount)}</dd>
+              </div>
+            ) : null}
+            {order.delivery_amount > 0 ? (
+              <div>
+                <dt>Доставка</dt>
+                <dd>{priceFormatter.format(order.delivery_amount)}</dd>
               </div>
             ) : null}
             <div>

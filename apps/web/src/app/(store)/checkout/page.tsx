@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 
 type Profile = {
   contact_phone: string | null;
+  discount_percent: number;
   first_name: string;
   last_name: string | null;
   phone: string | null;
@@ -44,7 +45,7 @@ export default async function CheckoutPage() {
   const [profileResult, addressResult] = await Promise.all([
     supabase
       .from("profiles")
-      .select("first_name,last_name,phone,contact_phone")
+      .select("first_name,last_name,phone,contact_phone,discount_percent")
       .eq("id", userId)
       .maybeSingle(),
     supabase
@@ -74,6 +75,7 @@ export default async function CheckoutPage() {
 
       <CheckoutForm
         apiUrl={getApiUrl()}
+        discountPercent={Number(profile?.discount_percent ?? 0)}
         initialAddress={
           address
             ? {

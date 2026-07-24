@@ -51,9 +51,11 @@ type Order = {
   customer_phone: string;
   delivery_city: string;
   delivery_details: string;
+  delivery_amount: number;
   delivery_method: string;
   establishment_name: string | null;
   id: string;
+  discount_amount: number;
   is_private_person: boolean;
   items: OrderItem[];
   order_number: number;
@@ -108,7 +110,7 @@ export default async function AdminOrderPage({
     supabase
       .from("orders")
       .select(
-        "id,order_number,status,subtotal,total,customer_first_name,customer_last_name,customer_phone,delivery_city,delivery_method,delivery_details,establishment_name,is_private_person,payment_method,contact_for_clarification,customer_note,tracking_number,created_at,items:order_items(id,product_name,product_image_object_key,unit_price,quantity)",
+        "id,order_number,status,subtotal,discount_amount,delivery_amount,total,customer_first_name,customer_last_name,customer_phone,delivery_city,delivery_method,delivery_details,establishment_name,is_private_person,payment_method,contact_for_clarification,customer_note,tracking_number,created_at,items:order_items(id,product_name,product_image_object_key,unit_price,quantity)",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -210,6 +212,24 @@ export default async function AdminOrderPage({
                     </div>
                   ))}
                   <div className="admin-order-total">
+                    <dl>
+                      <div>
+                        <dt>Товари</dt>
+                        <dd>{priceFormatter.format(order.subtotal)}</dd>
+                      </div>
+                      {order.discount_amount > 0 ? (
+                        <div className="order-discount">
+                          <dt>Знижка</dt>
+                          <dd>-{priceFormatter.format(order.discount_amount)}</dd>
+                        </div>
+                      ) : null}
+                      {order.delivery_amount > 0 ? (
+                        <div>
+                          <dt>Доставка</dt>
+                          <dd>{priceFormatter.format(order.delivery_amount)}</dd>
+                        </div>
+                      ) : null}
+                    </dl>
                     <span>Разом</span>
                     <strong>{priceFormatter.format(order.total)}</strong>
                   </div>

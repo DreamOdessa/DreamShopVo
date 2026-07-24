@@ -1,8 +1,8 @@
-import { PackageOpen, ShoppingBag } from "lucide-react";
+import { PackageOpen, ShoppingBag, UsersRound } from "lucide-react";
 import Link from "next/link";
 
 type AdminNavigationProps = {
-  active: "catalog" | "orders";
+  active: "catalog" | "customers" | "orders";
 };
 
 export function AdminNavigation({ active }: AdminNavigationProps) {
@@ -18,6 +18,13 @@ export function AdminNavigation({ active }: AdminNavigationProps) {
       >
         <ShoppingBag aria-hidden size={18} strokeWidth={1.8} />
         Замовлення
+      </Link>
+      <Link
+        aria-current={active === "customers" ? "page" : undefined}
+        href="/admin/customers"
+      >
+        <UsersRound aria-hidden size={18} strokeWidth={1.8} />
+        Клієнти
       </Link>
     </nav>
   );

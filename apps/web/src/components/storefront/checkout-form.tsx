@@ -14,6 +14,7 @@ import { useCartInventorySync } from "./use-cart-inventory-sync";
 
 type CheckoutFormProps = {
   apiUrl: string;
+  discountPercent: number;
   initialAddress: {
     city: string;
     deliveryDetails: string;
@@ -36,6 +37,7 @@ const priceFormatter = new Intl.NumberFormat("uk-UA", {
 
 export function CheckoutForm({
   apiUrl,
+  discountPercent,
   initialAddress,
   initialProfile,
 }: CheckoutFormProps) {
@@ -112,6 +114,10 @@ export function CheckoutForm({
   }
 
   const subtotal = cartSubtotal(items);
+  const normalizedDiscount = Math.min(100, Math.max(0, discountPercent));
+  const discountAmount =
+    Math.round(subtotal * normalizedDiscount) / 100;
+  const total = subtotal - discountAmount;
 
   return (
     <form action={formAction} className="checkout-layout">
@@ -253,6 +259,12 @@ export function CheckoutForm({
             <dt>Товари</dt>
             <dd>{priceFormatter.format(subtotal)}</dd>
           </div>
+          {discountAmount > 0 ? (
+            <div className="checkout-discount">
+              <dt>Знижка {normalizedDiscount}%</dt>
+              <dd>-{priceFormatter.format(discountAmount)}</dd>
+            </div>
+          ) : null}
           <div>
             <dt>Доставка</dt>
             <dd>За тарифами перевізника</dd>
@@ -260,7 +272,7 @@ export function CheckoutForm({
         </dl>
         <div className="cart-summary-total">
           <span>До сплати</span>
-          <strong>{priceFormatter.format(subtotal)}</strong>
+          <strong>{priceFormatter.format(total)}</strong>
         </div>
 
         <div

@@ -22,6 +22,7 @@ import {
   type OrderStatus,
 } from "../../lib/orders";
 import { createClient } from "../../lib/supabase/server";
+import { isTelegramAuthEmail } from "../../lib/auth/telegram";
 
 import {
   markAllNotificationsRead,
@@ -104,10 +105,6 @@ const notificationDateFormatter = new Intl.DateTimeFormat("uk-UA", {
   timeStyle: "short",
   timeZone: "Europe/Kyiv",
 });
-
-function isTelegramAuthEmail(email: string | null | undefined) {
-  return email?.endsWith("@auth.dreamshop.invalid") ?? false;
-}
 
 export default async function AccountPage() {
   const supabase = await createClient();

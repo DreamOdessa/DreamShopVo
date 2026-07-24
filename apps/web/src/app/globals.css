@@ -380,6 +380,28 @@ input:focus-visible {
   color: #26714d;
 }
 
+.auth-secondary-link {
+  width: fit-content;
+  color: #35646c;
+  font-size: 0.82rem;
+  font-weight: 680;
+  text-underline-offset: 3px;
+}
+
+.auth-secondary-link:hover {
+  color: #0c5363;
+}
+
+.auth-secondary-link-end {
+  justify-self: end;
+}
+
+.auth-secondary-link-center {
+  display: block;
+  margin: 1.25rem auto 0;
+  text-align: center;
+}
+
 .auth-primary-button {
   width: 100%;
   border: 1px solid #0c5363;

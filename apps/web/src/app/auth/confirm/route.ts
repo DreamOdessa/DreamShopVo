@@ -1,6 +1,7 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
+import { safeNextPath } from "../../../lib/auth/redirect";
 import { createClient } from "../../../lib/supabase/server";
 
 const EMAIL_OTP_TYPES = new Set([
@@ -11,10 +12,6 @@ const EMAIL_OTP_TYPES = new Set([
   "recovery",
   "signup",
 ]);
-
-function safeNextPath(value: string | null) {
-  return value?.startsWith("/") && !value.startsWith("//") ? value : "/account";
-}
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);

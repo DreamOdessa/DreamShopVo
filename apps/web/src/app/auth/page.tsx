@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
+import { safeNextPath } from "../../lib/auth/redirect";
 import { AuthForm } from "./auth-form";
 import { signInWithGoogle } from "./actions";
 
@@ -20,16 +21,14 @@ type AuthPageProps = {
     error?: string;
     mode?: string;
     next?: string;
+    notice?: string;
   }>;
 };
 
 export default async function AuthPage({ searchParams }: AuthPageProps) {
   const params = await searchParams;
   const mode = params.mode === "register" ? "register" : "login";
-  const nextPath =
-    params.next?.startsWith("/") && !params.next.startsWith("//")
-      ? params.next
-      : "/account";
+  const nextPath = safeNextPath(params.next);
   const encodedNext = encodeURIComponent(nextPath);
   const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
   const telegramUsername =
@@ -76,9 +75,19 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
           </p>
         </div>
 
-        {params.error === "google" ? (
+        {params.error ? (
           <p className="auth-message auth-message-error" role="alert">
-            Вхід через Google поки недоступний. Скористайтеся email.
+            {params.error === "google"
+              ? "Вхід через Google поки недоступний. Скористайтеся email."
+              : params.error === "confirmation"
+                ? "Посилання для підтвердження недійсне або застаріло."
+                : "Не вдалося завершити вхід. Спробуйте ще раз."}
+          </p>
+        ) : null}
+
+        {params.notice === "password-updated" ? (
+          <p className="auth-message auth-message-success" role="status">
+            Пароль оновлено. Тепер увійдіть з новим паролем.
           </p>
         ) : null}
 

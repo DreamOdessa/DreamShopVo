@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { getApiUrl, getSiteUrl } from "../../lib/env";
+import { safeNextPath } from "../../lib/auth/redirect";
 import { sessionTokens } from "../../lib/auth/session-tokens";
 import { createClient } from "../../lib/supabase/server";
 
@@ -38,12 +39,6 @@ function normalizePhone(value: string) {
 
 function errorState(message: string): AuthActionState {
   return { message, status: "error" };
-}
-
-function safeNextPath(value: string) {
-  return value.startsWith("/") && !value.startsWith("//")
-    ? value
-    : "/account";
 }
 
 export async function signIn(
@@ -164,6 +159,69 @@ export async function signInWithGoogle(formData: FormData) {
   }
 
   redirect(data.url);
+}
+
+export async function requestPasswordReset(
+  _previousState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const email = valueFrom(formData, "email").toLowerCase();
+  const next = safeNextPath(valueFrom(formData, "next"));
+
+  if (!validEmail(email)) {
+    return errorState("Вкажіть коректну адресу електронної пошти.");
+  }
+
+  const resetPage = `/auth/reset-password?next=${encodeURIComponent(next)}`;
+  const supabase = await createClient();
+
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(resetPage)}`,
+  });
+
+  return {
+    message:
+      "Якщо акаунт з таким email існує, ми надіслали посилання для відновлення.",
+    status: "success",
+  };
+}
+
+export async function updatePassword(
+  _previousState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const password = valueFrom(formData, "password", false);
+  const confirmation = valueFrom(formData, "passwordConfirmation", false);
+  const next = safeNextPath(valueFrom(formData, "next"));
+
+  if (!validatePassword(password)) {
+    return errorState("Пароль має містити від 10 до 72 символів.");
+  }
+
+  if (password !== confirmation) {
+    return errorState("Паролі не збігаються.");
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return errorState(
+      "Посилання недійсне або застаріло. Запросіть нове посилання.",
+    );
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    return errorState("Не вдалося оновити пароль. Запросіть нове посилання.");
+  }
+
+  await supabase.auth.signOut({ scope: "local" });
+  redirect(`/auth?notice=password-updated&next=${encodeURIComponent(next)}`);
 }
 
 export async function signOut() {

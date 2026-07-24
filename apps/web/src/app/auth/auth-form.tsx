@@ -1,6 +1,7 @@
 "use client";
 
 import { KeyRound, LoaderCircle, Mail, UserRound } from "lucide-react";
+import Link from "next/link";
 import { useActionState } from "react";
 
 import {
@@ -76,6 +77,15 @@ export function AuthForm({ mode, nextPath }: AuthFormProps) {
           />
         </span>
       </label>
+
+      {mode === "login" ? (
+        <Link
+          className="auth-secondary-link auth-secondary-link-end"
+          href={`/auth/forgot-password?next=${encodeURIComponent(nextPath)}`}
+        >
+          Забули пароль?
+        </Link>
+      ) : null}
 
       <div
         aria-live="polite"

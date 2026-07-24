@@ -58,6 +58,18 @@ select 1 / case
     then 1
   else 0
 end as customer_cannot_change_verified_phone;
+insert into public.wishlist_items (user_id, product_id)
+values (
+  '00000000-0000-4000-8000-000000000001',
+  (select id from public.products where slug = 'visible')
+);
+select 1 / case
+  when count(*) = 1 then 1
+  else 0
+end as customer_manages_own_wishlist
+from public.wishlist_items;
+delete from public.wishlist_items
+where user_id = '00000000-0000-4000-8000-000000000001';
 select 1 / case
   when count(*) = 1 then 1
   else 0

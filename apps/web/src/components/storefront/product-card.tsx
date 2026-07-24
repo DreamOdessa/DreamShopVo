@@ -5,9 +5,13 @@ import Link from "next/link";
 import type { CatalogProduct } from "../../lib/catalog";
 import { publicMediaUrl } from "../../lib/media-url";
 
+import { WishlistButton } from "./wishlist-button";
+
 type ProductCardProps = {
   eager?: boolean;
   product: CatalogProduct;
+  returnPath?: string;
+  wishlisted?: boolean;
 };
 
 const priceFormatter = new Intl.NumberFormat("uk-UA", {
@@ -16,11 +20,23 @@ const priceFormatter = new Intl.NumberFormat("uk-UA", {
   style: "currency",
 });
 
-export function ProductCard({ eager = false, product }: ProductCardProps) {
+export function ProductCard({
+  eager = false,
+  product,
+  returnPath = "/catalog",
+  wishlisted = false,
+}: ProductCardProps) {
   const mainImage = product.images.find(({ sortOrder }) => sortOrder === 0);
 
   return (
     <article className="product-card">
+      <WishlistButton
+        compact
+        productId={product.id}
+        productName={product.name}
+        returnPath={returnPath}
+        wishlisted={wishlisted}
+      />
       <Link className="product-card-media" href={`/product/${product.slug}`}>
         {mainImage ? (
           <Image

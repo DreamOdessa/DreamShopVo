@@ -49,6 +49,7 @@ type CategoryRow = {
 type ProductRow = {
   category: {
     id: string;
+    is_active: boolean;
     name: string;
     slug: string;
   } | null;
@@ -82,12 +83,16 @@ function mapMedia(
 }
 
 function mapProduct(row: ProductRow): CatalogProduct | null {
-  if (!row.category) {
+  if (!row.category?.is_active) {
     return null;
   }
 
   return {
-    category: row.category,
+    category: {
+      id: row.category.id,
+      name: row.category.name,
+      slug: row.category.slug,
+    },
     description: row.description,
     id: row.id,
     images: mapMedia(row.media),
@@ -126,6 +131,7 @@ export const getCatalogCategories = cache(async () => {
     .select(
       "id,name,slug,description,media:category_media(object_key,alt_text,kind)",
     )
+    .eq("is_active", true)
     .order("sort_order")
     .order("name");
 
@@ -144,6 +150,7 @@ export const getCatalogCategory = cache(async (slug: string) => {
       "id,name,slug,description,media:category_media(object_key,alt_text,kind)",
     )
     .eq("slug", slug)
+    .eq("is_active", true)
     .maybeSingle();
 
   if (error) {
@@ -158,8 +165,9 @@ export const getCatalogProducts = cache(async (categoryId?: string) => {
   let query = supabase
     .from("products")
     .select(
-      "id,name,slug,description,price,original_price,weight,in_stock,organic,category:categories!products_category_id_fkey(id,name,slug),media:product_media(object_key,alt_text,sort_order)",
+      "id,name,slug,description,price,original_price,weight,in_stock,organic,category:categories!products_category_id_fkey(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)",
     )
+    .eq("is_active", true)
     .order("sort_order")
     .order("created_at", { ascending: false })
     .limit(120);
@@ -184,9 +192,10 @@ export const getCatalogProduct = cache(async (slug: string) => {
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id,name,slug,description,price,original_price,weight,in_stock,organic,category:categories!products_category_id_fkey(id,name,slug),media:product_media(object_key,alt_text,sort_order)",
+      "id,name,slug,description,price,original_price,weight,in_stock,organic,category:categories!products_category_id_fkey(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)",
     )
     .eq("slug", slug)
+    .eq("is_active", true)
     .maybeSingle();
 
   if (error) {

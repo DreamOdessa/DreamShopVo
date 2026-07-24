@@ -12,6 +12,7 @@ import {
 } from "../../../../lib/catalog";
 import { getSiteUrl } from "../../../../lib/env";
 import { publicMediaUrl } from "../../../../lib/media-url";
+import { getWishlistState } from "../../../../lib/wishlist";
 
 type CategoryPageProps = {
   params: Promise<{ categorySlug: string }>;
@@ -45,10 +46,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
-  const [categories, products] = await Promise.all([
+  const [categories, products, wishlist] = await Promise.all([
     getCatalogCategories(),
     getCatalogProducts(category.id),
+    getWishlistState(),
   ]);
+  const wishlistIds = new Set(wishlist.productIds);
 
   return (
     <main className="store-main">
@@ -91,6 +94,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                 eager={index === 0 && !category.cover}
                 key={product.id}
                 product={product}
+                returnPath={`/catalog/${category.slug}`}
+                wishlisted={wishlistIds.has(product.id)}
               />
             ))}
           </div>

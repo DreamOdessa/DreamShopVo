@@ -7,6 +7,7 @@ import {
   getCatalogCategories,
   getCatalogProducts,
 } from "../../../lib/catalog";
+import { getWishlistState } from "../../../lib/wishlist";
 
 export const metadata: Metadata = {
   title: "Каталог - DreamShop",
@@ -15,10 +16,12 @@ export const metadata: Metadata = {
 };
 
 export default async function CatalogPage() {
-  const [categories, products] = await Promise.all([
+  const [categories, products, wishlist] = await Promise.all([
     getCatalogCategories(),
     getCatalogProducts(),
+    getWishlistState(),
   ]);
+  const wishlistIds = new Set(wishlist.productIds);
 
   return (
     <main className="store-main">
@@ -60,6 +63,7 @@ export default async function CatalogPage() {
                 eager={index === 0}
                 key={product.id}
                 product={product}
+                wishlisted={wishlistIds.has(product.id)}
               />
             ))}
           </div>

@@ -11,6 +11,8 @@ import {
 } from "../../../../lib/catalog";
 import { getSiteUrl } from "../../../../lib/env";
 import { publicMediaUrl } from "../../../../lib/media-url";
+import { getWishlistState } from "../../../../lib/wishlist";
+import { WishlistButton } from "../../../../components/storefront/wishlist-button";
 
 type ProductPageProps = {
   params: Promise<{ productSlug: string }>;
@@ -70,9 +72,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const relatedProducts = (
-    await getCatalogProducts(product.category.id)
-  )
+  const [categoryProducts, wishlist] = await Promise.all([
+    getCatalogProducts(product.category.id),
+    getWishlistState(),
+  ]);
+  const wishlistIds = new Set(wishlist.productIds);
+  const relatedProducts = categoryProducts
     .filter(({ id }) => id !== product.id)
     .slice(0, 4);
   const siteUrl = getSiteUrl();
@@ -142,18 +147,26 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {product.weight ? <span>{product.weight}</span> : null}
           </div>
 
-          <AddToCartButton
-            product={{
-              id: product.id,
-              imageObjectKey:
-                product.images.find(({ sortOrder }) => sortOrder === 0)
-                  ?.objectKey ?? null,
-              inStock: product.inStock,
-              name: product.name,
-              price: product.price,
-              slug: product.slug,
-            }}
-          />
+          <div className="product-detail-actions">
+            <AddToCartButton
+              product={{
+                id: product.id,
+                imageObjectKey:
+                  product.images.find(({ sortOrder }) => sortOrder === 0)
+                    ?.objectKey ?? null,
+                inStock: product.inStock,
+                name: product.name,
+                price: product.price,
+                slug: product.slug,
+              }}
+            />
+            <WishlistButton
+              productId={product.id}
+              productName={product.name}
+              returnPath={`/product/${product.slug}`}
+              wishlisted={wishlistIds.has(product.id)}
+            />
+          </div>
 
           {product.description ? (
             <div className="product-detail-description">
@@ -171,7 +184,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
           <div className="product-card-grid">
             {relatedProducts.map((relatedProduct) => (
-              <ProductCard key={relatedProduct.id} product={relatedProduct} />
+              <ProductCard
+                key={relatedProduct.id}
+                product={relatedProduct}
+                returnPath={`/product/${product.slug}`}
+                wishlisted={wishlistIds.has(relatedProduct.id)}
+              />
             ))}
           </div>
         </section>

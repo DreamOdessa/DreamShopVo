@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 type Profile = {
+  contact_phone: string | null;
   first_name: string;
   last_name: string | null;
   phone: string | null;
@@ -43,7 +44,7 @@ export default async function CheckoutPage() {
   const [profileResult, addressResult] = await Promise.all([
     supabase
       .from("profiles")
-      .select("first_name,last_name,phone")
+      .select("first_name,last_name,phone,contact_phone")
       .eq("id", userId)
       .maybeSingle(),
     supabase
@@ -87,7 +88,11 @@ export default async function CheckoutPage() {
         initialProfile={{
           firstName: address?.first_name ?? profile?.first_name ?? "",
           lastName: address?.last_name ?? profile?.last_name ?? "",
-          phone: address?.phone ?? profile?.phone ?? "",
+          phone:
+            address?.phone ??
+            profile?.contact_phone ??
+            profile?.phone ??
+            "",
         }}
       />
     </main>

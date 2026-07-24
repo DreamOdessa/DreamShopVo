@@ -79,6 +79,16 @@ select 1 / case
     then 1
   else 0
 end as customer_cannot_change_verified_phone;
+select 1 / case
+  when has_column_privilege(
+    current_user,
+    'public.profiles',
+    'contact_phone',
+    'UPDATE'
+  ) = true
+    then 1
+  else 0
+end as customer_can_change_contact_phone;
 insert into public.wishlist_items (user_id, product_id)
 values (
   '00000000-0000-4000-8000-000000000001',
@@ -388,7 +398,9 @@ update public.orders
 set status = 'processing'
 where id = '20000000-0000-4000-8000-000000000001';
 update public.orders
-set status = 'shipped'
+set
+  status = 'shipped',
+  tracking_number = '20400000000000'
 where id = '20000000-0000-4000-8000-000000000001';
 update public.orders
 set status = 'delivered'
@@ -422,15 +434,14 @@ set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
 set local request.jwt.claims =
   '{"sub":"00000000-0000-4000-8000-000000000001","app_metadata":{"role":"customer"}}';
 select 1 / case
-  when count(*) = 3 then 1
+  when count(*) = 4 then 1
   else 0
 end as customer_reads_own_notifications
 from public.notifications;
 update public.notifications
-set read_at = now()
-where order_id = '20000000-0000-4000-8000-000000000001';
+set read_at = now();
 select 1 / case
-  when count(*) = 3 and bool_and(read_at is not null) then 1
+  when count(*) = 4 and bool_and(read_at is not null) then 1
   else 0
 end as customer_marks_own_notifications_read
 from public.notifications;

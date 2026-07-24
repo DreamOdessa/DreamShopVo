@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getApiUrl, getSiteUrl } from "../../lib/env";
 import { safeNextPath } from "../../lib/auth/redirect";
 import { sessionTokens } from "../../lib/auth/session-tokens";
+import { normalizePhone } from "../../lib/phone";
 import { createClient } from "../../lib/supabase/server";
 
 import type { AuthActionState } from "./auth-state";
@@ -25,16 +26,6 @@ function validEmail(email: string) {
 
 function validatePassword(password: string) {
   return password.length >= 10 && password.length <= 72;
-}
-
-function normalizePhone(value: string) {
-  const digits = value.replace(/\D/g, "");
-
-  if (digits.length < 10 || digits.length > 15) {
-    return null;
-  }
-
-  return `+${digits}`;
 }
 
 function errorState(message: string): AuthActionState {

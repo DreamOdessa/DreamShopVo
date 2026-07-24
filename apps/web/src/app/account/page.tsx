@@ -40,6 +40,7 @@ export const metadata: Metadata = {
 };
 
 type Profile = {
+  contact_phone: string | null;
   email: string | null;
   first_name: string;
   last_name: string | null;
@@ -104,6 +105,16 @@ const notificationDateFormatter = new Intl.DateTimeFormat("uk-UA", {
   timeZone: "Europe/Kyiv",
 });
 
+function nonEmptyClaim(claims: unknown, key: "email" | "phone") {
+  if (!claims || typeof claims !== "object") {
+    return null;
+  }
+
+  const value = Reflect.get(claims, key);
+
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
 export default async function AccountPage() {
   const supabase = await createClient();
   const { data: claimsData, error: claimsError } =
@@ -122,7 +133,7 @@ export default async function AccountPage() {
   ] = await Promise.all([
     supabase
       .from("profiles")
-      .select("first_name,last_name,email,phone,role")
+      .select("first_name,last_name,email,phone,contact_phone,role")
       .eq("id", userId)
       .maybeSingle(),
     supabase
@@ -167,6 +178,9 @@ export default async function AccountPage() {
     (notification) => !notification.read_at,
   ).length;
   const savedAddress = addressResult.data as SavedAddress | null;
+  const verifiedPhone = nonEmptyClaim(claimsData.claims, "phone");
+  const verifiedEmail = nonEmptyClaim(claimsData.claims, "email");
+  const contactPhone = profile?.contact_phone ?? profile?.phone ?? "";
 
   return (
     <main className="account-page">
@@ -232,9 +246,11 @@ export default async function AccountPage() {
           </div>
           <span className="account-status">
             <ShieldCheck aria-hidden size={18} strokeWidth={1.8} />
-            {profile?.phone && !profile.email
+            {verifiedPhone
               ? "Telegram підтверджено"
-              : "Email підтверджено"}
+              : verifiedEmail
+                ? "Email підтверджено"
+                : "Акаунт підтверджено"}
           </span>
         </div>
 
@@ -244,8 +260,8 @@ export default async function AccountPage() {
             <dd>{profile?.email ?? "Не вказано"}</dd>
           </div>
           <div>
-            <dt>Телефон</dt>
-            <dd>{profile?.phone ?? "Не додано"}</dd>
+            <dt>Контактний телефон</dt>
+            <dd>{contactPhone || "Не додано"}</dd>
           </div>
           <div>
             <dt>Роль</dt>
@@ -262,6 +278,7 @@ export default async function AccountPage() {
             <p>Вони будуть використані для оформлення замовлень.</p>
           </div>
           <ProfileForm
+            contactPhone={contactPhone}
             firstName={profile?.first_name ?? ""}
             lastName={profile?.last_name ?? ""}
           />

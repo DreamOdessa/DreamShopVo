@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle, Save } from "lucide-react";
+import { LoaderCircle, Phone, Save } from "lucide-react";
 import { useActionState } from "react";
 
 import { updateProfile } from "./actions";
@@ -10,11 +10,13 @@ import {
 } from "./profile-state";
 
 type ProfileFormProps = {
+  contactPhone: string;
   firstName: string;
   lastName: string;
 };
 
 export function ProfileForm({
+  contactPhone,
   firstName,
   lastName,
 }: ProfileFormProps) {
@@ -52,6 +54,22 @@ export function ProfileForm({
               name="lastName"
               placeholder="Ваше прізвище"
               type="text"
+            />
+          </span>
+        </label>
+
+        <label className="auth-field profile-field-wide">
+          <span>Контактний телефон</span>
+          <span className="auth-input-wrap">
+            <Phone aria-hidden size={18} strokeWidth={1.8} />
+            <input
+              autoComplete="tel"
+              defaultValue={contactPhone}
+              inputMode="tel"
+              maxLength={24}
+              name="contactPhone"
+              placeholder="+380 00 000 00 00"
+              type="tel"
             />
           </span>
         </label>

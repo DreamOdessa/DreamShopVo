@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import type { CheckoutState } from "./checkout-state";
+import { normalizePhone } from "../../../lib/phone";
 import { createClient } from "../../../lib/supabase/server";
 
 const DELIVERY_METHODS = new Set([
@@ -28,16 +29,6 @@ function valueFrom(formData: FormData, name: string) {
 
 function errorState(message: string): CheckoutState {
   return { message, status: "error" };
-}
-
-function normalizePhone(value: string) {
-  const digits = value.replace(/\D/g, "");
-
-  if (digits.length < 10 || digits.length > 15) {
-    return null;
-  }
-
-  return `+${digits}`;
 }
 
 function parseItems(value: string) {

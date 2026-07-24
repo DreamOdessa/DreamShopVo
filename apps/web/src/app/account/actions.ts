@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { normalizePhone } from "../../lib/phone";
 import { createClient } from "../../lib/supabase/server";
 
 import type { ProfileActionState } from "./profile-state";
@@ -43,6 +44,10 @@ export async function updateProfile(
 ): Promise<ProfileActionState> {
   const firstName = normalizedValue(formData, "firstName");
   const lastName = normalizedValue(formData, "lastName");
+  const contactPhoneValue = normalizedValue(formData, "contactPhone");
+  const contactPhone = contactPhoneValue
+    ? normalizePhone(contactPhoneValue)
+    : null;
 
   if (firstName.length < 2 || firstName.length > 80) {
     return errorState("Ім’я має містити від 2 до 80 символів.");
@@ -50,6 +55,10 @@ export async function updateProfile(
 
   if (lastName.length > 80) {
     return errorState("Прізвище має містити не більше 80 символів.");
+  }
+
+  if (contactPhoneValue && !contactPhone) {
+    return errorState("Вкажіть коректний номер телефону.");
   }
 
   const { supabase, userId } = await authenticatedUser();
@@ -61,6 +70,7 @@ export async function updateProfile(
   const { error } = await supabase
     .from("profiles")
     .update({
+      contact_phone: contactPhone,
       first_name: firstName,
       last_name: lastName || null,
     })
@@ -71,6 +81,7 @@ export async function updateProfile(
   }
 
   revalidatePath("/account");
+  revalidatePath("/checkout");
 
   return {
     message: "Профіль збережено.",

@@ -1,4 +1,4 @@
-import { ArrowLeft, FolderTree, PackageOpen } from "lucide-react";
+import { ArrowLeft, FolderTree, PackageOpen, Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -138,15 +138,27 @@ export default async function AdminPage() {
                         <strong>{category.name}</strong>
                         <span>/{category.slug}</span>
                       </div>
-                      <span
-                        className={
-                          category.is_active
-                            ? "admin-state admin-state-active"
-                            : "admin-state"
-                        }
-                      >
-                        {category.is_active ? "Активна" : "Прихована"}
-                      </span>
+                      <div className="admin-list-actions">
+                        <span
+                          className={
+                            category.is_active
+                              ? "admin-state admin-state-active"
+                              : "admin-state"
+                          }
+                        >
+                          {category.is_active ? "Активна" : "Прихована"}
+                        </span>
+                        <Link
+                          className="admin-row-button"
+                          href={`/admin/categories/${category.id}`}
+                          title={`Редагувати ${category.name}`}
+                        >
+                          <Pencil aria-hidden size={16} strokeWidth={1.8} />
+                          <span className="sr-only">
+                            Редагувати {category.name}
+                          </span>
+                        </Link>
+                      </div>
                     </div>
                   ))
                 ) : (
@@ -182,17 +194,29 @@ export default async function AdminPage() {
                           {priceFormatter.format(product.price)}
                         </span>
                       </div>
-                      <span
-                        className={
-                          product.is_active && product.in_stock
-                            ? "admin-state admin-state-active"
-                            : "admin-state"
-                        }
-                      >
-                        {product.is_active && product.in_stock
-                          ? "У продажу"
-                          : "Неактивний"}
-                      </span>
+                      <div className="admin-list-actions">
+                        <span
+                          className={
+                            product.is_active && product.in_stock
+                              ? "admin-state admin-state-active"
+                              : "admin-state"
+                          }
+                        >
+                          {product.is_active && product.in_stock
+                            ? "У продажу"
+                            : "Неактивний"}
+                        </span>
+                        <Link
+                          className="admin-row-button"
+                          href={`/admin/products/${product.id}`}
+                          title={`Редагувати ${product.name}`}
+                        >
+                          <Pencil aria-hidden size={16} strokeWidth={1.8} />
+                          <span className="sr-only">
+                            Редагувати {product.name}
+                          </span>
+                        </Link>
+                      </div>
                     </div>
                   ))
                 ) : (

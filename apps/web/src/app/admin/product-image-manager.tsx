@@ -1,0 +1,296 @@
+"use client";
+
+import { ImagePlus, LoaderCircle, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useRef, useState, useTransition } from "react";
+
+import { createClient } from "../../lib/supabase/client";
+import {
+  registerProductMainImage,
+  removeProductMainImage,
+} from "./actions";
+
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const SUPPORTED_IMAGE_TYPES = new Set([
+  "image/avif",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+type ProductImageManagerProps = {
+  apiUrl: string;
+  currentImage: {
+    altText: string;
+    url: string;
+  } | null;
+  productId: string;
+  productName: string;
+};
+
+type MessageState = {
+  message: string;
+  status: "error" | "idle" | "success";
+};
+
+async function accessToken() {
+  const supabase = createClient();
+  const { data, error } = await supabase.auth.getSession();
+
+  if (error || !data.session?.access_token) {
+    throw new Error("Сесія завершилася. Увійдіть повторно.");
+  }
+
+  return data.session.access_token;
+}
+
+function mediaDeleteUrl(apiUrl: string, key: string) {
+  const encodedKey = key.split("/").map(encodeURIComponent).join("/");
+
+  return `${apiUrl}/admin/media/${encodedKey}`;
+}
+
+async function deleteStoredMedia(
+  apiUrl: string,
+  key: string,
+  token: string,
+) {
+  const response = await fetch(mediaDeleteUrl(apiUrl, key), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    method: "DELETE",
+  });
+
+  return response.ok || response.status === 404;
+}
+
+export function ProductImageManager({
+  apiUrl,
+  currentImage,
+  productId,
+  productName,
+}: ProductImageManagerProps) {
+  const router = useRouter();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [pending, startTransition] = useTransition();
+  const [state, setState] = useState<MessageState>({
+    message: "",
+    status: "idle",
+  });
+
+  function uploadImage(formData: FormData) {
+    const file = formData.get("image");
+    const altTextValue = formData.get("altText");
+    const altText =
+      typeof altTextValue === "string" ? altTextValue.trim() : productName;
+
+    if (!(file instanceof File) || file.size === 0) {
+      setState({ message: "Оберіть файл зображення.", status: "error" });
+      return;
+    }
+
+    if (!SUPPORTED_IMAGE_TYPES.has(file.type)) {
+      setState({
+        message: "Підтримуються JPEG, PNG, WebP та AVIF.",
+        status: "error",
+      });
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      setState({
+        message: "Розмір зображення не повинен перевищувати 10 МБ.",
+        status: "error",
+      });
+      return;
+    }
+
+    startTransition(async () => {
+      let uploadedKey: string | null = null;
+
+      try {
+        const token = await accessToken();
+        const uploadResponse = await fetch(`${apiUrl}/admin/media`, {
+          body: file,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": file.type,
+          },
+          method: "POST",
+        });
+        const uploadBody = (await uploadResponse.json().catch(() => null)) as {
+          key?: string;
+          message?: string;
+        } | null;
+
+        if (!uploadResponse.ok || !uploadBody?.key) {
+          throw new Error(
+            uploadBody?.message ?? "Не вдалося завантажити зображення.",
+          );
+        }
+
+        uploadedKey = uploadBody.key;
+
+        const result = await registerProductMainImage({
+          altText: altText || productName,
+          mimeType: file.type,
+          objectKey: uploadedKey,
+          productId,
+          sizeBytes: file.size,
+        });
+
+        if (result.status === "error") {
+          await deleteStoredMedia(apiUrl, uploadedKey, token);
+          throw new Error(result.message);
+        }
+
+        let message = result.message;
+
+        if (
+          result.oldKey &&
+          !(await deleteStoredMedia(apiUrl, result.oldKey, token))
+        ) {
+          message += " Старий файл потребує повторного очищення.";
+        }
+
+        setState({ message, status: "success" });
+
+        if (fileInput.current) {
+          fileInput.current.value = "";
+        }
+
+        router.refresh();
+      } catch (error) {
+        setState({
+          message:
+            error instanceof Error
+              ? error.message
+              : "Не вдалося завантажити зображення.",
+          status: "error",
+        });
+      }
+    });
+  }
+
+  function deleteImage() {
+    if (!window.confirm("Видалити головне фото товару?")) {
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const token = await accessToken();
+        const result = await removeProductMainImage(productId);
+
+        if (result.status === "error" || !result.key) {
+          throw new Error(result.message);
+        }
+
+        const removedFromStorage = await deleteStoredMedia(
+          apiUrl,
+          result.key,
+          token,
+        );
+
+        setState({
+          message: removedFromStorage
+            ? result.message
+            : `${result.message} Файл у сховищі потребує повторного очищення.`,
+          status: "success",
+        });
+        router.refresh();
+      } catch (error) {
+        setState({
+          message:
+            error instanceof Error
+              ? error.message
+              : "Не вдалося видалити зображення.",
+          status: "error",
+        });
+      }
+    });
+  }
+
+  return (
+    <div className="admin-media-layout">
+      <div className="admin-media-preview">
+        {currentImage ? (
+          <Image
+            alt={currentImage.altText || productName}
+            fill
+            sizes="(max-width: 640px) 100vw, 360px"
+            src={currentImage.url}
+          />
+        ) : (
+          <div className="admin-media-empty">
+            <ImagePlus aria-hidden size={30} strokeWidth={1.5} />
+            <span>Фото ще не додано</span>
+          </div>
+        )}
+      </div>
+
+      <form action={uploadImage} className="admin-form">
+        <label className="auth-field">
+          <span>Файл</span>
+          <input
+            accept="image/jpeg,image/png,image/webp,image/avif"
+            className="admin-file-input"
+            name="image"
+            ref={fileInput}
+            required
+            type="file"
+          />
+        </label>
+
+        <label className="auth-field">
+          <span>Опис фото</span>
+          <span className="auth-input-wrap">
+            <input
+              defaultValue={currentImage?.altText || productName}
+              maxLength={300}
+              name="altText"
+              type="text"
+            />
+          </span>
+        </label>
+
+        <div className="admin-media-actions">
+          <button
+            className="admin-submit-button"
+            disabled={pending}
+            type="submit"
+          >
+            {pending ? (
+              <LoaderCircle aria-hidden className="auth-spinner" size={18} />
+            ) : (
+              <ImagePlus aria-hidden size={18} strokeWidth={1.8} />
+            )}
+            {currentImage ? "Замінити фото" : "Завантажити фото"}
+          </button>
+
+          {currentImage ? (
+            <button
+              className="admin-danger-button"
+              disabled={pending}
+              onClick={deleteImage}
+              type="button"
+            >
+              <Trash2 aria-hidden size={18} strokeWidth={1.8} />
+              Видалити фото
+            </button>
+          ) : null}
+        </div>
+
+        <div
+          aria-live="polite"
+          className={`auth-message auth-message-${state.status}`}
+          role={state.status === "error" ? "alert" : "status"}
+        >
+          {state.message}
+        </div>
+      </form>
+    </div>
+  );
+}

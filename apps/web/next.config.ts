@@ -32,6 +32,21 @@ const maintenanceHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        hostname: "dreamshop-api.dreamshop-vo.workers.dev",
+        pathname: "/media/**",
+        protocol: "https",
+      },
+      {
+        hostname: "localhost",
+        pathname: "/media/**",
+        port: "8787",
+        protocol: "http",
+      },
+    ],
+  },
   poweredByHeader: false,
   reactStrictMode: true,
   turbopack: {

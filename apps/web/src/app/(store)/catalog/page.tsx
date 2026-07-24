@@ -14,9 +14,13 @@ import {
   normalizeCatalogSearch,
   normalizeCatalogSort,
 } from "../../../lib/catalog-filters";
+import { getSiteUrl } from "../../../lib/env";
 import { getWishlistState } from "../../../lib/wishlist";
 
 export const metadata: Metadata = {
+  alternates: {
+    canonical: `${getSiteUrl()}/catalog`,
+  },
   title: "Каталог - DreamShop",
   description:
     "Натуральні фруктові чипси та смаколики DreamShop в Одесі.",

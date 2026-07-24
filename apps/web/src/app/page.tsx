@@ -1,8 +1,14 @@
 import Image from "next/image";
+import { redirect } from "next/navigation";
 
+import { isStorefrontMaintenance } from "../lib/maintenance";
 import { ResetLegacyCaches } from "./reset-legacy-caches";
 
 export default function MaintenancePage() {
+  if (!isStorefrontMaintenance()) {
+    redirect("/catalog");
+  }
+
   return (
     <main className="maintenance-page">
       <ResetLegacyCaches />

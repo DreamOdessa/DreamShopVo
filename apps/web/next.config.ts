@@ -1,14 +1,19 @@
 import type { NextConfig } from "next";
 
-const maintenanceHeaders = [
-  {
-    key: "Cache-Control",
-    value: "no-store, max-age=0",
-  },
-  {
-    key: "X-Robots-Tag",
-    value: "noindex, nofollow, noarchive",
-  },
+const maintenanceEnabled = process.env.STOREFRONT_MAINTENANCE !== "false";
+const securityHeaders = [
+  ...(maintenanceEnabled
+    ? [
+        {
+          key: "Cache-Control",
+          value: "no-store, max-age=0",
+        },
+        {
+          key: "X-Robots-Tag",
+          value: "noindex, nofollow, noarchive",
+        },
+      ]
+    : []),
   {
     key: "X-Content-Type-Options",
     value: "nosniff",
@@ -56,7 +61,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/:path*",
-        headers: maintenanceHeaders,
+        headers: securityHeaders,
       },
     ];
   },

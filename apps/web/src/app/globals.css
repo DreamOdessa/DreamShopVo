@@ -1271,6 +1271,68 @@ input:focus-visible {
   color: #24704b;
 }
 
+.admin-order-search {
+  display: grid;
+  width: min(100%, 620px);
+  margin-top: 2rem;
+  grid-template-columns: minmax(0, 1fr) 42px auto;
+  gap: 0.5rem;
+}
+
+.admin-order-search label {
+  min-width: 0;
+}
+
+.admin-order-search input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 0.85rem;
+  border: 1px solid #c7d8d6;
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
+  color: #234d55;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.admin-order-search input:focus {
+  border-color: #16879a;
+  box-shadow: 0 0 0 3px rgb(22 135 154 / 12%);
+}
+
+.admin-order-search button,
+.admin-order-search > a,
+.admin-order-results nav > a,
+.admin-order-results nav > span {
+  display: inline-grid;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #c7d8d6;
+  border-radius: 6px;
+  place-items: center;
+  background: #fff;
+  color: #235965;
+  text-decoration: none;
+}
+
+.admin-order-search button {
+  border-color: #176b78;
+  background: #176b78;
+  color: #fff;
+  cursor: pointer;
+}
+
+.admin-order-search button:hover {
+  background: #125a65;
+}
+
+.admin-order-search > a:hover,
+.admin-order-results nav > a:hover {
+  border-color: #7faeb2;
+  background: #eef7f6;
+}
+
 .admin-order-filters {
   display: flex;
   width: 100%;
@@ -1358,6 +1420,39 @@ input:focus-visible {
 
 .admin-order-number strong {
   color: #175867 !important;
+}
+
+.admin-order-results {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #6b8083;
+  font-size: 0.72rem;
+}
+
+.admin-order-results nav {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.admin-order-results nav > a,
+.admin-order-results nav > span {
+  width: 34px;
+  height: 34px;
+}
+
+.admin-order-results nav > .is-disabled {
+  color: #aebcba;
+  opacity: 0.65;
+}
+
+.admin-order-results strong {
+  min-width: 54px;
+  color: #31575d;
+  text-align: center;
 }
 
 .admin-order-detail-grid {
@@ -1929,6 +2024,15 @@ input:focus-visible {
   .admin-order-row > .admin-row-button {
     grid-column: 2;
     grid-row: 1;
+  }
+
+  .admin-order-search {
+    width: 100%;
+  }
+
+  .admin-order-results {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .admin-order-details {

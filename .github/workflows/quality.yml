@@ -36,7 +36,21 @@ jobs:
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
       - run: npm ci
-      - run: npm audit --audit-level=high
+      - name: Audit dependencies
+        run: |
+          set -o pipefail
+          audit_log="$(mktemp)"
+
+          if npm audit --audit-level=high 2>&1 | tee "$audit_log"; then
+            exit 0
+          fi
+
+          if grep -q "audit endpoint returned an error" "$audit_log"; then
+            echo "::warning::npm audit service is temporarily unavailable"
+            exit 0
+          fi
+
+          exit 1
       - run: npm run typecheck
       - run: npm run build
 

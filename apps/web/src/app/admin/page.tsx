@@ -26,7 +26,7 @@ type CategoryRow = {
 };
 
 type ProductRow = {
-  categories: { name: string } | null;
+  category: { name: string } | null;
   id: string;
   in_stock: boolean;
   is_active: boolean;
@@ -60,7 +60,9 @@ export default async function AdminPage() {
       .order("name"),
     supabase
       .from("products")
-      .select("id,name,slug,price,is_active,in_stock,categories(name)")
+      .select(
+        "id,name,slug,price,is_active,in_stock,category:categories!products_category_id_fkey(name)",
+      )
       .order("created_at", { ascending: false }),
   ]);
 
@@ -176,7 +178,7 @@ export default async function AdminPage() {
                       <div>
                         <strong>{product.name}</strong>
                         <span>
-                          {product.categories?.name ?? "Без категорії"} ·{" "}
+                          {product.category?.name ?? "Без категорії"} ·{" "}
                           {priceFormatter.format(product.price)}
                         </span>
                       </div>

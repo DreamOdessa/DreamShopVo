@@ -171,5 +171,5 @@ export async function openAdmin() {
     redirect("/auth");
   }
 
-  redirect("/admin");
+  redirect("/admin/dashboard");
 }

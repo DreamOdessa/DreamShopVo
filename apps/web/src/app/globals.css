@@ -1074,6 +1074,175 @@ input:focus-visible {
   font-weight: 760;
 }
 
+.admin-dashboard-metrics {
+  display: grid;
+  margin: 2rem 0 0;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  border-top: 1px solid #d3dfdd;
+  border-bottom: 1px solid #d3dfdd;
+}
+
+.admin-dashboard-metrics > a,
+.admin-dashboard-metrics > div {
+  display: grid;
+  min-width: 0;
+  min-height: 92px;
+  padding: 1rem;
+  align-content: center;
+  gap: 0.35rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-dashboard-metrics > * + * {
+  border-left: 1px solid #d3dfdd;
+}
+
+.admin-dashboard-metrics > a:hover {
+  background: #f4f8f7;
+}
+
+.admin-dashboard-metrics dt {
+  color: #718487;
+  font-size: 0.67rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.admin-dashboard-metrics dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #174c58;
+  font-size: 1.15rem;
+  font-weight: 760;
+}
+
+.admin-dashboard-grid {
+  display: grid;
+  margin-top: 2rem;
+  grid-template-columns: minmax(0, 1.65fr) minmax(280px, 0.75fr);
+  align-items: start;
+  gap: 2rem;
+}
+
+.admin-dashboard-grid > section {
+  min-width: 0;
+}
+
+.admin-dashboard-section-heading {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-dashboard-section-heading > div,
+.admin-dashboard-section-heading > a {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.admin-dashboard-section-heading h2 {
+  margin: 0;
+  color: #244d55;
+  font-size: 1rem;
+}
+
+.admin-dashboard-section-heading > a {
+  color: #33656d;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-dashboard-section-heading > a:hover {
+  color: #16879a;
+}
+
+.admin-dashboard-orders,
+.admin-inventory-list {
+  display: grid;
+  margin-top: 0.65rem;
+  border-top: 1px solid #d8e3e1;
+}
+
+.admin-dashboard-order-row {
+  display: grid;
+  min-width: 0;
+  min-height: 78px;
+  padding: 0.8rem 0;
+  grid-template-columns: 110px minmax(150px, 1fr) 125px 36px;
+  border-bottom: 1px solid #d8e3e1;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.admin-dashboard-order-row > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.25rem;
+}
+
+.admin-dashboard-order-row strong {
+  overflow-wrap: anywhere;
+  color: #234d55;
+  font-size: 0.78rem;
+}
+
+.admin-dashboard-order-row span:not(.admin-order-status) {
+  overflow-wrap: anywhere;
+  color: #76898b;
+  font-size: 0.68rem;
+}
+
+.admin-dashboard-order-row .admin-order-status {
+  width: max-content;
+  max-width: 100%;
+}
+
+.admin-inventory-row {
+  display: grid;
+  min-width: 0;
+  min-height: 64px;
+  padding: 0.7rem 0;
+  grid-template-columns: minmax(0, 1fr) auto 36px;
+  border-bottom: 1px solid #d8e3e1;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-inventory-row > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.22rem;
+}
+
+.admin-inventory-row strong {
+  overflow-wrap: anywhere;
+  color: #234d55;
+  font-size: 0.76rem;
+}
+
+.admin-inventory-row > div span {
+  overflow-wrap: anywhere;
+  color: #76898b;
+  font-size: 0.66rem;
+}
+
+.admin-stock-state {
+  color: #9a641d;
+  font-size: 0.69rem;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.admin-stock-state.is-out {
+  color: #b74339;
+}
+
 .admin-section {
   margin-top: 2.5rem;
   padding-top: 1.5rem;
@@ -2198,6 +2367,26 @@ input:focus-visible {
     font-size: 1.55rem;
   }
 
+  .admin-dashboard-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-dashboard-metrics > * + * {
+    border-left: 1px solid #d3dfdd;
+  }
+
+  .admin-dashboard-metrics > :nth-child(odd) {
+    border-left: 0;
+  }
+
+  .admin-dashboard-metrics > :nth-child(n + 3) {
+    border-top: 1px solid #d3dfdd;
+  }
+
+  .admin-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
   .admin-workspace {
     grid-template-columns: 1fr;
   }
@@ -2302,6 +2491,19 @@ input:focus-visible {
 
   .admin-order-row > div {
     grid-column: 1;
+  }
+
+  .admin-dashboard-order-row {
+    grid-template-columns: minmax(0, 1fr) 36px;
+  }
+
+  .admin-dashboard-order-row > div {
+    grid-column: 1;
+  }
+
+  .admin-dashboard-order-row > .admin-row-button {
+    grid-column: 2;
+    grid-row: 1;
   }
 
   .admin-order-row > .admin-order-status {

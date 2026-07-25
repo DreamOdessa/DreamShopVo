@@ -152,6 +152,21 @@ begin
   end;
 end;
 $$;
+do $$
+begin
+  begin
+    perform public.set_product_stock(
+      (select id from public.products where slug = 'visible'),
+      2,
+      4
+    );
+
+    raise exception 'Customer changed protected inventory';
+  exception
+    when insufficient_privilege then null;
+  end;
+end;
+$$;
 insert into public.wishlist_items (user_id, product_id)
 values (
   '00000000-0000-4000-8000-000000000001',
@@ -516,6 +531,28 @@ select 1 / case
   else 0
 end as admin_reads_order_summary
 from public.get_admin_order_summary(null, null, null);
+select 1 / case
+  when public.set_product_stock(
+    (select id from public.products where slug = 'visible'),
+    2,
+    4
+  ) then 1
+  else 0
+end as admin_updates_current_inventory;
+select 1 / case
+  when stock_quantity = 4 and in_stock then 1
+  else 0
+end as inventory_update_is_synchronized
+from public.products
+where slug = 'visible';
+select 1 / case
+  when not public.set_product_stock(
+    (select id from public.products where slug = 'visible'),
+    2,
+    8
+  ) then 1
+  else 0
+end as stale_inventory_update_is_rejected;
 select 1 / case
   when count(*) = 3 then 1
   else 0

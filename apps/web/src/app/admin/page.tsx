@@ -5,6 +5,7 @@ import {
   PackageOpen,
   Pencil,
   Search,
+  SlidersHorizontal,
   X,
 } from "lucide-react";
 import type { Metadata } from "next";
@@ -17,6 +18,7 @@ import { getAdminContext } from "../../lib/auth/admin";
 import { AdminNavigation } from "./admin-navigation";
 import { CategoryForm } from "./category-form";
 import { ProductForm } from "./product-form";
+import { QuickStockForm } from "./quick-stock-form";
 
 export const metadata: Metadata = {
   title: "Каталог - DreamShop Admin",
@@ -46,11 +48,14 @@ type ProductRow = {
 };
 
 type ProductFilter = "active" | "all" | "inactive" | "low" | "out";
+type ProductSort = "name" | "newest" | "price_high" | "price_low" | "stock";
 
 type AdminPageProps = {
   searchParams: Promise<{
+    category?: string;
     page?: string;
     q?: string;
+    sort?: string;
     stock?: string;
   }>;
 };
@@ -62,12 +67,21 @@ const priceFormatter = new Intl.NumberFormat("uk-UA", {
 });
 
 const PAGE_SIZE = 20;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PRODUCT_FILTERS: Array<{ label: string; value: ProductFilter }> = [
   { label: "Усі", value: "all" },
   { label: "У продажу", value: "active" },
   { label: "Мало", value: "low" },
   { label: "Немає", value: "out" },
   { label: "Приховані", value: "inactive" },
+];
+const PRODUCT_SORTS: Array<{ label: string; value: ProductSort }> = [
+  { label: "Спочатку нові", value: "newest" },
+  { label: "За назвою", value: "name" },
+  { label: "Найменший залишок", value: "stock" },
+  { label: "Найдешевші", value: "price_low" },
+  { label: "Найдорожчі", value: "price_high" },
 ];
 
 function normalizedSearch(value?: string) {
@@ -91,19 +105,37 @@ function productFilterFrom(value?: string): ProductFilter {
     : "all";
 }
 
+function productSortFrom(value?: string): ProductSort {
+  return PRODUCT_SORTS.some((sort) => sort.value === value)
+    ? (value as ProductSort)
+    : "newest";
+}
+
 function catalogHref({
+  category,
   page,
   query,
+  sort,
   stock,
 }: {
+  category: string | null;
   page?: number;
   query: string;
+  sort: ProductSort;
   stock: ProductFilter;
 }) {
   const params = new URLSearchParams();
 
+  if (category) {
+    params.set("category", category);
+  }
+
   if (stock !== "all") {
     params.set("stock", stock);
+  }
+
+  if (sort !== "newest") {
+    params.set("sort", sort);
   }
 
   if (query) {
@@ -132,6 +164,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const params = await searchParams;
   const searchQuery = normalizedSearch(params.q);
   const activeFilter = productFilterFrom(params.stock);
+  const activeCategory =
+    params.category && UUID_PATTERN.test(params.category)
+      ? params.category
+      : null;
+  const activeSort = productSortFrom(params.sort);
   const currentPage = pageFrom(params.page);
   const rangeStart = (currentPage - 1) * PAGE_SIZE;
   let productsQuery = supabase
@@ -139,14 +176,16 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     .select(
       "id,name,slug,price,is_active,in_stock,stock_quantity,category:categories!products_category_id_fkey(name)",
       { count: "exact" },
-    )
-    .order("created_at", { ascending: false })
-    .range(rangeStart, rangeStart + PAGE_SIZE - 1);
+    );
 
   if (searchQuery) {
     productsQuery = productsQuery.or(
       `name.ilike.%${searchQuery}%,slug.ilike.%${searchQuery}%`,
     );
+  }
+
+  if (activeCategory) {
+    productsQuery = productsQuery.eq("category_id", activeCategory);
   }
 
   if (activeFilter === "active") {
@@ -167,6 +206,25 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   } else if (activeFilter === "inactive") {
     productsQuery = productsQuery.eq("is_active", false);
   }
+
+  if (activeSort === "name") {
+    productsQuery = productsQuery.order("name");
+  } else if (activeSort === "stock") {
+    productsQuery = productsQuery
+      .order("stock_quantity", { ascending: true, nullsFirst: false })
+      .order("name");
+  } else if (activeSort === "price_low") {
+    productsQuery = productsQuery.order("price", { ascending: true });
+  } else if (activeSort === "price_high") {
+    productsQuery = productsQuery.order("price", { ascending: false });
+  } else {
+    productsQuery = productsQuery.order("created_at", { ascending: false });
+  }
+
+  productsQuery = productsQuery.range(
+    rangeStart,
+    rangeStart + PAGE_SIZE - 1,
+  );
 
   const [categoriesResult, productsResult, productCountResult] =
     await Promise.all([
@@ -196,7 +254,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   if ((!products.length && currentPage > 1) || currentPage > pageCount) {
     redirect(
       catalogHref({
+        category: activeCategory,
         query: searchQuery,
+        sort: activeSort,
         stock: activeFilter,
       }),
     );
@@ -301,47 +361,116 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <h2 id="products-title">Товари</h2>
             </div>
             <div className="admin-catalog-controls">
-              <form
-                action="/admin"
-                aria-label="Пошук товарів"
-                className="admin-order-search"
-                method="get"
-              >
-                {activeFilter !== "all" ? (
-                  <input
-                    name="stock"
-                    type="hidden"
-                    value={activeFilter}
-                  />
-                ) : null}
-                <label>
-                  <span className="sr-only">Назва або slug товару</span>
-                  <input
-                    autoComplete="off"
-                    defaultValue={searchQuery}
-                    maxLength={80}
-                    name="q"
-                    placeholder="Назва або slug товару"
-                    type="search"
-                  />
-                </label>
-                <button title="Знайти товар" type="submit">
-                  <Search aria-hidden size={17} strokeWidth={1.8} />
-                  <span className="sr-only">Знайти товар</span>
-                </button>
-                {searchQuery ? (
-                  <Link
-                    href={catalogHref({
-                      query: "",
-                      stock: activeFilter,
-                    })}
-                    title="Очистити пошук"
-                  >
-                    <X aria-hidden size={17} strokeWidth={1.8} />
-                    <span className="sr-only">Очистити пошук</span>
-                  </Link>
-                ) : null}
-              </form>
+              <div className="admin-catalog-control-row">
+                <form
+                  action="/admin#products-title"
+                  aria-label="Пошук товарів"
+                  className="admin-order-search"
+                  method="get"
+                >
+                  {activeFilter !== "all" ? (
+                    <input
+                      name="stock"
+                      type="hidden"
+                      value={activeFilter}
+                    />
+                  ) : null}
+                  {activeCategory ? (
+                    <input
+                      name="category"
+                      type="hidden"
+                      value={activeCategory}
+                    />
+                  ) : null}
+                  {activeSort !== "newest" ? (
+                    <input name="sort" type="hidden" value={activeSort} />
+                  ) : null}
+                  <label>
+                    <span className="sr-only">Назва або slug товару</span>
+                    <input
+                      autoComplete="off"
+                      defaultValue={searchQuery}
+                      maxLength={80}
+                      name="q"
+                      placeholder="Назва або slug товару"
+                      type="search"
+                    />
+                  </label>
+                  <button title="Знайти товар" type="submit">
+                    <Search aria-hidden size={17} strokeWidth={1.8} />
+                    <span className="sr-only">Знайти товар</span>
+                  </button>
+                  {searchQuery ? (
+                    <Link
+                      href={catalogHref({
+                        category: activeCategory,
+                        query: "",
+                        sort: activeSort,
+                        stock: activeFilter,
+                      })}
+                      title="Очистити пошук"
+                    >
+                      <X aria-hidden size={17} strokeWidth={1.8} />
+                      <span className="sr-only">Очистити пошук</span>
+                    </Link>
+                  ) : null}
+                </form>
+
+                <form
+                  action="/admin#products-title"
+                  aria-label="Категорія та сортування товарів"
+                  className="admin-catalog-selectors"
+                  method="get"
+                >
+                  {searchQuery ? (
+                    <input name="q" type="hidden" value={searchQuery} />
+                  ) : null}
+                  {activeFilter !== "all" ? (
+                    <input
+                      name="stock"
+                      type="hidden"
+                      value={activeFilter}
+                    />
+                  ) : null}
+                  <label>
+                    <span className="sr-only">Категорія товарів</span>
+                    <select
+                      aria-label="Категорія товарів"
+                      defaultValue={activeCategory ?? ""}
+                      name="category"
+                    >
+                      <option value="">Усі категорії</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="sr-only">Сортування товарів</span>
+                    <select
+                      aria-label="Сортування товарів"
+                      defaultValue={activeSort}
+                      name="sort"
+                    >
+                      {PRODUCT_SORTS.map((sort) => (
+                        <option key={sort.value} value={sort.value}>
+                          {sort.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button title="Застосувати фільтри" type="submit">
+                    <SlidersHorizontal
+                      aria-hidden
+                      size={17}
+                      strokeWidth={1.8}
+                    />
+                    <span className="sr-only">Застосувати фільтри</span>
+                  </button>
+                </form>
+              </div>
 
               <nav
                 aria-label="Фільтр товарів"
@@ -353,7 +482,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       activeFilter === filter.value ? "page" : undefined
                     }
                     href={catalogHref({
+                      category: activeCategory,
                       query: searchQuery,
+                      sort: activeSort,
                       stock: filter.value,
                     })}
                     key={filter.value}
@@ -363,7 +494,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 ))}
               </nav>
             </div>
-            <div className="admin-workspace">
+            <div className="admin-workspace admin-product-workspace">
               <div className="admin-tool">
                 <h3>Новий товар</h3>
                 <ProductForm
@@ -400,6 +531,11 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             ? "У продажу"
                             : "Неактивний"}
                         </span>
+                        <QuickStockForm
+                          expectedStock={product.stock_quantity}
+                          productId={product.id}
+                          productName={product.name}
+                        />
                         <Link
                           className="admin-row-button"
                           href={`/admin/products/${product.id}`}
@@ -417,7 +553,9 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                   <div className="admin-empty">
                     <PackageOpen aria-hidden size={24} strokeWidth={1.6} />
                     <p>
-                      {searchQuery || activeFilter !== "all"
+                      {searchQuery ||
+                      activeCategory ||
+                      activeFilter !== "all"
                         ? "За вибраними умовами товарів не знайдено"
                         : "Товарів поки немає"}
                     </p>
@@ -430,8 +568,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       {currentPage > 1 ? (
                         <Link
                           href={catalogHref({
+                            category: activeCategory,
                             page: currentPage - 1,
                             query: searchQuery,
+                            sort: activeSort,
                             stock: activeFilter,
                           })}
                           title="Попередня сторінка"
@@ -454,8 +594,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                       {currentPage < pageCount ? (
                         <Link
                           href={catalogHref({
+                            category: activeCategory,
                             page: currentPage + 1,
                             query: searchQuery,
+                            sort: activeSort,
                             stock: activeFilter,
                           })}
                           title="Наступна сторінка"

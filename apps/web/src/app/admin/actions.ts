@@ -214,7 +214,10 @@ function validateProduct(formData: FormData): ValidatedValues<ProductValues> {
     values: {
       category_id: categoryId,
       description,
-      in_stock: checkboxValue(formData, "inStock"),
+      in_stock:
+        stockQuantity === 0
+          ? false
+          : checkboxValue(formData, "inStock"),
       is_active: checkboxValue(formData, "isActive"),
       is_popular: checkboxValue(formData, "isPopular"),
       name,
@@ -456,6 +459,68 @@ export async function updateProduct(
 
   return {
     message: "Зміни товару збережено.",
+    status: "success",
+  };
+}
+
+export async function updateProductStock(
+  _previousState: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const productId = stringValue(formData, "productId");
+  const expectedValue = stringValue(formData, "expectedStock");
+  const stockValue = stringValue(formData, "stockQuantity");
+  const expectedStock = expectedValue === "" ? null : numericValue(expectedValue);
+  const stockQuantity = stockValue === "" ? null : numericValue(stockValue);
+
+  if (!UUID_PATTERN.test(productId)) {
+    return errorState("Товар не знайдено.");
+  }
+
+  if (
+    (expectedValue !== "" &&
+      (expectedStock === null || !Number.isInteger(expectedStock))) ||
+    (stockValue !== "" &&
+      (stockQuantity === null ||
+        !Number.isInteger(stockQuantity) ||
+        stockQuantity < 0 ||
+        stockQuantity > 1000000))
+  ) {
+    return errorState("Вкажіть цілий залишок від 0 до 1 000 000.");
+  }
+
+  const context = await verifiedAdmin();
+
+  if (!context) {
+    return errorState("Сесія адміністратора недійсна. Увійдіть повторно.");
+  }
+
+  const { data, error } = await context.supabase.rpc("set_product_stock", {
+    p_expected_stock: expectedStock,
+    p_new_stock: stockQuantity,
+    p_product_id: productId,
+  });
+
+  if (error) {
+    return databaseErrorState(error.code);
+  }
+
+  if (!data) {
+    return errorState("Залишок уже змінився. Оновіть сторінку.");
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath("/admin/dashboard");
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/cart");
+  revalidatePath("/catalog");
+
+  return {
+    message:
+      stockQuantity === null
+        ? "Облік залишку вимкнено."
+        : `Збережено: ${stockQuantity} шт.`,
     status: "success",
   };
 }

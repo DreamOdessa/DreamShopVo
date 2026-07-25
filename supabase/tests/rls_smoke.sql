@@ -141,6 +141,17 @@ begin
   end;
 end;
 $$;
+do $$
+begin
+  begin
+    perform * from public.get_admin_order_summary(null, null, null);
+
+    raise exception 'Customer read protected order statistics';
+  exception
+    when insufficient_privilege then null;
+  end;
+end;
+$$;
 insert into public.wishlist_items (user_id, product_id)
 values (
   '00000000-0000-4000-8000-000000000001',
@@ -499,6 +510,12 @@ select 1 / case
   else 0
 end as admin_reads_dashboard_summary
 from public.get_admin_dashboard_summary();
+select 1 / case
+  when order_count = 2
+    and order_total = 10 then 1
+  else 0
+end as admin_reads_order_summary
+from public.get_admin_order_summary(null, null, null);
 select 1 / case
   when count(*) = 3 then 1
   else 0

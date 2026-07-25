@@ -1539,6 +1539,68 @@ input:focus-visible {
   background: #eef7f6;
 }
 
+.admin-order-tools {
+  display: flex;
+  margin-top: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-order-periods {
+  display: inline-flex;
+  min-width: 0;
+  padding: 3px;
+  overflow-x: auto;
+  border: 1px solid #cad9d7;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.admin-order-periods a {
+  display: inline-flex;
+  min-height: 32px;
+  padding: 0 0.75rem;
+  border-radius: 4px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: #5d7377;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-order-periods a:hover {
+  color: #175867;
+}
+
+.admin-order-periods a[aria-current="page"] {
+  background: #eaf4f2;
+  color: #175867;
+}
+
+.admin-export-button {
+  display: inline-flex;
+  min-height: 40px;
+  padding: 0 0.85rem;
+  border: 1px solid #b9cecb;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  background: #fff;
+  color: #235965;
+  font-size: 0.72rem;
+  font-weight: 740;
+  text-decoration: none;
+}
+
+.admin-export-button:hover {
+  border-color: #7faeb2;
+  background: #eef7f6;
+}
+
 .admin-order-filters {
   display: flex;
   width: 100%;
@@ -2551,6 +2613,24 @@ input:focus-visible {
   }
 
   .admin-order-search {
+    width: 100%;
+  }
+
+  .admin-order-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .admin-order-periods {
+    width: 100%;
+  }
+
+  .admin-order-periods a {
+    min-width: max-content;
+    flex: 1 0 auto;
+  }
+
+  .admin-export-button {
     width: 100%;
   }
 

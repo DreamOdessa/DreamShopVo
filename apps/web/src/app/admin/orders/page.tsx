@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  Download,
   Search,
   ShoppingBag,
   X,
@@ -11,6 +12,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import {
+  normalizedOrderSearch,
+  ORDER_PERIODS,
+  orderFilterParams,
+  orderPeriodFrom,
+  orderSearchFilter,
+  orderSince,
+  type OrderPeriod,
+} from "../../../lib/admin/order-filters";
 import { getAdminContext } from "../../../lib/auth/admin";
 import {
   isOrderStatus,
@@ -32,6 +42,7 @@ export const metadata: Metadata = {
 type AdminOrdersPageProps = {
   searchParams: Promise<{
     page?: string;
+    period?: string;
     q?: string;
     status?: string;
   }>;
@@ -64,15 +75,6 @@ const dateFormatter = new Intl.DateTimeFormat("uk-UA", {
 
 const PAGE_SIZE = 25;
 
-function normalizedSearch(value?: string) {
-  return (value ?? "")
-    .normalize("NFKC")
-    .replace(/[^\p{L}\p{N}+\-\s]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 80);
-}
-
 function pageFrom(value?: string) {
   const page = Number(value);
 
@@ -81,22 +83,16 @@ function pageFrom(value?: string) {
 
 function ordersHref({
   page,
+  period,
   query,
   status,
 }: {
   page?: number;
+  period: OrderPeriod;
   query: string;
   status: OrderStatus | null;
 }) {
-  const params = new URLSearchParams();
-
-  if (status) {
-    params.set("status", status);
-  }
-
-  if (query) {
-    params.set("q", query);
-  }
+  const params = orderFilterParams({ period, query, status });
 
   if (page && page > 1) {
     params.set("page", String(page));
@@ -106,27 +102,20 @@ function ordersHref({
   return search ? `/admin/orders?${search}` : "/admin/orders";
 }
 
-function orderSearchFilter(query: string) {
-  const filters = [
-    `customer_first_name.ilike.%${query}%`,
-    `customer_last_name.ilike.%${query}%`,
-    `delivery_city.ilike.%${query}%`,
-  ];
-  const digits = query.replace(/\D/g, "");
-
-  if (digits.length >= 3) {
-    filters.push(`customer_phone.ilike.%${digits}%`);
-  }
-
-  if (/^\d{1,12}$/.test(query)) {
-    const orderNumber = Number(query);
-
-    if (Number.isSafeInteger(orderNumber)) {
-      filters.push(`order_number.eq.${orderNumber}`);
-    }
-  }
-
-  return filters.join(",");
+function exportHref({
+  period,
+  query,
+  status,
+}: {
+  period: OrderPeriod;
+  query: string;
+  status: OrderStatus | null;
+}) {
+  const params = orderFilterParams({ period, query, status });
+  const search = params.toString();
+  return search
+    ? `/admin/orders/export?${search}`
+    : "/admin/orders/export";
 }
 
 export default async function AdminOrdersPage({
@@ -145,7 +134,9 @@ export default async function AdminOrdersPage({
   const params = await searchParams;
   const activeStatus =
     params.status && isOrderStatus(params.status) ? params.status : null;
-  const searchQuery = normalizedSearch(params.q);
+  const activePeriod = orderPeriodFrom(params.period);
+  const searchQuery = normalizedOrderSearch(params.q);
+  const since = orderSince(activePeriod);
   const currentPage = pageFrom(params.page);
   const rangeStart = (currentPage - 1) * PAGE_SIZE;
   let ordersQuery = supabase
@@ -161,23 +152,45 @@ export default async function AdminOrdersPage({
     ordersQuery = ordersQuery.eq("status", activeStatus);
   }
 
+  if (since) {
+    ordersQuery = ordersQuery.gte("created_at", since);
+  }
+
   if (searchQuery) {
     ordersQuery = ordersQuery.or(orderSearchFilter(searchQuery));
   }
 
-  const [ordersResult, ...countResults] = await Promise.all([
+  const statusCountQueries = ORDER_STATUSES.map((status) => {
+    let countQuery = supabase
+      .from("orders")
+      .select("id", { count: "exact", head: true })
+      .eq("status", status);
+
+    if (since) {
+      countQuery = countQuery.gte("created_at", since);
+    }
+
+    if (searchQuery) {
+      countQuery = countQuery.or(orderSearchFilter(searchQuery));
+    }
+
+    return countQuery;
+  });
+
+  const [ordersResult, summaryResult, ...countResults] = await Promise.all([
     ordersQuery,
-    ...ORDER_STATUSES.map((status) =>
-      supabase
-        .from("orders")
-        .select("id", { count: "exact", head: true })
-        .eq("status", status),
-    ),
+    supabase.rpc("get_admin_order_summary", {
+      p_search: searchQuery || null,
+      p_since: since,
+      p_status: activeStatus,
+    }),
+    ...statusCountQueries,
   ]);
 
   if (currentPage > 1 && ordersResult.error?.code === "PGRST103") {
     redirect(
       ordersHref({
+        period: activePeriod,
         query: searchQuery,
         status: activeStatus,
       }),
@@ -186,6 +199,7 @@ export default async function AdminOrdersPage({
 
   if (
     ordersResult.error ||
+    summaryResult.error ||
     countResults.some((result) => Boolean(result.error))
   ) {
     throw new Error("Unable to load orders.");
@@ -198,6 +212,7 @@ export default async function AdminOrdersPage({
   if (!orders.length && currentPage > 1) {
     redirect(
       ordersHref({
+        period: activePeriod,
         query: searchQuery,
         status: activeStatus,
       }),
@@ -215,6 +230,13 @@ export default async function AdminOrdersPage({
     (total, count) => total + count,
     0,
   );
+  const orderSummary = (summaryResult.data?.[0] ?? {
+    order_count: 0,
+    order_total: 0,
+  }) as {
+    order_count: number;
+    order_total: number;
+  };
 
   return (
     <main className="admin-page">
@@ -248,12 +270,14 @@ export default async function AdminOrdersPage({
             </div>
             <dl className="admin-counts">
               <div>
-                <dt>Усього</dt>
-                <dd>{totalOrders}</dd>
+                <dt>У вибірці</dt>
+                <dd>{orderSummary.order_count}</dd>
               </div>
               <div>
-                <dt>Нових</dt>
-                <dd>{statusCounts.pending}</dd>
+                <dt>Без скасованих</dt>
+                <dd>
+                  {priceFormatter.format(Number(orderSummary.order_total))}
+                </dd>
               </div>
             </dl>
           </header>
@@ -266,6 +290,9 @@ export default async function AdminOrdersPage({
           >
             {activeStatus ? (
               <input name="status" type="hidden" value={activeStatus} />
+            ) : null}
+            {activePeriod !== "30d" ? (
+              <input name="period" type="hidden" value={activePeriod} />
             ) : null}
             <label>
               <span className="sr-only">
@@ -286,7 +313,11 @@ export default async function AdminOrdersPage({
             </button>
             {searchQuery ? (
               <Link
-                href={ordersHref({ query: "", status: activeStatus })}
+                href={ordersHref({
+                  period: activePeriod,
+                  query: "",
+                  status: activeStatus,
+                })}
                 title="Очистити пошук"
               >
                 <X aria-hidden size={17} strokeWidth={1.8} />
@@ -295,17 +326,60 @@ export default async function AdminOrdersPage({
             ) : null}
           </form>
 
+          <div className="admin-order-tools">
+            <nav
+              aria-label="Період замовлень"
+              className="admin-order-periods"
+            >
+              {ORDER_PERIODS.map((period) => (
+                <Link
+                  aria-current={
+                    activePeriod === period.value ? "page" : undefined
+                  }
+                  href={ordersHref({
+                    period: period.value,
+                    query: searchQuery,
+                    status: activeStatus,
+                  })}
+                  key={period.value}
+                >
+                  {period.label}
+                </Link>
+              ))}
+            </nav>
+            <a
+              className="admin-export-button"
+              download
+              href={exportHref({
+                period: activePeriod,
+                query: searchQuery,
+                status: activeStatus,
+              })}
+            >
+              <Download aria-hidden size={16} strokeWidth={1.8} />
+              CSV
+            </a>
+          </div>
+
           <nav className="admin-order-filters" aria-label="Фільтр замовлень">
             <Link
               aria-current={!activeStatus ? "page" : undefined}
-              href={ordersHref({ query: searchQuery, status: null })}
+              href={ordersHref({
+                period: activePeriod,
+                query: searchQuery,
+                status: null,
+              })}
             >
               Усі <span>{totalOrders}</span>
             </Link>
             {ORDER_STATUSES.map((status) => (
               <Link
                 aria-current={activeStatus === status ? "page" : undefined}
-                href={ordersHref({ query: searchQuery, status })}
+                href={ordersHref({
+                  period: activePeriod,
+                  query: searchQuery,
+                  status,
+                })}
                 key={status}
               >
                 {orderStatusLabels[status]} <span>{statusCounts[status]}</span>
@@ -371,6 +445,7 @@ export default async function AdminOrdersPage({
                     <Link
                       href={ordersHref({
                         page: currentPage - 1,
+                        period: activePeriod,
                         query: searchQuery,
                         status: activeStatus,
                       })}
@@ -391,6 +466,7 @@ export default async function AdminOrdersPage({
                     <Link
                       href={ordersHref({
                         page: currentPage + 1,
+                        period: activePeriod,
                         query: searchQuery,
                         status: activeStatus,
                       })}

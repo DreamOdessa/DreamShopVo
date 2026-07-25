@@ -1,4 +1,12 @@
-import { ArrowLeft, FolderTree, PackageOpen, Pencil } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  FolderTree,
+  PackageOpen,
+  Pencil,
+  Search,
+  X,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -37,13 +45,80 @@ type ProductRow = {
   stock_quantity: number | null;
 };
 
+type ProductFilter = "active" | "all" | "inactive" | "low" | "out";
+
+type AdminPageProps = {
+  searchParams: Promise<{
+    page?: string;
+    q?: string;
+    stock?: string;
+  }>;
+};
+
 const priceFormatter = new Intl.NumberFormat("uk-UA", {
   currency: "UAH",
   maximumFractionDigits: 2,
   style: "currency",
 });
 
-export default async function AdminPage() {
+const PAGE_SIZE = 20;
+const PRODUCT_FILTERS: Array<{ label: string; value: ProductFilter }> = [
+  { label: "Усі", value: "all" },
+  { label: "У продажу", value: "active" },
+  { label: "Мало", value: "low" },
+  { label: "Немає", value: "out" },
+  { label: "Приховані", value: "inactive" },
+];
+
+function normalizedSearch(value?: string) {
+  return (value ?? "")
+    .normalize("NFKC")
+    .replace(/[^\p{L}\p{N}\-\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 80);
+}
+
+function pageFrom(value?: string) {
+  const page = Number(value);
+
+  return Number.isInteger(page) && page > 0 ? page : 1;
+}
+
+function productFilterFrom(value?: string): ProductFilter {
+  return PRODUCT_FILTERS.some((filter) => filter.value === value)
+    ? (value as ProductFilter)
+    : "all";
+}
+
+function catalogHref({
+  page,
+  query,
+  stock,
+}: {
+  page?: number;
+  query: string;
+  stock: ProductFilter;
+}) {
+  const params = new URLSearchParams();
+
+  if (stock !== "all") {
+    params.set("stock", stock);
+  }
+
+  if (query) {
+    params.set("q", query);
+  }
+
+  if (page && page > 1) {
+    params.set("page", String(page));
+  }
+
+  const search = params.toString();
+  return `${search ? `/admin?${search}` : "/admin"}#products-title`;
+}
+
+export default async function AdminPage({ searchParams }: AdminPageProps) {
   const { isAdmin, supabase, userId } = await getAdminContext();
 
   if (!userId) {
@@ -54,26 +129,78 @@ export default async function AdminPage() {
     redirect("/account");
   }
 
-  const [categoriesResult, productsResult] = await Promise.all([
-    supabase
-      .from("categories")
-      .select("id,name,slug,is_active,sort_order")
-      .order("sort_order")
-      .order("name"),
-    supabase
-      .from("products")
-      .select(
-        "id,name,slug,price,is_active,in_stock,stock_quantity,category:categories!products_category_id_fkey(name)",
-      )
-      .order("created_at", { ascending: false }),
-  ]);
+  const params = await searchParams;
+  const searchQuery = normalizedSearch(params.q);
+  const activeFilter = productFilterFrom(params.stock);
+  const currentPage = pageFrom(params.page);
+  const rangeStart = (currentPage - 1) * PAGE_SIZE;
+  let productsQuery = supabase
+    .from("products")
+    .select(
+      "id,name,slug,price,is_active,in_stock,stock_quantity,category:categories!products_category_id_fkey(name)",
+      { count: "exact" },
+    )
+    .order("created_at", { ascending: false })
+    .range(rangeStart, rangeStart + PAGE_SIZE - 1);
 
-  if (categoriesResult.error || productsResult.error) {
+  if (searchQuery) {
+    productsQuery = productsQuery.or(
+      `name.ilike.%${searchQuery}%,slug.ilike.%${searchQuery}%`,
+    );
+  }
+
+  if (activeFilter === "active") {
+    productsQuery = productsQuery
+      .eq("is_active", true)
+      .eq("in_stock", true)
+      .or("stock_quantity.is.null,stock_quantity.gt.0");
+  } else if (activeFilter === "low") {
+    productsQuery = productsQuery
+      .eq("is_active", true)
+      .eq("in_stock", true)
+      .gte("stock_quantity", 1)
+      .lte("stock_quantity", 5);
+  } else if (activeFilter === "out") {
+    productsQuery = productsQuery
+      .eq("is_active", true)
+      .or("stock_quantity.eq.0,in_stock.eq.false");
+  } else if (activeFilter === "inactive") {
+    productsQuery = productsQuery.eq("is_active", false);
+  }
+
+  const [categoriesResult, productsResult, productCountResult] =
+    await Promise.all([
+      supabase
+        .from("categories")
+        .select("id,name,slug,is_active,sort_order")
+        .order("sort_order")
+        .order("name"),
+      productsQuery,
+      supabase.from("products").select("id", { count: "exact", head: true }),
+    ]);
+
+  if (
+    categoriesResult.error ||
+    productsResult.error ||
+    productCountResult.error
+  ) {
     throw new Error("Unable to load the admin catalog.");
   }
 
   const categories = (categoriesResult.data ?? []) as CategoryRow[];
   const products = (productsResult.data ?? []) as unknown as ProductRow[];
+  const filteredProductCount = productsResult.count ?? 0;
+  const totalProductCount = productCountResult.count ?? 0;
+  const pageCount = Math.max(1, Math.ceil(filteredProductCount / PAGE_SIZE));
+
+  if ((!products.length && currentPage > 1) || currentPage > pageCount) {
+    redirect(
+      catalogHref({
+        query: searchQuery,
+        stock: activeFilter,
+      }),
+    );
+  }
 
   return (
     <main className="admin-page">
@@ -112,7 +239,7 @@ export default async function AdminPage() {
               </div>
               <div>
                 <dt>Товарів</dt>
-                <dd>{products.length}</dd>
+                <dd>{totalProductCount}</dd>
               </div>
             </dl>
           </header>
@@ -173,6 +300,69 @@ export default async function AdminPage() {
               <PackageOpen aria-hidden size={21} strokeWidth={1.8} />
               <h2 id="products-title">Товари</h2>
             </div>
+            <div className="admin-catalog-controls">
+              <form
+                action="/admin"
+                aria-label="Пошук товарів"
+                className="admin-order-search"
+                method="get"
+              >
+                {activeFilter !== "all" ? (
+                  <input
+                    name="stock"
+                    type="hidden"
+                    value={activeFilter}
+                  />
+                ) : null}
+                <label>
+                  <span className="sr-only">Назва або slug товару</span>
+                  <input
+                    autoComplete="off"
+                    defaultValue={searchQuery}
+                    maxLength={80}
+                    name="q"
+                    placeholder="Назва або slug товару"
+                    type="search"
+                  />
+                </label>
+                <button title="Знайти товар" type="submit">
+                  <Search aria-hidden size={17} strokeWidth={1.8} />
+                  <span className="sr-only">Знайти товар</span>
+                </button>
+                {searchQuery ? (
+                  <Link
+                    href={catalogHref({
+                      query: "",
+                      stock: activeFilter,
+                    })}
+                    title="Очистити пошук"
+                  >
+                    <X aria-hidden size={17} strokeWidth={1.8} />
+                    <span className="sr-only">Очистити пошук</span>
+                  </Link>
+                ) : null}
+              </form>
+
+              <nav
+                aria-label="Фільтр товарів"
+                className="admin-order-filters admin-catalog-filters"
+              >
+                {PRODUCT_FILTERS.map((filter) => (
+                  <Link
+                    aria-current={
+                      activeFilter === filter.value ? "page" : undefined
+                    }
+                    href={catalogHref({
+                      query: searchQuery,
+                      stock: filter.value,
+                    })}
+                    key={filter.value}
+                  >
+                    {filter.label}
+                  </Link>
+                ))}
+              </nav>
+            </div>
             <div className="admin-workspace">
               <div className="admin-tool">
                 <h3>Новий товар</h3>
@@ -226,9 +416,65 @@ export default async function AdminPage() {
                 ) : (
                   <div className="admin-empty">
                     <PackageOpen aria-hidden size={24} strokeWidth={1.6} />
-                    <p>Товарів поки немає</p>
+                    <p>
+                      {searchQuery || activeFilter !== "all"
+                        ? "За вибраними умовами товарів не знайдено"
+                        : "Товарів поки немає"}
+                    </p>
                   </div>
                 )}
+                <div className="admin-order-results">
+                  <span>Знайдено: {filteredProductCount}</span>
+                  {pageCount > 1 ? (
+                    <nav aria-label="Сторінки товарів">
+                      {currentPage > 1 ? (
+                        <Link
+                          href={catalogHref({
+                            page: currentPage - 1,
+                            query: searchQuery,
+                            stock: activeFilter,
+                          })}
+                          title="Попередня сторінка"
+                        >
+                          <ArrowLeft
+                            aria-hidden
+                            size={17}
+                            strokeWidth={1.8}
+                          />
+                          <span className="sr-only">Попередня сторінка</span>
+                        </Link>
+                      ) : (
+                        <span aria-hidden className="is-disabled">
+                          <ArrowLeft size={17} strokeWidth={1.8} />
+                        </span>
+                      )}
+                      <strong>
+                        {currentPage} / {pageCount}
+                      </strong>
+                      {currentPage < pageCount ? (
+                        <Link
+                          href={catalogHref({
+                            page: currentPage + 1,
+                            query: searchQuery,
+                            stock: activeFilter,
+                          })}
+                          title="Наступна сторінка"
+                        >
+                          <ArrowRight
+                            aria-hidden
+                            size={17}
+                            strokeWidth={1.8}
+                          />
+                          <span className="sr-only">Наступна сторінка</span>
+                        </Link>
+                      ) : (
+                        <span aria-hidden className="is-disabled">
+                          <ArrowRight size={17} strokeWidth={1.8} />
+                        </span>
+                      )}
+                    </nav>
+                  ) : null}
+                </div>
               </div>
             </div>
           </section>

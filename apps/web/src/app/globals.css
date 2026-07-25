@@ -1455,6 +1455,27 @@ input:focus-visible {
   color: #24704b;
 }
 
+.admin-catalog-controls {
+  display: grid;
+  margin-bottom: 1.25rem;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
+  align-items: end;
+  gap: 1.5rem;
+}
+
+.admin-catalog-controls .admin-order-search,
+.admin-catalog-controls .admin-order-filters {
+  margin-top: 0;
+}
+
+.admin-catalog-controls .admin-order-search {
+  width: 100%;
+}
+
+.admin-catalog-filters {
+  justify-content: flex-end;
+}
+
 .admin-order-search {
   display: grid;
   width: min(100%, 620px);
@@ -2239,6 +2260,15 @@ input:focus-visible {
 
   .admin-media-slots-single {
     grid-template-columns: 1fr;
+  }
+
+  .admin-catalog-controls {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .admin-catalog-filters {
+    justify-content: flex-start;
   }
 }
 

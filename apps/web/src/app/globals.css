@@ -1259,6 +1259,7 @@ input:focus-visible {
 
 .admin-section-title h2 {
   margin: 0;
+  scroll-margin-top: 92px;
   font-size: 1.05rem;
 }
 
@@ -2284,6 +2285,10 @@ input:focus-visible {
 }
 
 @media (max-width: 640px) {
+  .admin-section-title h2 {
+    scroll-margin-top: 154px;
+  }
+
   .auth-page {
     padding: 0;
     place-items: stretch;

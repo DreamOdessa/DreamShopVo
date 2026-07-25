@@ -1,6 +1,6 @@
 import { cache } from "react";
 
-import type { CatalogSort } from "./catalog-filters";
+import type { CatalogFilters, CatalogSort } from "./catalog-filters";
 import { createClient } from "./supabase/server";
 
 export type CatalogMedia = {
@@ -168,6 +168,38 @@ function escapedSearchPattern(value: string) {
   return `%${value.replace(/[\\%_]/g, "\\$&")}%`;
 }
 
+const catalogProductSelection =
+  "id,name,slug,description,price,original_price,weight,in_stock,stock_quantity,organic,category:categories!products_category_id_fkey(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)";
+const catalogProductPageSelection =
+  "id,name,slug,description,price,original_price,weight,in_stock,stock_quantity,organic,category:categories!products_category_id_fkey!inner(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)";
+
+function sortedProductQuery<T>(query: T, sort: CatalogSort) {
+  const sortable = query as T & {
+    order: (
+      column: string,
+      options?: { ascending?: boolean },
+    ) => T;
+  };
+
+  sortable.order("in_stock", { ascending: false });
+
+  if (sort === "newest") {
+    sortable.order("created_at", { ascending: false });
+    sortable.order("sort_order");
+  } else if (sort === "price-asc") {
+    sortable.order("price");
+    sortable.order("name");
+  } else if (sort === "price-desc") {
+    sortable.order("price", { ascending: false });
+    sortable.order("name");
+  } else {
+    sortable.order("sort_order");
+    sortable.order("created_at", { ascending: false });
+  }
+
+  return sortable;
+}
+
 export const getCatalogProducts = cache(async (
   categoryId?: string,
   search = "",
@@ -190,23 +222,7 @@ export const getCatalogProducts = cache(async (
     query = query.ilike("name", escapedSearchPattern(search));
   }
 
-  query = query.order("in_stock", { ascending: false });
-
-  if (sort === "newest") {
-    query = query
-      .order("created_at", { ascending: false })
-      .order("sort_order");
-  } else if (sort === "price-asc") {
-    query = query.order("price").order("name");
-  } else if (sort === "price-desc") {
-    query = query
-      .order("price", { ascending: false })
-      .order("name");
-  } else {
-    query = query
-      .order("sort_order")
-      .order("created_at", { ascending: false });
-  }
+  query = sortedProductQuery(query, sort);
 
   const { data, error } = await query;
 
@@ -218,6 +234,77 @@ export const getCatalogProducts = cache(async (
     .map(mapProduct)
     .filter((product): product is CatalogProduct => Boolean(product));
 });
+
+type CatalogProductPageInput = CatalogFilters & {
+  categoryId?: string;
+  pageSize?: number;
+};
+
+export const getCatalogProductPage = cache(
+  async ({
+    availableOnly,
+    categoryId,
+    maxPrice,
+    minPrice,
+    page,
+    pageSize = 24,
+    search,
+    sort,
+  }: CatalogProductPageInput) => {
+    const supabase = await createClient();
+    const rangeStart = (page - 1) * pageSize;
+    let query = supabase
+      .from("products")
+      .select(catalogProductPageSelection, { count: "exact" })
+      .eq("is_active", true)
+      .eq("category.is_active", true);
+
+    if (categoryId) {
+      query = query.eq("category_id", categoryId);
+    }
+
+    if (search) {
+      const pattern = escapedSearchPattern(search);
+      query = query.or(`name.ilike.${pattern},description.ilike.${pattern}`);
+    }
+
+    if (availableOnly) {
+      query = query
+        .eq("in_stock", true)
+        .or("stock_quantity.is.null,stock_quantity.gt.0");
+    }
+
+    if (minPrice !== null) {
+      query = query.gte("price", minPrice);
+    }
+
+    if (maxPrice !== null) {
+      query = query.lte("price", maxPrice);
+    }
+
+    query = sortedProductQuery(query, sort).range(
+      rangeStart,
+      rangeStart + pageSize - 1,
+    );
+
+    const { count, data, error } = await query;
+
+    if (error) {
+      throw new Error("Unable to load catalog product page.");
+    }
+
+    const products = ((data ?? []) as unknown as ProductRow[])
+      .map(mapProduct)
+      .filter((product): product is CatalogProduct => Boolean(product));
+    const total = count ?? 0;
+
+    return {
+      pageCount: Math.max(1, Math.ceil(total / pageSize)),
+      products,
+      total,
+    };
+  },
+);
 
 export const getCatalogProduct = cache(async (slug: string) => {
   const supabase = await createClient();

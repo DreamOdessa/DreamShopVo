@@ -5,16 +5,27 @@ import type { CatalogSort } from "../../lib/catalog-filters";
 
 type CatalogToolbarProps = {
   action: string;
+  availableOnly: boolean;
+  maxPrice: number | null;
+  minPrice: number | null;
   search: string;
   sort: CatalogSort;
 };
 
 export function CatalogToolbar({
   action,
+  availableOnly,
+  maxPrice,
+  minPrice,
   search,
   sort,
 }: CatalogToolbarProps) {
-  const filtered = Boolean(search) || sort !== "featured";
+  const filtered =
+    Boolean(search) ||
+    sort !== "featured" ||
+    availableOnly ||
+    minPrice !== null ||
+    maxPrice !== null;
 
   return (
     <form action={action} className="catalog-toolbar" method="get">
@@ -39,6 +50,43 @@ export function CatalogToolbar({
           <option value="price-desc">Від дорогих</option>
         </select>
       </label>
+
+      <fieldset className="catalog-filter-fields">
+        <legend className="sr-only">Фільтри товарів</legend>
+        <label className="catalog-availability-field">
+          <input
+            defaultChecked={availableOnly}
+            name="available"
+            type="checkbox"
+            value="1"
+          />
+          Тільки в наявності
+        </label>
+        <label className="catalog-price-field">
+          <span>Ціна від</span>
+          <input
+            defaultValue={minPrice ?? ""}
+            inputMode="decimal"
+            min={0}
+            name="min"
+            placeholder="0"
+            step="0.01"
+            type="number"
+          />
+        </label>
+        <label className="catalog-price-field">
+          <span>до</span>
+          <input
+            defaultValue={maxPrice ?? ""}
+            inputMode="decimal"
+            min={0}
+            name="max"
+            placeholder="∞"
+            step="0.01"
+            type="number"
+          />
+        </label>
+      </fieldset>
 
       <button className="catalog-search-button" type="submit">
         <Search aria-hidden size={17} strokeWidth={1.8} />

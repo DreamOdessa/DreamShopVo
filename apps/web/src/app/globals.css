@@ -3026,6 +3026,61 @@ input:focus-visible {
   outline: 3px solid rgba(43, 135, 148, 0.12);
 }
 
+.catalog-filter-fields {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  grid-column: 1 / -1;
+  border: 0;
+  align-items: center;
+  gap: 1rem;
+}
+
+.catalog-availability-field {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 0.5rem;
+  color: #42656b;
+  font-size: 0.78rem;
+  font-weight: 680;
+}
+
+.catalog-availability-field input {
+  width: 17px;
+  height: 17px;
+  accent-color: #176b78;
+}
+
+.catalog-price-field {
+  display: grid;
+  grid-template-columns: auto 92px;
+  align-items: center;
+  gap: 0.45rem;
+  color: #60777a;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.catalog-price-field input {
+  width: 92px;
+  min-height: 40px;
+  padding: 0 0.65rem;
+  border: 1px solid #cfdcd8;
+  border-radius: 6px;
+  outline: none;
+  background: #fff;
+  color: #23484e;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.catalog-price-field input:focus {
+  border-color: #2b8794;
+  box-shadow: 0 0 0 3px rgba(43, 135, 148, 0.12);
+}
+
 .catalog-search-button,
 .catalog-reset-button {
   display: inline-flex;
@@ -3557,6 +3612,48 @@ input:focus-visible {
   color: #176b78;
   font-size: 0.78rem;
   font-weight: 720;
+}
+
+.catalog-pagination {
+  display: grid;
+  width: min(100%, 420px);
+  min-height: 44px;
+  margin: 2rem auto 0;
+  grid-template-columns: 1fr 72px 1fr;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.catalog-pagination > a,
+.catalog-pagination > span {
+  display: inline-flex;
+  min-height: 42px;
+  padding: 0 0.8rem;
+  border: 1px solid #cbd9d6;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  color: #315d64;
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.catalog-pagination > a:hover {
+  border-color: #7faeb2;
+  background: #eef7f6;
+}
+
+.catalog-pagination > span[aria-disabled="true"] {
+  color: #98a7a7;
+  opacity: 0.65;
+}
+
+.catalog-pagination > strong {
+  color: #345b61;
+  font-size: 0.76rem;
+  text-align: center;
 }
 
 .wishlist-empty {
@@ -4483,6 +4580,24 @@ input:focus-visible {
 
   .catalog-toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .catalog-filter-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .catalog-availability-field {
+    grid-column: 1 / -1;
+  }
+
+  .catalog-price-field {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .catalog-price-field input {
+    width: 100%;
   }
 
   .catalog-search-button,

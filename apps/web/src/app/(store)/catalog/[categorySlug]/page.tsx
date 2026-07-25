@@ -1,20 +1,26 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
+import { CatalogPagination } from "../../../../components/storefront/catalog-pagination";
 import { CatalogToolbar } from "../../../../components/storefront/catalog-toolbar";
 import { CategoryNav } from "../../../../components/storefront/category-nav";
 import { ProductCard } from "../../../../components/storefront/product-card";
 import {
   getCatalogCategories,
   getCatalogCategory,
-  getCatalogProducts,
+  getCatalogProductPage,
 } from "../../../../lib/catalog";
 import {
+  catalogPath,
   catalogReturnPath,
+  normalizeAvailableOnly,
+  normalizeCatalogPage,
+  normalizeCatalogPrice,
   normalizeCatalogSearch,
   normalizeCatalogSort,
+  type CatalogFilters,
 } from "../../../../lib/catalog-filters";
 import { getSiteUrl } from "../../../../lib/env";
 import { publicMediaUrl } from "../../../../lib/media-url";
@@ -23,6 +29,10 @@ import { getWishlistState } from "../../../../lib/wishlist";
 type CategoryPageProps = {
   params: Promise<{ categorySlug: string }>;
   searchParams: Promise<{
+    available?: string | string[];
+    max?: string | string[];
+    min?: string | string[];
+    page?: string | string[];
     q?: string | string[];
     sort?: string | string[];
   }>;
@@ -54,22 +64,34 @@ export default async function CategoryPage({
 }: CategoryPageProps) {
   const { categorySlug } = await params;
   const queryParams = await searchParams;
-  const search = normalizeCatalogSearch(queryParams.q);
-  const sort = normalizeCatalogSort(queryParams.sort);
+  const filters: CatalogFilters = {
+    availableOnly: normalizeAvailableOnly(queryParams.available),
+    maxPrice: normalizeCatalogPrice(queryParams.max),
+    minPrice: normalizeCatalogPrice(queryParams.min),
+    page: normalizeCatalogPage(queryParams.page),
+    search: normalizeCatalogSearch(queryParams.q),
+    sort: normalizeCatalogSort(queryParams.sort),
+  };
   const category = await getCatalogCategory(categorySlug);
 
   if (!category) {
     notFound();
   }
 
-  const [categories, products, wishlist] = await Promise.all([
+  const [categories, productPage, wishlist] = await Promise.all([
     getCatalogCategories(),
-    getCatalogProducts(category.id, search, sort),
+    getCatalogProductPage({ ...filters, categoryId: category.id }),
     getWishlistState(),
   ]);
+  const { pageCount, products, total } = productPage;
   const wishlistIds = new Set(wishlist.productIds);
   const categoryPath = `/catalog/${category.slug}`;
-  const returnPath = catalogReturnPath(categoryPath, search, sort);
+
+  if (filters.page > pageCount) {
+    redirect(catalogPath(categoryPath, { ...filters, page: 1 }));
+  }
+
+  const returnPath = catalogReturnPath(categoryPath, filters);
 
   return (
     <main className="store-main">
@@ -98,14 +120,21 @@ export default async function CategoryPage({
       ) : null}
 
       <CategoryNav activeSlug={category.slug} categories={categories} />
-      <CatalogToolbar action={categoryPath} search={search} sort={sort} />
+      <CatalogToolbar
+        action={categoryPath}
+        availableOnly={filters.availableOnly}
+        maxPrice={filters.maxPrice}
+        minPrice={filters.minPrice}
+        search={filters.search}
+        sort={filters.sort}
+      />
 
       <section className="catalog-section" aria-labelledby="category-products">
         <div className="catalog-section-heading">
           <h2 id="category-products">
-            {search ? "Результати пошуку" : "Товари"}
+            {filters.search ? "Результати пошуку" : "Товари"}
           </h2>
-          <span>{products.length}</span>
+          <span>{total}</span>
         </div>
 
         {products.length ? (
@@ -123,13 +152,18 @@ export default async function CategoryPage({
         ) : (
           <div className="catalog-empty">
             <p>
-              {search
-                ? `У категорії немає товарів за запитом «${search}».`
-                : "У цій категорії поки немає активних товарів."}
+              {filters.search
+                ? `У категорії немає товарів за запитом «${filters.search}» з вибраними фільтрами.`
+                : "У категорії немає товарів за вибраними фільтрами."}
             </p>
-            {search ? <Link href={categoryPath}>Скинути пошук</Link> : null}
+            <Link href={categoryPath}>Скинути фільтри</Link>
           </div>
         )}
+        <CatalogPagination
+          filters={filters}
+          pageCount={pageCount}
+          pathname={categoryPath}
+        />
       </section>
     </main>
   );

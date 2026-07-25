@@ -1,18 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
+import { CatalogPagination } from "../../../components/storefront/catalog-pagination";
 import { CatalogToolbar } from "../../../components/storefront/catalog-toolbar";
 import { CategoryCard } from "../../../components/storefront/category-card";
 import { CategoryNav } from "../../../components/storefront/category-nav";
 import { ProductCard } from "../../../components/storefront/product-card";
 import {
   getCatalogCategories,
-  getCatalogProducts,
+  getCatalogProductPage,
 } from "../../../lib/catalog";
 import {
+  catalogPath,
   catalogReturnPath,
+  normalizeAvailableOnly,
+  normalizeCatalogPage,
+  normalizeCatalogPrice,
   normalizeCatalogSearch,
   normalizeCatalogSort,
+  type CatalogFilters,
 } from "../../../lib/catalog-filters";
 import { getSiteUrl } from "../../../lib/env";
 import { getWishlistState } from "../../../lib/wishlist";
@@ -28,6 +35,10 @@ export const metadata: Metadata = {
 
 type CatalogPageProps = {
   searchParams: Promise<{
+    available?: string | string[];
+    max?: string | string[];
+    min?: string | string[];
+    page?: string | string[];
     q?: string | string[];
     sort?: string | string[];
   }>;
@@ -37,15 +48,27 @@ export default async function CatalogPage({
   searchParams,
 }: CatalogPageProps) {
   const params = await searchParams;
-  const search = normalizeCatalogSearch(params.q);
-  const sort = normalizeCatalogSort(params.sort);
-  const [categories, products, wishlist] = await Promise.all([
+  const filters: CatalogFilters = {
+    availableOnly: normalizeAvailableOnly(params.available),
+    maxPrice: normalizeCatalogPrice(params.max),
+    minPrice: normalizeCatalogPrice(params.min),
+    page: normalizeCatalogPage(params.page),
+    search: normalizeCatalogSearch(params.q),
+    sort: normalizeCatalogSort(params.sort),
+  };
+  const [categories, productPage, wishlist] = await Promise.all([
     getCatalogCategories(),
-    getCatalogProducts(undefined, search, sort),
+    getCatalogProductPage(filters),
     getWishlistState(),
   ]);
+  const { pageCount, products, total } = productPage;
+
+  if (filters.page > pageCount) {
+    redirect(catalogPath("/catalog", { ...filters, page: 1 }));
+  }
+
   const wishlistIds = new Set(wishlist.productIds);
-  const returnPath = catalogReturnPath("/catalog", search, sort);
+  const returnPath = catalogReturnPath("/catalog", filters);
 
   return (
     <main className="store-main">
@@ -56,7 +79,14 @@ export default async function CatalogPage({
       </header>
 
       <CategoryNav categories={categories} />
-      <CatalogToolbar action="/catalog" search={search} sort={sort} />
+      <CatalogToolbar
+        action="/catalog"
+        availableOnly={filters.availableOnly}
+        maxPrice={filters.maxPrice}
+        minPrice={filters.minPrice}
+        search={filters.search}
+        sort={filters.sort}
+      />
 
       {categories.length ? (
         <section className="catalog-section" aria-labelledby="category-list-title">
@@ -78,9 +108,9 @@ export default async function CatalogPage({
       <section className="catalog-section" aria-labelledby="product-list-title">
         <div className="catalog-section-heading">
           <h2 id="product-list-title">
-            {search ? "Результати пошуку" : "Усі товари"}
+            {filters.search ? "Результати пошуку" : "Усі товари"}
           </h2>
-          <span>{products.length}</span>
+          <span>{total}</span>
         </div>
 
         {products.length ? (
@@ -98,13 +128,18 @@ export default async function CatalogPage({
         ) : (
           <div className="catalog-empty">
             <p>
-              {search
-                ? `За запитом «${search}» товарів не знайдено.`
-                : "Активних товарів поки немає."}
+              {filters.search
+                ? `За запитом «${filters.search}» товарів не знайдено з вибраними фільтрами.`
+                : "За вибраними фільтрами товарів не знайдено."}
             </p>
-            {search ? <Link href="/catalog">Скинути пошук</Link> : null}
+            <Link href="/catalog">Скинути фільтри</Link>
           </div>
         )}
+        <CatalogPagination
+          filters={filters}
+          pageCount={pageCount}
+          pathname="/catalog"
+        />
       </section>
     </main>
   );

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { ProductCard } from "../../../components/storefront/product-card";
-import { getCatalogProducts } from "../../../lib/catalog";
+import { getCatalogProductsByIds } from "../../../lib/catalog";
 import { getWishlistState } from "../../../lib/wishlist";
 
 export const metadata: Metadata = {
@@ -22,10 +22,7 @@ export default async function WishlistPage() {
     redirect("/auth?next=%2Fwishlist");
   }
 
-  const wishlistIds = new Set(wishlist.productIds);
-  const products = (await getCatalogProducts()).filter(({ id }) =>
-    wishlistIds.has(id),
-  );
+  const products = await getCatalogProductsByIds(wishlist.productIds);
 
   return (
     <main className="store-main">

@@ -7,7 +7,7 @@ import { ProductCard } from "../../../../components/storefront/product-card";
 import { ProductGallery } from "../../../../components/storefront/product-gallery";
 import {
   getCatalogProduct,
-  getCatalogProducts,
+  getRelatedCatalogProducts,
 } from "../../../../lib/catalog";
 import { getSiteUrl } from "../../../../lib/env";
 import { publicMediaUrl } from "../../../../lib/media-url";
@@ -73,13 +73,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   const [categoryProducts, wishlist] = await Promise.all([
-    getCatalogProducts(product.category.id),
+    getRelatedCatalogProducts(product.category.id, product.id),
     getWishlistState(),
   ]);
   const wishlistIds = new Set(wishlist.productIds);
-  const relatedProducts = categoryProducts
-    .filter(({ id }) => id !== product.id)
-    .slice(0, 4);
+  const relatedProducts = categoryProducts;
   const siteUrl = getSiteUrl();
   const productUrl = `${siteUrl}/product/${product.slug}`;
   const schema = {

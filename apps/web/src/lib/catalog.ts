@@ -235,6 +235,62 @@ export const getCatalogProducts = cache(async (
     .filter((product): product is CatalogProduct => Boolean(product));
 });
 
+export const getCatalogProductsByIds = cache(async (productIds: string[]) => {
+  if (!productIds.length) {
+    return [];
+  }
+
+  const uniqueProductIds = [...new Set(productIds)].slice(0, 120);
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(catalogProductPageSelection)
+    .in("id", uniqueProductIds)
+    .eq("is_active", true)
+    .eq("category.is_active", true);
+
+  if (error) {
+    throw new Error("Unable to load selected catalog products.");
+  }
+
+  const products = ((data ?? []) as unknown as ProductRow[])
+    .map(mapProduct)
+    .filter((product): product is CatalogProduct => Boolean(product));
+  const productById = new Map(products.map((product) => [product.id, product]));
+
+  return uniqueProductIds.flatMap((id) => {
+    const product = productById.get(id);
+    return product ? [product] : [];
+  });
+});
+
+export const getRelatedCatalogProducts = cache(
+  async (categoryId: string, excludedProductId: string, limit = 4) => {
+    const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 12);
+    const supabase = await createClient();
+    let query = supabase
+      .from("products")
+      .select(catalogProductPageSelection)
+      .eq("category_id", categoryId)
+      .neq("id", excludedProductId)
+      .eq("is_active", true)
+      .eq("category.is_active", true)
+      .limit(safeLimit);
+
+    query = sortedProductQuery(query, "featured");
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw new Error("Unable to load related catalog products.");
+    }
+
+    return ((data ?? []) as unknown as ProductRow[])
+      .map(mapProduct)
+      .filter((product): product is CatalogProduct => Boolean(product));
+  },
+);
+
 type CatalogProductPageInput = CatalogFilters & {
   categoryId?: string;
   pageSize?: number;

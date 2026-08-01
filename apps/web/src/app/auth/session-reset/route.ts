@@ -2,10 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { safeNextPath } from "../../../lib/auth/redirect";
-
-function isSupabaseAuthCookie(name: string) {
-  return name.startsWith("sb-") && name.includes("-auth-token");
-}
+import { isSupabaseAuthCookie } from "../../../lib/auth/cookies";
 
 export async function GET(request: NextRequest) {
   const next = safeNextPath(request.nextUrl.searchParams.get("next"));

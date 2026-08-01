@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { getApiUrl } from "../../../lib/env";
 import { sessionTokens } from "../../../lib/auth/session-tokens";
+import { clearSupabaseAuthCookies } from "../../../lib/auth/cookies";
 import { createClient } from "../../../lib/supabase/server";
 
 import type { TelegramAuthState } from "./telegram-state";
@@ -79,6 +80,7 @@ export async function completeTelegramRegistration(
     return errorState("Сервіс Telegram повернув некоректну відповідь.");
   }
 
+  await clearSupabaseAuthCookies();
   const supabase = await createClient();
   const { error } = await supabase.auth.setSession(tokens);
 

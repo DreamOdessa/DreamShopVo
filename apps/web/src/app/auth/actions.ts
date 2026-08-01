@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 
 import { getApiUrl, getSiteUrl } from "../../lib/env";
 import { safeNextPath } from "../../lib/auth/redirect";
+import { clearSupabaseAuthCookies } from "../../lib/auth/cookies";
+import { isInvalidSessionError } from "../../lib/auth/errors";
 import { sessionTokens } from "../../lib/auth/session-tokens";
 import { normalizePhone } from "../../lib/phone";
 import { createClient } from "../../lib/supabase/server";
@@ -46,11 +48,15 @@ export async function signIn(
     return errorState("Перевірте email або номер телефону та пароль.");
   }
 
+  await clearSupabaseAuthCookies();
   const supabase = await createClient();
   let error: unknown;
+  let userId: string | undefined;
 
   if (email) {
-    ({ error } = await supabase.auth.signInWithPassword({ email, password }));
+    const result = await supabase.auth.signInWithPassword({ email, password });
+    error = result.error;
+    userId = result.data.user?.id;
   } else {
     try {
       const response = await fetch(
@@ -73,6 +79,10 @@ export async function signIn(
         error = new Error("Phone sign-in failed.");
       } else {
         ({ error } = await supabase.auth.setSession(tokens));
+        if (!error) {
+          const { data } = await supabase.auth.getUser();
+          userId = data.user?.id;
+        }
       }
     } catch {
       error = new Error("Phone sign-in failed.");
@@ -80,7 +90,26 @@ export async function signIn(
   }
 
   if (error) {
+    await clearSupabaseAuthCookies();
     return errorState("Не вдалося увійти. Перевірте дані або підтвердьте email.");
+  }
+
+  if (!userId) {
+    await clearSupabaseAuthCookies();
+    return errorState("Не вдалося створити сесію. Спробуйте ще раз.");
+  }
+
+  const { error: sessionError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (sessionError && isInvalidSessionError(sessionError)) {
+    await clearSupabaseAuthCookies();
+    return errorState(
+      "Сервіс авторизації тимчасово не приймає нову сесію. Спробуйте ще раз пізніше.",
+    );
   }
 
   redirect(next);
@@ -135,6 +164,7 @@ export async function signUp(
 
 export async function signInWithGoogle(formData: FormData) {
   const next = safeNextPath(valueFrom(formData, "next"));
+  await clearSupabaseAuthCookies();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -219,5 +249,6 @@ export async function signOut() {
   const supabase = await createClient();
 
   await supabase.auth.signOut({ scope: "local" });
+  await clearSupabaseAuthCookies();
   redirect("/auth");
 }

@@ -91,6 +91,12 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
           </p>
         ) : null}
 
+        {params.notice === "session-reset" ? (
+          <p className="auth-message auth-message-success" role="status">
+            Стару сесію очищено. Увійдіть повторно, щоб продовжити.
+          </p>
+        ) : null}
+
         <div className="auth-provider-list">
           <form action={signInWithGoogle}>
             <input name="next" type="hidden" value={nextPath} />

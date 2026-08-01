@@ -221,3 +221,11 @@ export async function signOut() {
   await supabase.auth.signOut({ scope: "local" });
   redirect("/auth");
 }
+
+export async function resetBrokenSession(formData: FormData) {
+  const next = safeNextPath(valueFrom(formData, "next"));
+  const supabase = await createClient();
+
+  await supabase.auth.signOut({ scope: "local" });
+  redirect(`/auth?notice=session-reset&next=${encodeURIComponent(next)}`);
+}

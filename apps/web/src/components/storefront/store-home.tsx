@@ -9,11 +9,20 @@ import { CategoryCard } from "./category-card";
 import { ProductCard } from "./product-card";
 
 export async function StoreHome() {
-  const [categories, products, wishlist] = await Promise.all([
+  const [categoriesResult, productsResult, wishlistResult] =
+    await Promise.allSettled([
     getCatalogCategories(),
     getCatalogProducts(undefined, "", "featured"),
     getWishlistState(),
   ]);
+  const categories =
+    categoriesResult.status === "fulfilled" ? categoriesResult.value : [];
+  const products =
+    productsResult.status === "fulfilled" ? productsResult.value : [];
+  const wishlist =
+    wishlistResult.status === "fulfilled"
+      ? wishlistResult.value
+      : { authenticated: false, available: false, productIds: [] };
   const featuredProducts = products.slice(0, 8);
   const wishlistedIds = new Set(wishlist.productIds);
 

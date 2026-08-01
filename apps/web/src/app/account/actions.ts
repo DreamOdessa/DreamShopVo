@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { normalizePhone } from "../../lib/phone";
 import { createClient } from "../../lib/supabase/server";
+import { isInvalidSessionError } from "../../lib/auth/errors";
 
 import type { ProfileActionState } from "./profile-state";
 
@@ -77,6 +78,10 @@ export async function updateProfile(
     .eq("id", userId);
 
   if (error) {
+    if (isInvalidSessionError(error)) {
+      return errorState("Сесія завершилася. Увійдіть в акаунт повторно.");
+    }
+
     return errorState("Не вдалося зберегти профіль. Спробуйте ще раз.");
   }
 

@@ -1,8 +1,7 @@
 "use client";
 
 import { LogIn, RotateCcw } from "lucide-react";
-
-import { resetBrokenSession } from "../../app/auth/actions";
+import Link from "next/link";
 
 type SessionErrorProps = {
   area: "account" | "admin";
@@ -26,13 +25,12 @@ export function SessionError({ area, reset }: SessionErrorProps) {
             <RotateCcw aria-hidden size={18} strokeWidth={1.8} />
             Повторити
           </button>
-          <form action={resetBrokenSession}>
-            <input name="next" type="hidden" value={nextPath} />
-            <button type="submit">
+          <Link
+            href={`/auth/session-reset?next=${encodeURIComponent(nextPath)}`}
+          >
               <LogIn aria-hidden size={18} strokeWidth={1.8} />
               Увійти повторно
-            </button>
-          </form>
+          </Link>
         </div>
       </section>
     </main>

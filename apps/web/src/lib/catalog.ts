@@ -1,7 +1,7 @@
 import { cache } from "react";
 
 import type { CatalogFilters, CatalogSort } from "./catalog-filters";
-import { createClient } from "./supabase/server";
+import { createPublicClient } from "./supabase/public";
 
 export type CatalogMedia = {
   altText: string;
@@ -129,7 +129,7 @@ function mapCategory(row: CategoryRow): CatalogCategory {
 }
 
 export const getCatalogCategories = cache(async () => {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("categories")
     .select(
@@ -147,7 +147,7 @@ export const getCatalogCategories = cache(async () => {
 });
 
 export const getCatalogCategory = cache(async (slug: string) => {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("categories")
     .select(
@@ -205,7 +205,7 @@ export const getCatalogProducts = cache(async (
   search = "",
   sort: CatalogSort = "featured",
 ) => {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   let query = supabase
     .from("products")
     .select(
@@ -241,7 +241,7 @@ export const getCatalogProductsByIds = cache(async (productIds: string[]) => {
   }
 
   const uniqueProductIds = [...new Set(productIds)].slice(0, 120);
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("products")
     .select(catalogProductPageSelection)
@@ -267,7 +267,7 @@ export const getCatalogProductsByIds = cache(async (productIds: string[]) => {
 export const getRelatedCatalogProducts = cache(
   async (categoryId: string, excludedProductId: string, limit = 4) => {
     const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 12);
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     let query = supabase
       .from("products")
       .select(catalogProductPageSelection)
@@ -307,7 +307,7 @@ export const getCatalogProductPage = cache(
     search,
     sort,
   }: CatalogProductPageInput) => {
-    const supabase = await createClient();
+    const supabase = createPublicClient();
     const rangeStart = (page - 1) * pageSize;
     let query = supabase
       .from("products")
@@ -363,7 +363,7 @@ export const getCatalogProductPage = cache(
 );
 
 export const getCatalogProduct = cache(async (slug: string) => {
-  const supabase = await createClient();
+    const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("products")
     .select(

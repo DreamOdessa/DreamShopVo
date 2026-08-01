@@ -493,7 +493,8 @@ input:focus-visible {
   gap: 0.65rem;
 }
 
-.session-error-actions button {
+.session-error-actions button,
+.session-error-actions a {
   display: inline-flex;
   min-height: 42px;
   padding: 0 1rem;
@@ -507,9 +508,10 @@ input:focus-visible {
   font: inherit;
   font-size: 0.8rem;
   font-weight: 720;
+  text-decoration: none;
 }
 
-.session-error-actions form button {
+.session-error-actions a {
   background: #145c6a;
   color: #fff;
 }

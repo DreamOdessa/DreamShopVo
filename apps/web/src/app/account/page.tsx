@@ -22,6 +22,7 @@ import {
 } from "../../lib/orders";
 import { createClient } from "../../lib/supabase/server";
 import { isTelegramAuthEmail } from "../../lib/auth/telegram";
+import { isInvalidSessionError } from "../../lib/auth/errors";
 
 import {
   markAllNotificationsRead,
@@ -121,7 +122,7 @@ export default async function AccountPage() {
   }
 
   const [
-    profileResult,
+    initialProfileResult,
     ordersResult,
     notificationsResult,
     addressResult,
@@ -156,12 +157,57 @@ export default async function AccountPage() {
       .maybeSingle(),
   ]);
 
-  if (profileResult.error) {
+  if (initialProfileResult.error) {
     console.error("Account profile query failed", {
-      code: profileResult.error.code,
-      message: profileResult.error.message,
+      code: initialProfileResult.error.code,
+      message: initialProfileResult.error.message,
     });
+
+    if (isInvalidSessionError(initialProfileResult.error)) {
+      redirect("/auth/session-reset?next=/account");
+    }
+
     throw new Error("Unable to load the authenticated account.");
+  }
+
+  let profileData = initialProfileResult.data;
+
+  if (!profileData) {
+    const { error: ensureProfileError } = await supabase.rpc(
+      "ensure_my_profile",
+    );
+
+    if (ensureProfileError) {
+      if (isInvalidSessionError(ensureProfileError)) {
+        redirect("/auth/session-reset?next=/account");
+      }
+
+      console.error("Account profile recovery failed", {
+        code: ensureProfileError.code,
+        message: ensureProfileError.message,
+      });
+    } else {
+      const recoveredProfileResult = await supabase
+        .from("profiles")
+        .select(
+          "first_name,last_name,email,phone,contact_phone,discount_percent,role",
+        )
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (recoveredProfileResult.error) {
+        if (isInvalidSessionError(recoveredProfileResult.error)) {
+          redirect("/auth/session-reset?next=/account");
+        }
+
+        console.error("Recovered account profile query failed", {
+          code: recoveredProfileResult.error.code,
+          message: recoveredProfileResult.error.message,
+        });
+      } else {
+        profileData = recoveredProfileResult.data;
+      }
+    }
   }
 
   const optionalQueryErrors = [
@@ -178,7 +224,7 @@ export default async function AccountPage() {
     });
   });
 
-  const profile = profileResult.data as Profile | null;
+  const profile = profileData as Profile | null;
   const orders = (ordersResult.error ? [] : (ordersResult.data ?? []))
     .filter((order) => isOrderStatus(order.status))
     .map((order) => order as unknown as AccountOrder);

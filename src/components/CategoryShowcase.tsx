@@ -322,7 +322,7 @@ const SectionDivider = styled.hr`
 // ==========================================================
 type MediaItem = { type: 'image' | 'video'; src: string };
 
-const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'right' }> = ({ images, videos, layout }) => {
+const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'right'; alt: string }> = ({ images, videos, layout, alt }) => {
   // Проверяем, может ли браузер воспроизводить данный URL (по расширению и поддержке кодеков)
   const canPlayUrl = (url: string): boolean => {
     if (typeof document === 'undefined') return false;
@@ -358,10 +358,12 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
     ...(images || []).map(src => ({ type: 'image', src } as MediaItem)),
     ...(videos || []).map(src => ({ type: 'video', src } as MediaItem))
   ], [images, videos]);
+  const [failedSources, setFailedSources] = useState<string[]>([]);
 
   // Фильтруем неподдерживаемые видео (например, .mov в Chrome/Windows)
   const media: MediaItem[] = React.useMemo(() => {
     const filtered = mediaRaw.filter(item => {
+      if (failedSources.includes(item.src)) return false;
       if (item.type === 'video') {
         const ok = canPlayUrl(item.src);
         if (!ok) {
@@ -372,7 +374,7 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
       return true;
     });
     return filtered;
-  }, [mediaRaw]);
+  }, [failedSources, mediaRaw]);
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [videoLoaded, setVideoLoaded] = useState(false);
@@ -474,7 +476,12 @@ const Album: React.FC<{ images: string[]; videos: string[]; layout: 'left' | 'ri
           <AlbumImage
             key={media[currentIndex].src}
             src={media[currentIndex].src}
-            alt="Album media"
+            alt={alt}
+            onError={() => {
+              setFailedSources(previous => previous.includes(media[currentIndex].src)
+                ? previous
+                : [...previous, media[currentIndex].src]);
+            }}
             initial={{ opacity: 0, x: layout === 'right' ? 80 : -80, scale: 1.05 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: layout === 'right' ? -50 : 50, scale: 0.95, filter: 'blur(8px)' }}
@@ -760,7 +767,12 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ category, layout }) => {
       {/* 'Album' - наш компонент альбома (колонка 55%) */}
       {/* 'category.albumImages || []' - передаем массив картинок. Если его нет (undefined),
           передаем пустой массив [], чтобы компонент 'Album' не сломался. */}
-  <Album images={category.albumImages || []} videos={category.albumVideos || []} layout={layout} />
+      <Album
+        images={category.albumImages || []}
+        videos={category.albumVideos || []}
+        layout={layout}
+        alt={`Обкладинка категорії ${category.name}`}
+      />
       
     </CategoryContainer>
   );
@@ -827,8 +839,10 @@ const CategoryShowcase: React.FC = () => {
           
           // 'albumImages: ...' - логика для картинок альбома
           // Если есть 'albumImages' (массив) - используем его.
-          // Не используем c.image как заглушку - только явно загруженные albumImages
-          albumImages: c.albumImages && c.albumImages.length > 0 ? c.albumImages : [],
+          // Обложка категории остается безопасным резервом, если отдельный альбом не заполнен.
+          albumImages: c.albumImages && c.albumImages.length > 0
+            ? c.albumImages
+            : (c.image ? [c.image] : []),
           albumVideos: c.albumVideos || [],
           
           // 'products: ...' - *главное*: добавляем отфильтрованные товары

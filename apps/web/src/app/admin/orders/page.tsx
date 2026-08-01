@@ -177,6 +177,26 @@ export default async function AdminOrdersPage({
       p_since: since,
     }),
   ]);
+  const fallbackCountResults = statusCountsResult.error
+    ? await Promise.all(
+        ORDER_STATUSES.map((status) => {
+          let countQuery = supabase
+            .from("orders")
+            .select("id", { count: "exact", head: true })
+            .eq("status", status);
+
+          if (since) {
+            countQuery = countQuery.gte("created_at", since);
+          }
+
+          if (searchQuery) {
+            countQuery = countQuery.or(orderSearchFilter(searchQuery));
+          }
+
+          return countQuery;
+        }),
+      )
+    : null;
 
   if (currentPage > 1 && ordersResult.error?.code === "PGRST103") {
     redirect(
@@ -191,7 +211,7 @@ export default async function AdminOrdersPage({
   if (
     ordersResult.error ||
     summaryResult.error ||
-    statusCountsResult.error
+    fallbackCountResults?.some((result) => Boolean(result.error))
   ) {
     throw new Error("Unable to load orders.");
   }
@@ -214,11 +234,17 @@ export default async function AdminOrdersPage({
     ORDER_STATUSES.map((status) => [status, 0]),
   ) as Record<OrderStatus, number>;
 
-  ((statusCountsResult.data ?? []) as OrderStatusCountRow[]).forEach((row) => {
-    if (isOrderStatus(row.status)) {
-      statusCounts[row.status] = Number(row.order_count ?? 0);
-    }
-  });
+  if (fallbackCountResults) {
+    ORDER_STATUSES.forEach((status, index) => {
+      statusCounts[status] = fallbackCountResults[index]?.count ?? 0;
+    });
+  } else {
+    ((statusCountsResult.data ?? []) as OrderStatusCountRow[]).forEach((row) => {
+      if (isOrderStatus(row.status)) {
+        statusCounts[row.status] = Number(row.order_count ?? 0);
+      }
+    });
+  }
 
   const totalOrders = Object.values(statusCounts).reduce(
     (total, count) => total + count,

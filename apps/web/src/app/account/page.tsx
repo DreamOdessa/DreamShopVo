@@ -158,14 +158,14 @@ export default async function AccountPage() {
   ]);
 
   if (initialProfileResult.error) {
+    if (isInvalidSessionError(initialProfileResult.error)) {
+      redirect("/auth/session-reset?next=/account");
+    }
+
     console.error("Account profile query failed", {
       code: initialProfileResult.error.code,
       message: initialProfileResult.error.message,
     });
-
-    if (isInvalidSessionError(initialProfileResult.error)) {
-      redirect("/auth/session-reset?next=/account");
-    }
 
     throw new Error("Unable to load the authenticated account.");
   }

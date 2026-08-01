@@ -52,6 +52,7 @@ jobs:
 
           exit 1
       - run: npm run typecheck
+      - run: npm run check:migration-boundary
       - run: npm run build
 
   cloudflare-worker:

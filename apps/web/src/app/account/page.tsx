@@ -11,7 +11,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -31,6 +30,9 @@ import {
 } from "./actions";
 import { DeleteAddressButton } from "./delete-address-button";
 import { ProfileForm } from "./profile-form";
+import { CartProvider } from "../../components/storefront/cart-provider";
+import { StoreFooter } from "../../components/storefront/store-footer";
+import { StoreHeader } from "../../components/storefront/store-header";
 
 export const metadata: Metadata = {
   title: "Мій акаунт - DreamShop",
@@ -182,60 +184,11 @@ export default async function AccountPage() {
   const contactPhone = profile?.contact_phone ?? profile?.phone ?? "";
 
   return (
-    <main className="account-page">
-      <header className="account-header">
-        <Image
-          className="account-logo"
-          src="/logo-name.PNG"
-          alt="DreamShop"
-          width={180}
-          height={144}
-          priority
-        />
-        <div className="account-header-actions">
-          <Link
-            aria-label={
-              unreadNotifications
-                ? `Сповіщення: ${unreadNotifications} непрочитаних`
-                : "Сповіщення"
-            }
-            className="icon-button account-notification-link"
-            href="#notifications"
-            title="Сповіщення"
-          >
-            <Bell aria-hidden size={20} strokeWidth={1.8} />
-            {unreadNotifications ? (
-              <span aria-hidden className="account-notification-count">
-                {unreadNotifications > 99 ? "99+" : unreadNotifications}
-              </span>
-            ) : null}
-          </Link>
-          {profile?.role === "admin" ? (
-            <form action={openAdmin}>
-              <button
-                aria-label="Адмін-панель"
-                className="icon-button"
-                title="Адмін-панель"
-                type="submit"
-              >
-                <LayoutDashboard aria-hidden size={20} strokeWidth={1.8} />
-              </button>
-            </form>
-          ) : null}
-          <form action={signOut}>
-            <button
-              aria-label="Вийти"
-              className="icon-button"
-              title="Вийти"
-              type="submit"
-            >
-              <LogOut aria-hidden size={20} strokeWidth={1.8} />
-            </button>
-          </form>
-        </div>
-      </header>
-
-      <section className="account-content" aria-labelledby="account-title">
+    <CartProvider>
+      <div className="store-page">
+        <StoreHeader />
+        <main className="account-page">
+          <section className="account-content" aria-labelledby="account-title">
         <div className="account-title-row">
           <div>
             <p className="account-eyebrow">Мій акаунт</p>
@@ -243,14 +196,57 @@ export default async function AccountPage() {
               {profile?.first_name ? `Вітаємо, ${profile.first_name}` : "Вітаємо"}
             </h1>
           </div>
-          <span className="account-status">
-            <ShieldCheck aria-hidden size={18} strokeWidth={1.8} />
-            {telegramVerified
-              ? "Telegram підтверджено"
-              : visibleEmail
-                ? "Email підтверджено"
-                : "Акаунт підтверджено"}
-          </span>
+          <div className="account-title-side">
+            <span className="account-status">
+              <ShieldCheck aria-hidden size={18} strokeWidth={1.8} />
+              {telegramVerified
+                ? "Telegram підтверджено"
+                : visibleEmail
+                  ? "Email підтверджено"
+                  : "Акаунт підтверджено"}
+            </span>
+            <div className="account-header-actions">
+              <Link
+                aria-label={
+                  unreadNotifications
+                    ? `Сповіщення: ${unreadNotifications} непрочитаних`
+                    : "Сповіщення"
+                }
+                className="icon-button account-notification-link"
+                href="#notifications"
+                title="Сповіщення"
+              >
+                <Bell aria-hidden size={20} strokeWidth={1.8} />
+                {unreadNotifications ? (
+                  <span aria-hidden className="account-notification-count">
+                    {unreadNotifications > 99 ? "99+" : unreadNotifications}
+                  </span>
+                ) : null}
+              </Link>
+              {profile?.role === "admin" ? (
+                <form action={openAdmin}>
+                  <button
+                    aria-label="Адмін-панель"
+                    className="icon-button"
+                    title="Адмін-панель"
+                    type="submit"
+                  >
+                    <LayoutDashboard aria-hidden size={20} strokeWidth={1.8} />
+                  </button>
+                </form>
+              ) : null}
+              <form action={signOut}>
+                <button
+                  aria-label="Вийти"
+                  className="icon-button"
+                  title="Вийти"
+                  type="submit"
+                >
+                  <LogOut aria-hidden size={20} strokeWidth={1.8} />
+                </button>
+              </form>
+            </div>
+          </div>
         </div>
 
         <dl className="account-details">
@@ -422,6 +418,17 @@ export default async function AccountPage() {
                       {dateFormatter.format(new Date(order.created_at))} ·{" "}
                       {order.items?.length ?? 0} позицій
                     </span>
+                    {order.items?.length ? (
+                      <small className="account-order-products">
+                        {order.items
+                          .slice(0, 2)
+                          .map((item) => `${item.product_name} × ${item.quantity}`)
+                          .join(", ")}
+                        {order.items.length > 2
+                          ? ` та ще ${order.items.length - 2}`
+                          : ""}
+                      </small>
+                    ) : null}
                   </div>
                   <div className="account-order-price">
                     <strong>{priceFormatter.format(order.total)}</strong>
@@ -458,7 +465,10 @@ export default async function AccountPage() {
             )}
           </div>
         </section>
-      </section>
-    </main>
+          </section>
+        </main>
+        <StoreFooter />
+      </div>
+    </CartProvider>
   );
 }

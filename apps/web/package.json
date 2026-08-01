@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "check:migration-boundary": "node scripts/check-migration-boundary.mjs",
     "start": "next start",
     "typecheck": "tsc --noEmit"
   },

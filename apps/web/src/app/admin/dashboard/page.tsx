@@ -166,9 +166,7 @@ export default async function AdminDashboardPage() {
   if (
     summaryResult.error ||
     ordersResult.error ||
-    stockResult.error ||
-    integrationSummaryResult.error ||
-    failedEventsResult.error
+    stockResult.error
   ) {
     throw new Error("Unable to load the admin dashboard.");
   }
@@ -186,14 +184,20 @@ export default async function AdminDashboardPage() {
     .filter((order) => isOrderStatus(order.status))
     .map((order) => order as RecentOrder);
   const stockProducts = (stockResult.data ?? []) as unknown as StockProduct[];
-  const integrationSummary = (integrationSummaryResult.data?.[0] ?? {
+  const integrationAvailable =
+    !integrationSummaryResult.error && !failedEventsResult.error;
+  const integrationSummary = ((integrationAvailable
+    ? integrationSummaryResult.data?.[0]
+    : null) ?? {
     failed_count: 0,
     oldest_pending_at: null,
     pending_count: 0,
     processed_24h_count: 0,
     retrying_count: 0,
   }) as IntegrationSummary;
-  const failedEvents = (failedEventsResult.data ?? []) as FailedIntegrationEvent[];
+  const failedEvents = (integrationAvailable
+    ? failedEventsResult.data ?? []
+    : []) as FailedIntegrationEvent[];
   const attentionCount =
     Number(summary.low_stock_count) + Number(summary.out_of_stock_count);
 
@@ -421,17 +425,21 @@ export default async function AdminDashboardPage() {
               </div>
               <span
                 className={
-                  workerHealthy
+                  workerHealthy && integrationAvailable
                     ? "admin-service-state is-online"
                     : "admin-service-state is-offline"
                 }
               >
-                {workerHealthy ? (
+                {workerHealthy && integrationAvailable ? (
                   <CircleCheck aria-hidden size={15} strokeWidth={1.9} />
                 ) : (
                   <AlertTriangle aria-hidden size={15} strokeWidth={1.9} />
                 )}
-                {workerHealthy ? "Worker працює" : "Worker недоступний"}
+                {!integrationAvailable
+                  ? "Моніторинг недоступний"
+                  : workerHealthy
+                    ? "Worker працює"
+                    : "Worker недоступний"}
               </span>
             </header>
 
@@ -462,7 +470,15 @@ export default async function AdminDashboardPage() {
               </p>
             ) : null}
 
-            {failedEvents.length ? (
+            {!integrationAvailable ? (
+              <div className="admin-integration-warning" role="status">
+                <AlertTriangle aria-hidden size={22} strokeWidth={1.6} />
+                <p>
+                  Не вдалося отримати стан черги. Замовлення та каталог
+                  продовжують працювати.
+                </p>
+              </div>
+            ) : failedEvents.length ? (
               <div className="admin-integration-list">
                 {failedEvents.map((event) => (
                   <article className="admin-integration-row" key={event.id}>

@@ -1258,6 +1258,22 @@ input:focus-visible {
   font-weight: 700;
 }
 
+.admin-integration-warning {
+  display: flex;
+  min-height: 74px;
+  margin-top: 1rem;
+  border-bottom: 1px solid #e3c8b4;
+  align-items: center;
+  gap: 0.65rem;
+  color: #94612f;
+}
+
+.admin-integration-warning p {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
 .admin-dashboard-section-heading {
   display: flex;
   min-height: 38px;

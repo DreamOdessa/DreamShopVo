@@ -7,6 +7,9 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type ProductRow = {
+  category: {
+    is_active: boolean;
+  } | null;
   id: string;
   in_stock: boolean;
   media: Array<{
@@ -38,9 +41,10 @@ export async function refreshCartProducts(
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id,name,slug,price,in_stock,stock_quantity,media:product_media(object_key,sort_order)",
+      "id,name,slug,price,in_stock,stock_quantity,category:categories!products_category_id_fkey!inner(is_active),media:product_media(object_key,sort_order)",
     )
     .eq("is_active", true)
+    .eq("category.is_active", true)
     .in("id", ids);
 
   if (error) {

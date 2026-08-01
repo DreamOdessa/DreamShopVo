@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { refreshCartProducts } from "../../app/(store)/cart/actions";
 import { cartItemsMatch, reconcileCartItems } from "../../lib/cart";
@@ -13,6 +13,8 @@ export function useCartInventorySync() {
   const [attempt, setAttempt] = useState(0);
   const [changed, setChanged] = useState(false);
   const [status, setStatus] = useState<SyncStatus>("idle");
+  const currentItemsRef = useRef(items);
+  currentItemsRef.current = items;
   const productIds = useMemo(
     () => items.map(({ id }) => id).sort(),
     [items],
@@ -46,9 +48,10 @@ export function useCartInventorySync() {
         return;
       }
 
-      const nextItems = reconcileCartItems(items, result.products);
+      const currentItems = currentItemsRef.current;
+      const nextItems = reconcileCartItems(currentItems, result.products);
 
-      setChanged(!cartItemsMatch(items, nextItems));
+      setChanged(!cartItemsMatch(currentItems, nextItems));
       syncItems(result.products);
       setStatus("ready");
     });

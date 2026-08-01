@@ -4298,6 +4298,84 @@ input:focus-visible {
   text-decoration: none;
 }
 
+.checkout-progress {
+  margin-bottom: 2rem;
+}
+
+.checkout-progress ol {
+  display: grid;
+  width: min(100%, 680px);
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+}
+
+.checkout-progress li {
+  position: relative;
+  min-width: 0;
+}
+
+.checkout-progress li:not(:last-child)::after {
+  position: absolute;
+  z-index: 0;
+  top: 16px;
+  right: 0;
+  left: 38px;
+  height: 1px;
+  background: #d4dfdb;
+  content: "";
+}
+
+.checkout-progress li.is-complete::after {
+  background: #65a6a5;
+}
+
+.checkout-progress li > a,
+.checkout-progress li > span {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.55rem;
+  color: #829092;
+  font-size: 0.72rem;
+  text-decoration: none;
+}
+
+.checkout-progress li > a:hover strong {
+  text-decoration: underline;
+}
+
+.checkout-progress li > a > span,
+.checkout-progress li > span > span {
+  display: grid;
+  width: 33px;
+  height: 33px;
+  flex: 0 0 auto;
+  border: 1px solid #cad8d4;
+  border-radius: 50%;
+  place-items: center;
+  background: #f6f8f5;
+  color: #728587;
+  font-weight: 760;
+}
+
+.checkout-progress li.is-active > span,
+.checkout-progress li.is-complete > a,
+.checkout-progress li.is-complete > span {
+  color: #176b78;
+}
+
+.checkout-progress li.is-active > span > span,
+.checkout-progress li.is-complete > a > span,
+.checkout-progress li.is-complete > span > span {
+  border-color: #176b78;
+  background: #176b78;
+  color: #fff;
+}
+
 .cart-loading {
   min-height: 55svh;
 }
@@ -4343,6 +4421,34 @@ input:focus-visible {
 .cart-items {
   display: grid;
   border-top: 1px solid #d9e2dd;
+}
+
+.cart-list-toolbar {
+  display: flex;
+  min-height: 42px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #748587;
+  font-size: 0.72rem;
+}
+
+.cart-list-toolbar button {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  color: #8e5f5a;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.cart-list-toolbar button:hover {
+  color: #793e39;
+  text-decoration: underline;
 }
 
 .cart-item {
@@ -5338,6 +5444,33 @@ input:focus-visible {
 
   .catalog-toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .checkout-progress {
+    margin-bottom: 1.5rem;
+  }
+
+  .checkout-progress li > a,
+  .checkout-progress li > span {
+    gap: 0.35rem;
+  }
+
+  .checkout-progress li > a > span,
+  .checkout-progress li > span > span {
+    width: 29px;
+    height: 29px;
+  }
+
+  .checkout-progress li:not(:last-child)::after {
+    top: 14px;
+    left: 33px;
+  }
+
+  .checkout-progress strong {
+    overflow: hidden;
+    font-size: 0.66rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .catalog-filter-fields {

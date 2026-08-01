@@ -14,6 +14,7 @@ import {
 } from "../../../../lib/orders";
 import { CancelOrderForm } from "./cancel-order-form";
 import { RepeatOrderButton } from "../../../../components/storefront/repeat-order-button";
+import { CheckoutProgress } from "../../../../components/storefront/checkout-progress";
 
 type CurrentProduct = {
   id: string;
@@ -167,6 +168,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
 
   return (
     <main className="store-main order-page">
+      <CheckoutProgress current="complete" />
       <section
         className={`order-confirmation order-confirmation-${order.status}`}
         aria-labelledby="order-title"

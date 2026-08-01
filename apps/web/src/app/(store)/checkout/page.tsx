@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { CheckoutForm } from "../../../components/storefront/checkout-form";
+import { CheckoutProgress } from "../../../components/storefront/checkout-progress";
 import { getApiUrl } from "../../../lib/env";
 import { createClient } from "../../../lib/supabase/server";
 
@@ -67,6 +68,7 @@ export default async function CheckoutPage() {
 
   return (
     <main className="store-main checkout-page">
+      <CheckoutProgress current="checkout" />
       <div className="catalog-heading">
         <p>Останній крок</p>
         <h1>Оформлення замовлення</h1>

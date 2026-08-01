@@ -12,6 +12,7 @@ import Link from "next/link";
 
 import { cartSubtotal } from "../../lib/cart";
 import { publicMediaUrl } from "../../lib/media-url";
+import { CheckoutProgress } from "./checkout-progress";
 import { useCart } from "./cart-provider";
 import { useCartInventorySync } from "./use-cart-inventory-sync";
 
@@ -24,6 +25,7 @@ const priceFormatter = new Intl.NumberFormat("uk-UA", {
 export function CartPageContent() {
   const {
     hydrated,
+    clear,
     items,
     removeItem,
     updateQuantity,
@@ -71,9 +73,15 @@ export function CartPageContent() {
 
   const subtotal = cartSubtotal(items);
   const hasUnavailableItems = items.some((item) => !item.inStock);
+  const removeUnavailableItems = () => {
+    items
+      .filter((item) => !item.inStock)
+      .forEach((item) => removeItem(item.id));
+  };
 
   return (
     <>
+      <CheckoutProgress current="cart" />
       <div className="catalog-heading">
         <p>Ваше замовлення</p>
         <h1>Кошик</h1>
@@ -87,12 +95,20 @@ export function CartPageContent() {
       ) : null}
 
       <div className="cart-layout">
-        <section className="cart-items" aria-label="Товари у кошику">
-          {items.map((item) => (
-            <article
-              className={`cart-item${item.inStock ? "" : " is-unavailable"}`}
-              key={item.id}
-            >
+        <section aria-label="Товари у кошику">
+          <div className="cart-list-toolbar">
+            <span>{items.length} товарних позицій</span>
+            <button onClick={clear} type="button">
+              <Trash2 aria-hidden size={16} />
+              Очистити кошик
+            </button>
+          </div>
+          <div className="cart-items">
+            {items.map((item) => (
+              <article
+                className={`cart-item${item.inStock ? "" : " is-unavailable"}`}
+                key={item.id}
+              >
               <Link
                 className="cart-item-media"
                 href={`/product/${item.slug}`}
@@ -171,8 +187,9 @@ export function CartPageContent() {
                 <Trash2 aria-hidden size={18} strokeWidth={1.8} />
                 <span className="sr-only">Видалити {item.name}</span>
               </button>
-            </article>
-          ))}
+              </article>
+            ))}
+          </div>
         </section>
 
         <aside className="cart-summary" aria-label="Підсумок">
@@ -192,7 +209,12 @@ export function CartPageContent() {
             <strong>{priceFormatter.format(subtotal)}</strong>
           </div>
           {hasUnavailableItems ? (
-            <button className="store-primary-action" disabled type="button">
+            <button
+              className="store-primary-action"
+              onClick={removeUnavailableItems}
+              type="button"
+            >
+              <Trash2 aria-hidden size={17} />
               Приберіть недоступні товари
             </button>
           ) : (

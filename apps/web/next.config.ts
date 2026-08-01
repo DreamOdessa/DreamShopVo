@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const maintenanceEnabled = process.env.STOREFRONT_MAINTENANCE !== "false";
+const maintenanceEnabled = process.env.STOREFRONT_MAINTENANCE === "true";
 const securityHeaders = [
   ...(maintenanceEnabled
     ? [

@@ -3,7 +3,7 @@ import type { AppRole } from "./auth/claims";
 const ALWAYS_AVAILABLE_PATHS = new Set(["/", "/robots.txt", "/sitemap.xml"]);
 
 export function isStorefrontMaintenance() {
-  return process.env.STOREFRONT_MAINTENANCE !== "false";
+  return process.env.STOREFRONT_MAINTENANCE === "true";
 }
 
 export function canAccessDuringMaintenance(

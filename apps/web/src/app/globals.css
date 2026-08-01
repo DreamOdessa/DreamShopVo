@@ -1015,6 +1015,16 @@ input:focus-visible {
   font-weight: 700;
 }
 
+.account-section-error {
+  color: #8b544f;
+}
+
+.account-section-error a {
+  color: #176b78;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
 .admin-page {
   min-height: 100svh;
   background: #f4f7f6;

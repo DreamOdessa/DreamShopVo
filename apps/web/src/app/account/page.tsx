@@ -156,25 +156,41 @@ export default async function AccountPage() {
       .maybeSingle(),
   ]);
 
-  if (
-    profileResult.error ||
-    ordersResult.error ||
-    notificationsResult.error ||
-    addressResult.error
-  ) {
+  if (profileResult.error) {
+    console.error("Account profile query failed", {
+      code: profileResult.error.code,
+      message: profileResult.error.message,
+    });
     throw new Error("Unable to load the authenticated account.");
   }
 
+  const optionalQueryErrors = [
+    ["orders", ordersResult.error],
+    ["notifications", notificationsResult.error],
+    ["address", addressResult.error],
+  ].filter((entry) => entry[1]);
+
+  optionalQueryErrors.forEach(([section, error]) => {
+    const queryError = error as { code?: string; message?: string };
+    console.error(`Account ${section} query failed`, {
+      code: queryError.code,
+      message: queryError.message,
+    });
+  });
+
   const profile = profileResult.data as Profile | null;
-  const orders = (ordersResult.data ?? [])
+  const orders = (ordersResult.error ? [] : (ordersResult.data ?? []))
     .filter((order) => isOrderStatus(order.status))
     .map((order) => order as unknown as AccountOrder);
-  const notifications = (notificationsResult.data ??
-    []) as AccountNotification[];
+  const notifications = (notificationsResult.error
+    ? []
+    : (notificationsResult.data ?? [])) as AccountNotification[];
   const unreadNotifications = notifications.filter(
     (notification) => !notification.read_at,
   ).length;
-  const savedAddress = addressResult.data as SavedAddress | null;
+  const savedAddress = addressResult.error
+    ? null
+    : (addressResult.data as SavedAddress | null);
   const telegramVerified =
     Boolean(profile?.phone) &&
     (!profile?.email || isTelegramAuthEmail(profile.email));
@@ -313,6 +329,12 @@ export default async function AccountPage() {
               </div>
               <DeleteAddressButton addressId={savedAddress.id} />
             </div>
+          ) : addressResult.error ? (
+            <div className="account-address-empty account-section-error">
+              <MapPin aria-hidden size={25} strokeWidth={1.5} />
+              <p>Не вдалося завантажити збережену доставку.</p>
+              <Link href="/account">Повторити</Link>
+            </div>
           ) : (
             <div className="account-address-empty">
               <MapPin aria-hidden size={25} strokeWidth={1.5} />
@@ -339,7 +361,13 @@ export default async function AccountPage() {
             ) : null}
           </div>
           <div className="account-notifications-list">
-            {notifications.length ? (
+            {notificationsResult.error ? (
+              <div className="account-notifications-empty account-section-error">
+                <BellOff aria-hidden size={25} strokeWidth={1.5} />
+                <p>Не вдалося завантажити сповіщення.</p>
+                <Link href="/account#notifications">Повторити</Link>
+              </div>
+            ) : notifications.length ? (
               notifications.map((notification) => (
                 <article
                   className={`account-notification-row${
@@ -403,13 +431,23 @@ export default async function AccountPage() {
           </div>
         </section>
 
-        <section className="account-orders-section" aria-labelledby="orders-title">
+        <section
+          className="account-orders-section"
+          id="orders"
+          aria-labelledby="orders-title"
+        >
           <div className="account-section-heading">
             <h2 id="orders-title">Мої замовлення</h2>
             <p>Останні замовлення та їх поточний статус.</p>
           </div>
           <div className="account-orders-list">
-            {orders.length ? (
+            {ordersResult.error ? (
+              <div className="account-orders-empty account-section-error">
+                <PackageOpen aria-hidden size={26} strokeWidth={1.5} />
+                <p>Не вдалося завантажити історію замовлень.</p>
+                <Link href="/account#orders">Повторити</Link>
+              </div>
+            ) : orders.length ? (
               orders.map((order) => (
                 <article className="account-order-row" key={order.id}>
                   <div>

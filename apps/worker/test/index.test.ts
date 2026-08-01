@@ -6,6 +6,7 @@ import { classifyWarehouse } from "../src/nova-poshta";
 import {
   formatOrderNotification,
   processOrderOutbox,
+  retryDelayMs,
 } from "../src/orders";
 import {
   isMatchingTelegramIdentity,
@@ -106,6 +107,13 @@ describe("DreamShop Worker", () => {
     });
 
     expect(eventTypes).toEqual(["order.created", "order.cancelled"]);
+  });
+
+  it("backs off failed notifications without exceeding six hours", () => {
+    expect(retryDelayMs(1)).toBe(60_000);
+    expect(retryDelayMs(4)).toBe(8 * 60_000);
+    expect(retryDelayMs(10)).toBe(6 * 60 * 60_000);
+    expect(retryDelayMs(100)).toBe(6 * 60 * 60_000);
   });
 
   it("formats a distinct Telegram message for a cancelled order", () => {

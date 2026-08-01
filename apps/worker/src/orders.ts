@@ -4,6 +4,7 @@ import type { WorkerEnv } from "./types";
 
 type ClaimedEvent = {
   aggregate_id: string | null;
+  attempts: number;
   id: number;
 };
 
@@ -52,6 +53,8 @@ const orderEventTypes: OrderEventType[] = [
   "order.cancelled",
 ];
 
+const TELEGRAM_TIMEOUT_MS = 10_000;
+
 function serviceClient(env: WorkerEnv) {
   return createClient(env.SUPABASE_URL, env.SUPABASE_SECRET_KEY, {
     auth: {
@@ -82,6 +85,11 @@ function money(value: number) {
     maximumFractionDigits: 2,
     style: "currency",
   }).format(value);
+}
+
+export function retryDelayMs(attempts: number) {
+  const safeAttempts = Math.min(Math.max(Math.trunc(attempts), 1), 10);
+  return Math.min(2 ** (safeAttempts - 1) * 60_000, 6 * 60 * 60_000);
 }
 
 export function formatOrderNotification(
@@ -154,6 +162,7 @@ async function sendOrderMessage(
         "Content-Type": "application/json",
       },
       method: "POST",
+      signal: AbortSignal.timeout(TELEGRAM_TIMEOUT_MS),
     },
   );
 
@@ -241,10 +250,11 @@ export async function processOrderOutbox(env: WorkerEnv) {
       }
 
       processed += 1;
-    } catch {
-      const retryAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
-
-      await supabase
+    } catch (error) {
+      const retryAt = new Date(
+        Date.now() + retryDelayMs(event.attempts),
+      ).toISOString();
+      const { error: retryError } = await supabase
         .from("integration_outbox")
         .update({
           available_at: retryAt,
@@ -254,6 +264,14 @@ export async function processOrderOutbox(env: WorkerEnv) {
               : "order_notification_failed",
         })
         .eq("id", event.id);
+
+      console.error(JSON.stringify({
+        error: error instanceof Error ? error.name : "UnknownError",
+        eventId: event.id,
+        eventType: event.eventType,
+        retryPersisted: !retryError,
+        type: "order_notification_failed",
+      }));
     }
   }
 

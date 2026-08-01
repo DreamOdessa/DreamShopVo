@@ -4,6 +4,7 @@ import { createClient } from "./supabase/server";
 
 export type WishlistState = {
   authenticated: boolean;
+  available: boolean;
   productIds: string[];
 };
 
@@ -16,6 +17,7 @@ export const getWishlistState = cache(async (): Promise<WishlistState> => {
   if (claimsError || !userId) {
     return {
       authenticated: false,
+      available: true,
       productIds: [],
     };
   }
@@ -28,11 +30,16 @@ export const getWishlistState = cache(async (): Promise<WishlistState> => {
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new Error("Unable to load the wishlist.");
+    return {
+      authenticated: true,
+      available: false,
+      productIds: [],
+    };
   }
 
   return {
     authenticated: true,
+    available: true,
     productIds: (data ?? []).map(({ product_id }) => product_id),
   };
 });

@@ -1,4 +1,4 @@
-import { HeartOff } from "lucide-react";
+import { HeartOff, RefreshCw } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -20,6 +20,26 @@ export default async function WishlistPage() {
 
   if (!wishlist.authenticated) {
     redirect("/auth?next=%2Fwishlist");
+  }
+
+  if (!wishlist.available) {
+    return (
+      <main className="store-main">
+        <header className="catalog-heading">
+          <p>Мій список</p>
+          <h1>Обране</h1>
+          <span>Товари, до яких ви хочете повернутися.</span>
+        </header>
+        <section className="wishlist-empty" aria-labelledby="wishlist-error-title">
+          <RefreshCw aria-hidden size={30} strokeWidth={1.5} />
+          <h2 id="wishlist-error-title">Не вдалося завантажити обране</h2>
+          <p>Сервіс тимчасово недоступний. Оновіть сторінку трохи пізніше.</p>
+          <Link className="store-primary-action" href="/catalog">
+            Повернутися до каталогу
+          </Link>
+        </section>
+      </main>
+    );
   }
 
   const products = await getCatalogProductsByIds(wishlist.productIds);

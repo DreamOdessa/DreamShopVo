@@ -218,10 +218,10 @@ export default async function OrderPage({ params }: OrderPageProps) {
               </>
             );
 
-            return item.product_slug ? (
+            return item.product?.is_active ? (
               <Link
                 className="order-item"
-                href={`/product/${item.product_slug}`}
+                href={`/product/${item.product.slug}`}
                 key={item.id}
               >
                 {content}

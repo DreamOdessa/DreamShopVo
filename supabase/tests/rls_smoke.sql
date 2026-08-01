@@ -552,6 +552,14 @@ select 1 / case
 end as admin_reads_order_summary
 from public.get_admin_order_summary(null, null, null);
 select 1 / case
+  when count(*) = 5
+    and sum(order_count) = 2
+    and max(order_count) filter (where status = 'cancelled') = 1
+    and max(order_count) filter (where status = 'delivered') = 1 then 1
+  else 0
+end as admin_reads_order_status_counts
+from public.get_admin_order_status_counts(null, null);
+select 1 / case
   when public.set_product_stock(
     (select id from public.products where slug = 'visible'),
     2,

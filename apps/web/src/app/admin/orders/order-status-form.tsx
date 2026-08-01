@@ -43,6 +43,7 @@ export function OrderStatusForm({
   return (
     <form action={formAction} className="admin-order-status-form">
       <input name="orderId" type="hidden" value={orderId} />
+      <input name="currentStatus" type="hidden" value={status} />
       <label>
         <span>Новий статус</span>
         <select

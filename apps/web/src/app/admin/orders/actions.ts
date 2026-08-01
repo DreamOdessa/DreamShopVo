@@ -33,9 +33,14 @@ export async function updateOrderStatus(
 ): Promise<AdminActionState> {
   const orderId = stringValue(formData, "orderId");
   const status = stringValue(formData, "status");
+  const currentStatus = stringValue(formData, "currentStatus");
   const trackingNumber = trackingNumberValue(formData);
 
-  if (!UUID_PATTERN.test(orderId) || !isOrderStatus(status)) {
+  if (
+    !UUID_PATTERN.test(orderId) ||
+    !isOrderStatus(status) ||
+    !isOrderStatus(currentStatus)
+  ) {
     return errorState("Замовлення або статус некоректні.");
   }
 
@@ -66,7 +71,8 @@ export async function updateOrderStatus(
     .from("orders")
     .update(update)
     .eq("id", orderId)
-    .select("id")
+    .eq("status", currentStatus)
+    .select("id,user_id")
     .maybeSingle();
 
   if (error) {
@@ -80,12 +86,18 @@ export async function updateOrderStatus(
   }
 
   if (!data) {
-    return errorState("Замовлення не знайдено.");
+    return errorState(
+      "Статус уже змінився в іншій вкладці. Оновіть сторінку.",
+    );
   }
 
   revalidatePath("/account");
+  revalidatePath("/admin/dashboard");
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
+  if (data.user_id) {
+    revalidatePath(`/admin/customers/${data.user_id}`);
+  }
   revalidatePath(`/orders/${orderId}`);
 
   return {
@@ -116,7 +128,7 @@ export async function updateOrderTracking(
     .update({ tracking_number: trackingNumber })
     .eq("id", orderId)
     .eq("status", "shipped")
-    .select("id")
+    .select("id,user_id")
     .maybeSingle();
 
   if (error) {
@@ -128,7 +140,12 @@ export async function updateOrderTracking(
   }
 
   revalidatePath("/account");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
+  if (data.user_id) {
+    revalidatePath(`/admin/customers/${data.user_id}`);
+  }
   revalidatePath(`/orders/${orderId}`);
 
   return {

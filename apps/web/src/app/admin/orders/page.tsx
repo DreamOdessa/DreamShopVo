@@ -55,10 +55,15 @@ type OrderRow = {
   customer_phone: string;
   delivery_city: string;
   id: string;
-  items: Array<{ id: string }> | null;
+  items: Array<{ count: number }> | null;
   order_number: number;
   status: OrderStatus;
   total: number;
+};
+
+type OrderStatusCountRow = {
+  order_count: number | string;
+  status: string;
 };
 
 const priceFormatter = new Intl.NumberFormat("uk-UA", {
@@ -142,7 +147,7 @@ export default async function AdminOrdersPage({
   let ordersQuery = supabase
     .from("orders")
     .select(
-      "id,order_number,status,total,customer_first_name,customer_last_name,customer_phone,delivery_city,created_at,items:order_items(id)",
+      "id,order_number,status,total,customer_first_name,customer_last_name,customer_phone,delivery_city,created_at,items:order_items(count)",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -160,31 +165,17 @@ export default async function AdminOrdersPage({
     ordersQuery = ordersQuery.or(orderSearchFilter(searchQuery));
   }
 
-  const statusCountQueries = ORDER_STATUSES.map((status) => {
-    let countQuery = supabase
-      .from("orders")
-      .select("id", { count: "exact", head: true })
-      .eq("status", status);
-
-    if (since) {
-      countQuery = countQuery.gte("created_at", since);
-    }
-
-    if (searchQuery) {
-      countQuery = countQuery.or(orderSearchFilter(searchQuery));
-    }
-
-    return countQuery;
-  });
-
-  const [ordersResult, summaryResult, ...countResults] = await Promise.all([
+  const [ordersResult, summaryResult, statusCountsResult] = await Promise.all([
     ordersQuery,
     supabase.rpc("get_admin_order_summary", {
       p_search: searchQuery || null,
       p_since: since,
       p_status: activeStatus,
     }),
-    ...statusCountQueries,
+    supabase.rpc("get_admin_order_status_counts", {
+      p_search: searchQuery || null,
+      p_since: since,
+    }),
   ]);
 
   if (currentPage > 1 && ordersResult.error?.code === "PGRST103") {
@@ -200,7 +191,7 @@ export default async function AdminOrdersPage({
   if (
     ordersResult.error ||
     summaryResult.error ||
-    countResults.some((result) => Boolean(result.error))
+    statusCountsResult.error
   ) {
     throw new Error("Unable to load orders.");
   }
@@ -220,11 +211,14 @@ export default async function AdminOrdersPage({
   }
 
   const statusCounts = Object.fromEntries(
-    ORDER_STATUSES.map((status, index) => [
-      status,
-      countResults[index]?.count ?? 0,
-    ]),
+    ORDER_STATUSES.map((status) => [status, 0]),
   ) as Record<OrderStatus, number>;
+
+  ((statusCountsResult.data ?? []) as OrderStatusCountRow[]).forEach((row) => {
+    if (isOrderStatus(row.status)) {
+      statusCounts[row.status] = Number(row.order_count ?? 0);
+    }
+  });
 
   const totalOrders = Object.values(statusCounts).reduce(
     (total, count) => total + count,
@@ -405,7 +399,7 @@ export default async function AdminOrdersPage({
                   </div>
                   <div>
                     <strong>{priceFormatter.format(order.total)}</strong>
-                    <span>Позицій: {order.items?.length ?? 0}</span>
+                    <span>Позицій: {order.items?.[0]?.count ?? 0}</span>
                   </div>
                   <span
                     className={`admin-order-status admin-order-status-${order.status}`}

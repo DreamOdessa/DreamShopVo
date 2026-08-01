@@ -50,9 +50,11 @@ export async function cancelOrder(
   }
 
   revalidatePath("/account");
+  revalidatePath("/admin/dashboard");
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath(`/admin/customers/${claimsData.claims.sub}`);
 
   return {
     message: "Замовлення скасовано.",

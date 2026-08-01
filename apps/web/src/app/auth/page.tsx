@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { safeNextPath } from "../../lib/auth/redirect";
+import { getTelegramBotUsername } from "../../lib/env";
 import { AuthForm } from "./auth-form";
 import { signInWithGoogle } from "./actions";
 
@@ -31,9 +32,8 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
   const nextPath = safeNextPath(params.next);
   const encodedNext = encodeURIComponent(nextPath);
   const googleEnabled = process.env.NEXT_PUBLIC_GOOGLE_AUTH_ENABLED === "true";
-  const telegramUsername =
-    process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.trim() ?? "";
-  const telegramEnabled = /^[A-Za-z0-9_]{5,32}$/.test(telegramUsername);
+  const telegramUsername = await getTelegramBotUsername();
+  const telegramEnabled = Boolean(telegramUsername);
 
   return (
     <main className="auth-page">

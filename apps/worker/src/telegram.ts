@@ -29,6 +29,13 @@ type TelegramUpdate = {
   message?: TelegramMessage;
 };
 
+type TelegramBotInfoResponse = {
+  ok?: boolean;
+  result?: {
+    username?: string;
+  };
+};
+
 type ConsumedChallenge = {
   challenge_id: string;
   phone: string;
@@ -172,6 +179,42 @@ async function telegramRequest(
       "Telegram is temporarily unavailable.",
     );
   }
+}
+
+export async function getTelegramBotInfo(request: Request, env: WorkerEnv) {
+  if (!env.TELEGRAM_BOT_TOKEN) {
+    throw new HttpError(
+      503,
+      "service_unavailable",
+      "Telegram is temporarily unavailable.",
+    );
+  }
+
+  const response = await fetch(
+    `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/getMe`,
+    { signal: AbortSignal.timeout(10_000) },
+  );
+
+  if (!response.ok) {
+    throw new HttpError(
+      503,
+      "service_unavailable",
+      "Telegram is temporarily unavailable.",
+    );
+  }
+
+  const body = (await response.json()) as TelegramBotInfoResponse;
+  const username = body.result?.username?.trim() ?? "";
+
+  if (!body.ok || !/^[A-Za-z0-9_]{5,32}$/.test(username)) {
+    throw new HttpError(
+      503,
+      "service_unavailable",
+      "Telegram is temporarily unavailable.",
+    );
+  }
+
+  return json(request, env, { username });
 }
 
 async function requestPhone(env: WorkerEnv, chatId: number) {

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { safeNextPath } from "../../../lib/auth/redirect";
+import { getTelegramBotUsername } from "../../../lib/env";
 import { ForgotPasswordForm } from "./forgot-password-form";
 
 export const metadata: Metadata = {
@@ -25,9 +26,8 @@ export default async function ForgotPasswordPage({
 }: ForgotPasswordPageProps) {
   const params = await searchParams;
   const nextPath = safeNextPath(params.next);
-  const telegramUsername =
-    process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME?.trim() ?? "";
-  const telegramEnabled = /^[A-Za-z0-9_]{5,32}$/.test(telegramUsername);
+  const telegramUsername = await getTelegramBotUsername();
+  const telegramEnabled = Boolean(telegramUsername);
 
   return (
     <main className="auth-page">

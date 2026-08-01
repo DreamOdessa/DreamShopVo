@@ -8,6 +8,7 @@ import {
 import { processOrderOutbox } from "./orders";
 import {
   completeTelegramRegistration,
+  getTelegramBotInfo,
   handleTelegramWebhook,
   signInWithTelegramPhone,
 } from "./telegram";
@@ -69,6 +70,10 @@ async function handleRequest(request: Request, env: WorkerEnv) {
     return handleTelegramWebhook(request, env);
   }
 
+  if (pathname === "/telegram/info" && request.method === "GET") {
+    return getTelegramBotInfo(request, env);
+  }
+
   if (
     pathname === "/auth/telegram/complete" &&
     request.method === "POST"
@@ -99,6 +104,7 @@ async function handleRequest(request: Request, env: WorkerEnv) {
     pathname.startsWith("/media/") ||
     pathname.startsWith("/admin/media/") ||
     pathname === "/telegram/webhook" ||
+    pathname === "/telegram/info" ||
     pathname === "/auth/telegram/complete" ||
     pathname === "/auth/phone/login" ||
     pathname === "/delivery/nova-poshta/cities" ||

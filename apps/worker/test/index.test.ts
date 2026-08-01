@@ -288,6 +288,31 @@ describe("DreamShop Worker", () => {
     expect(await response.json()).toMatchObject({ error: "unauthorized" });
   });
 
+  it("returns only the public Telegram bot username", async () => {
+    const token = "123456789:secret-token-value";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      Response.json({
+        ok: true,
+        result: {
+          first_name: "DreamShop",
+          id: 123456789,
+          username: "DreamShopAuthBot",
+        },
+      }),
+    );
+    const response = await fetchRequest(
+      new Request("https://api.example.test/telegram/info"),
+      createEnv({ TELEGRAM_BOT_TOKEN: token }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ username: "DreamShopAuthBot" });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `https://api.telegram.org/bot${token}/getMe`,
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
+  });
+
   it("accepts authenticated Telegram updates that do not contain a message", async () => {
     const response = await fetchRequest(
       new Request("https://api.example.test/telegram/webhook", {

@@ -1,12 +1,24 @@
 import Image from "next/image";
-import { redirect } from "next/navigation";
 
+import { CartProvider } from "../components/storefront/cart-provider";
+import { StoreFooter } from "../components/storefront/store-footer";
+import { StoreHeader } from "../components/storefront/store-header";
+import { StoreHome } from "../components/storefront/store-home";
 import { isStorefrontMaintenance } from "../lib/maintenance";
 import { ResetLegacyCaches } from "./reset-legacy-caches";
 
 export default function MaintenancePage() {
   if (!isStorefrontMaintenance()) {
-    redirect("/catalog");
+    return (
+      <CartProvider>
+        <div className="store-page">
+          <ResetLegacyCaches />
+          <StoreHeader />
+          <StoreHome />
+          <StoreFooter />
+        </div>
+      </CartProvider>
+    );
   }
 
   return (

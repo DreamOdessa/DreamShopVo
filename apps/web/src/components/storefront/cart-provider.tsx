@@ -16,6 +16,7 @@ import {
   mergeCartItems,
   reconcileCartItems,
   type CartAddition,
+  type CartAddResult,
   type CartItem,
   type CartProduct,
 } from "../../lib/cart";
@@ -23,7 +24,7 @@ import {
 const STORAGE_KEY = "dreamshop_cart_v1";
 
 type CartContextValue = {
-  addItem: (product: CartProduct) => void;
+  addItem: (product: CartProduct) => CartAddResult;
   addItems: (additions: CartAddition[]) => void;
   clear: () => void;
   hydrated: boolean;
@@ -122,7 +123,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (hydrated) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+      } catch {
+        // The in-memory cart remains usable when browser storage is unavailable.
+      }
     }
   }, [hydrated, items]);
 
@@ -132,9 +137,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(
     (product: CartProduct) => {
+      const stockLimit = Math.min(
+        product.stockQuantity ?? MAX_CART_QUANTITY,
+        MAX_CART_QUANTITY,
+      );
+      const existing = items.find((item) => item.id === product.id);
+
+      if (!product.inStock || stockLimit < 1) {
+        return "unavailable";
+      }
+
+      if (existing && existing.quantity >= stockLimit) {
+        return "limit";
+      }
+
+      if (!existing && items.length >= MAX_CART_LINES) {
+        return "full";
+      }
+
       addItems([{ product, quantity: 1 }]);
+      return "added";
     },
-    [addItems],
+    [addItems, items],
   );
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {

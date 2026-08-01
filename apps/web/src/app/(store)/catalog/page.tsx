@@ -16,7 +16,7 @@ import {
   catalogReturnPath,
   normalizeAvailableOnly,
   normalizeCatalogPage,
-  normalizeCatalogPrice,
+  normalizeCatalogPriceRange,
   normalizeCatalogSearch,
   normalizeCatalogSort,
   type CatalogFilters,
@@ -48,10 +48,11 @@ export default async function CatalogPage({
   searchParams,
 }: CatalogPageProps) {
   const params = await searchParams;
+  const priceRange = normalizeCatalogPriceRange(params.min, params.max);
   const filters: CatalogFilters = {
     availableOnly: normalizeAvailableOnly(params.available),
-    maxPrice: normalizeCatalogPrice(params.max),
-    minPrice: normalizeCatalogPrice(params.min),
+    maxPrice: priceRange.maxPrice,
+    minPrice: priceRange.minPrice,
     page: normalizeCatalogPage(params.page),
     search: normalizeCatalogSearch(params.q),
     sort: normalizeCatalogSort(params.sort),

@@ -53,6 +53,20 @@ export function normalizeCatalogPrice(value: SearchParam) {
     : null;
 }
 
+export function normalizeCatalogPriceRange(
+  minValue: SearchParam,
+  maxValue: SearchParam,
+) {
+  const first = normalizeCatalogPrice(minValue);
+  const second = normalizeCatalogPrice(maxValue);
+
+  if (first !== null && second !== null && first > second) {
+    return { maxPrice: first, minPrice: second };
+  }
+
+  return { maxPrice: second, minPrice: first };
+}
+
 export function normalizeCatalogPage(value: SearchParam) {
   const page = Number(firstParam(value));
   return Number.isInteger(page) && page > 0 ? page : 1;

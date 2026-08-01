@@ -3489,6 +3489,11 @@ input:focus-visible {
   color: #a13e54;
 }
 
+.wishlist-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .wishlist-form-compact .wishlist-button {
   width: 38px;
   min-height: 38px;
@@ -3610,6 +3615,34 @@ input:focus-visible {
   color: #a04a42;
   font-size: 0.7rem;
   font-weight: 680;
+}
+
+.product-card-cart {
+  display: inline-flex;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 0.8rem;
+  border: 1px solid #176b78;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  background: #fff;
+  color: #176b78;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 740;
+}
+
+.product-card-cart:hover:not(:disabled) {
+  background: #eef7f6;
+}
+
+.product-card-cart:disabled {
+  border-color: #d3ddda;
+  color: #8a9998;
+  cursor: not-allowed;
 }
 
 .catalog-category-cover {

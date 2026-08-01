@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "../../../lib/supabase/server";
+import { safeNextPath } from "../../../lib/auth/redirect";
 
 function formValue(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -17,15 +18,12 @@ function isUuid(value: string) {
   );
 }
 
-function safeReturnPath(value: string) {
-  return value.startsWith("/") && !value.startsWith("//")
-    ? value
-    : "/catalog";
-}
-
 export async function toggleWishlistItem(formData: FormData) {
   const productId = formValue(formData, "productId");
-  const returnPath = safeReturnPath(formValue(formData, "returnPath"));
+  const returnPath = safeNextPath(
+    formValue(formData, "returnPath"),
+    "/catalog",
+  );
   const remove = formValue(formData, "wishlisted") === "true";
 
   if (!isUuid(productId)) {

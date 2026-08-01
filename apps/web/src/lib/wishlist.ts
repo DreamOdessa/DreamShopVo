@@ -24,9 +24,12 @@ export const getWishlistState = cache(async (): Promise<WishlistState> => {
 
   const { data, error } = await supabase
     .from("wishlist_items")
-    .select("product_id,product:products!inner(is_active)")
+    .select(
+      "product_id,product:products!inner(is_active,category:categories!inner(is_active))",
+    )
     .eq("user_id", userId)
     .eq("product.is_active", true)
+    .eq("product.category.is_active", true)
     .order("created_at", { ascending: false });
 
   if (error) {

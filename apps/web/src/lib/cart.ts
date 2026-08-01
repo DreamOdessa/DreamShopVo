@@ -20,6 +20,8 @@ export type CartAddition = {
   quantity: number;
 };
 
+export type CartAddResult = "added" | "full" | "limit" | "unavailable";
+
 export function cartSubtotal(items: CartItem[]) {
   return items.reduce(
     (total, item) =>

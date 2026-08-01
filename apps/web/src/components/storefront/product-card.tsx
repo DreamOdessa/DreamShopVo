@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { CatalogProduct } from "../../lib/catalog";
 import { publicMediaUrl } from "../../lib/media-url";
 
+import { AddToCartButton } from "./add-to-cart-button";
 import { WishlistButton } from "./wishlist-button";
 
 type ProductCardProps = {
@@ -84,6 +85,18 @@ export function ProductCard({
           ) : null}
           {!product.inStock ? <span>Немає в наявності</span> : null}
         </div>
+        <AddToCartButton
+          compact
+          product={{
+            id: product.id,
+            imageObjectKey: mainImage?.objectKey ?? null,
+            inStock: product.inStock,
+            name: product.name,
+            price: product.price,
+            slug: product.slug,
+            stockQuantity: product.stockQuantity,
+          }}
+        />
       </div>
     </article>
   );

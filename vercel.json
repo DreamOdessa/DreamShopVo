@@ -36,28 +36,16 @@
     },
     {
       "src": "/",
-      "dest": "/index.html",
-      "headers": {
-        "X-Robots-Tag": "noindex, nofollow, noarchive",
-        "Cache-Control": "no-store, max-age=0"
-      }
+      "dest": "/index.html"
     },
     {
       "src": "/index.html",
-      "dest": "/index.html",
-      "headers": {
-        "X-Robots-Tag": "noindex, nofollow, noarchive",
-        "Cache-Control": "no-store, max-age=0"
-      }
+      "dest": "/index.html"
     },
     { "handle": "filesystem" },
     {
       "src": "/(.*)",
-      "dest": "/index.html",
-      "headers": {
-        "X-Robots-Tag": "noindex, nofollow, noarchive",
-        "Cache-Control": "no-store, max-age=0"
-      }
+      "dest": "/index.html"
     }
   ]
 }

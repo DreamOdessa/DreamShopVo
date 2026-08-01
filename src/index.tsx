@@ -1,6 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import MaintenancePage from './MaintenancePage';
+import { BrowserRouter } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import App from './App';
+import { GlobalStyles } from './styles/GlobalStyles';
+import { AuthProvider } from './contexts/AuthContext';
+import { CartProvider } from './contexts/CartContext';
+import { AdminProvider } from './contexts/AdminContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -8,6 +15,37 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <MaintenancePage />
+    <BrowserRouter>
+      <AuthProvider>
+        <CartProvider>
+          <AdminProvider>
+            <NotificationProvider>
+              <GlobalStyles />
+              <App />
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 3000,
+                  style: {
+                    background: '#363636',
+                    color: '#fff',
+                  },
+                }}
+              />
+            </NotificationProvider>
+          </AdminProvider>
+        </CartProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then((registration) => {
+      console.log('Firebase Messaging SW registered:', registration.scope);
+    })
+    .catch((error) => {
+      console.error('Firebase Messaging SW registration failed:', error);
+    });
+}

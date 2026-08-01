@@ -36,6 +36,7 @@
     "typecheck:api": "node node_modules/typescript-api/bin/tsc -p api/tsconfig.json",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
+    "migrate:catalog": "node scripts/migrate-live-catalog-to-supabase.mjs",
     "postinstall": "prisma generate",
     "eject": "react-scripts eject",
     "vercel-build": "react-scripts build"

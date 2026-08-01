@@ -54,7 +54,7 @@ export function ProductCard({
           </div>
         )}
         {product.organic ? (
-          <span className="product-card-badge">Organic</span>
+          <span className="product-card-badge">Органічний</span>
         ) : null}
       </Link>
 

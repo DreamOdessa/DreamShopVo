@@ -66,13 +66,15 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
             aria-label="DreamShop, головна"
           >
             <Image
-              className="store-logo"
-              src="/logo-name.PNG"
-              alt="DreamShop"
-              width={180}
-              height={144}
+              className="store-logo-icon"
+              src="/small-icon.png"
+              alt=""
+              aria-hidden
+              width={70}
+              height={40}
               priority
             />
+            <span>DreamShop</span>
           </Link>
 
           <nav className="store-primary-nav" aria-label="Основна навігація">
@@ -124,12 +126,14 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
       >
         <div className="store-mobile-nav-brand">
           <Image
-            src="/logo-name.PNG"
-            alt="DreamShop"
-            width={160}
-            height={128}
+            src="/small-icon.png"
+            alt=""
+            aria-hidden
+            width={70}
+            height={40}
             loading="eager"
           />
+          <strong>DreamShop</strong>
           <button aria-label="Закрити меню" onClick={closeMenu} type="button">
             <X aria-hidden size={22} />
           </button>

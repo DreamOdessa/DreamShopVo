@@ -1,6 +1,6 @@
 "use client";
 
-import { PackageOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, PackageOpen } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -20,10 +20,37 @@ export function ProductGallery({
 }: ProductGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedImage = images[selectedIndex] ?? images[0];
+  const hasMultipleImages = images.length > 1;
+
+  const selectPrevious = () => {
+    setSelectedIndex((current) =>
+      current === 0 ? images.length - 1 : current - 1,
+    );
+  };
+
+  const selectNext = () => {
+    setSelectedIndex((current) =>
+      current === images.length - 1 ? 0 : current + 1,
+    );
+  };
 
   return (
     <div className="product-gallery">
-      <div className="product-gallery-main">
+      <div
+        className="product-gallery-main"
+        onKeyDown={(event) => {
+          if (!hasMultipleImages) return;
+          if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            selectPrevious();
+          }
+          if (event.key === "ArrowRight") {
+            event.preventDefault();
+            selectNext();
+          }
+        }}
+        tabIndex={hasMultipleImages ? 0 : undefined}
+      >
         {selectedImage ? (
           <Image
             alt={selectedImage.altText || productName}
@@ -38,9 +65,32 @@ export function ProductGallery({
             <span>Фото готується</span>
           </div>
         )}
+        {hasMultipleImages ? (
+          <>
+            <button
+              aria-label="Попереднє фото"
+              className="product-gallery-arrow product-gallery-arrow-previous"
+              onClick={selectPrevious}
+              type="button"
+            >
+              <ChevronLeft aria-hidden size={21} />
+            </button>
+            <button
+              aria-label="Наступне фото"
+              className="product-gallery-arrow product-gallery-arrow-next"
+              onClick={selectNext}
+              type="button"
+            >
+              <ChevronRight aria-hidden size={21} />
+            </button>
+            <span className="product-gallery-count" aria-live="polite">
+              {selectedIndex + 1} / {images.length}
+            </span>
+          </>
+        ) : null}
       </div>
 
-      {images.length > 1 ? (
+      {hasMultipleImages ? (
         <div className="product-gallery-thumbnails" aria-label="Фотографії товару">
           {images.map((image, index) => (
             <button

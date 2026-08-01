@@ -1,8 +1,10 @@
 import {
+  Activity,
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  CircleCheck,
   PackageSearch,
   ShoppingBag,
 } from "lucide-react";
@@ -12,6 +14,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getAdminContext } from "../../../lib/auth/admin";
+import { getApiUrl } from "../../../lib/env";
 import {
   isOrderStatus,
   orderStatusLabels,
@@ -19,6 +22,7 @@ import {
 } from "../../../lib/orders";
 
 import { AdminNavigation } from "../admin-navigation";
+import { IntegrationRetryForm } from "../integration-retry-form";
 
 export const metadata: Metadata = {
   title: "Огляд - DreamShop Admin",
@@ -57,6 +61,23 @@ type StockProduct = {
   stock_quantity: number | null;
 };
 
+type IntegrationSummary = {
+  failed_count: number;
+  oldest_pending_at: string | null;
+  pending_count: number;
+  processed_24h_count: number;
+  retrying_count: number;
+};
+
+type FailedIntegrationEvent = {
+  aggregate_id: string | null;
+  attempts: number;
+  created_at: string;
+  event_type: string;
+  id: number;
+  last_error: string | null;
+};
+
 const priceFormatter = new Intl.NumberFormat("uk-UA", {
   currency: "UAH",
   maximumFractionDigits: 2,
@@ -67,6 +88,39 @@ const dateFormatter = new Intl.DateTimeFormat("uk-UA", {
   dateStyle: "medium",
   timeZone: "Europe/Kyiv",
 });
+
+const dateTimeFormatter = new Intl.DateTimeFormat("uk-UA", {
+  dateStyle: "short",
+  timeStyle: "short",
+  timeZone: "Europe/Kyiv",
+});
+
+const integrationEventLabels: Record<string, string> = {
+  "order.cancelled": "Скасування замовлення",
+  "order.created": "Нове замовлення",
+};
+
+async function workerIsHealthy() {
+  try {
+    const response = await fetch(`${getApiUrl()}/health`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(5_000),
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const body = (await response.json()) as {
+      services?: { telegramOrders?: boolean };
+      status?: string;
+    };
+
+    return body.status === "ok" && body.services?.telegramOrders === true;
+  } catch {
+    return false;
+  }
+}
 
 export default async function AdminDashboardPage() {
   const { isAdmin, supabase, userId } = await getAdminContext();
@@ -79,7 +133,14 @@ export default async function AdminDashboardPage() {
     redirect("/account");
   }
 
-  const [summaryResult, ordersResult, stockResult] = await Promise.all([
+  const [
+    summaryResult,
+    ordersResult,
+    stockResult,
+    integrationSummaryResult,
+    failedEventsResult,
+    workerHealthy,
+  ] = await Promise.all([
     supabase.rpc("get_admin_dashboard_summary"),
     supabase
       .from("orders")
@@ -97,9 +158,18 @@ export default async function AdminDashboardPage() {
       .or("stock_quantity.lte.5,in_stock.eq.false")
       .order("stock_quantity", { ascending: true, nullsFirst: true })
       .limit(8),
+    supabase.rpc("get_admin_integration_summary"),
+    supabase.rpc("get_admin_failed_integration_events", { p_limit: 8 }),
+    workerIsHealthy(),
   ]);
 
-  if (summaryResult.error || ordersResult.error || stockResult.error) {
+  if (
+    summaryResult.error ||
+    ordersResult.error ||
+    stockResult.error ||
+    integrationSummaryResult.error ||
+    failedEventsResult.error
+  ) {
     throw new Error("Unable to load the admin dashboard.");
   }
 
@@ -116,6 +186,14 @@ export default async function AdminDashboardPage() {
     .filter((order) => isOrderStatus(order.status))
     .map((order) => order as RecentOrder);
   const stockProducts = (stockResult.data ?? []) as unknown as StockProduct[];
+  const integrationSummary = (integrationSummaryResult.data?.[0] ?? {
+    failed_count: 0,
+    oldest_pending_at: null,
+    pending_count: 0,
+    processed_24h_count: 0,
+    retrying_count: 0,
+  }) as IntegrationSummary;
+  const failedEvents = (failedEventsResult.data ?? []) as FailedIntegrationEvent[];
   const attentionCount =
     Number(summary.low_stock_count) + Number(summary.out_of_stock_count);
 
@@ -331,6 +409,88 @@ export default async function AdminDashboardPage() {
               </div>
             </section>
           </div>
+
+          <section
+            aria-labelledby="integration-monitor-title"
+            className="admin-integration-monitor"
+          >
+            <header className="admin-dashboard-section-heading">
+              <div>
+                <Activity aria-hidden size={20} strokeWidth={1.7} />
+                <h2 id="integration-monitor-title">Інтеграції та Telegram</h2>
+              </div>
+              <span
+                className={
+                  workerHealthy
+                    ? "admin-service-state is-online"
+                    : "admin-service-state is-offline"
+                }
+              >
+                {workerHealthy ? (
+                  <CircleCheck aria-hidden size={15} strokeWidth={1.9} />
+                ) : (
+                  <AlertTriangle aria-hidden size={15} strokeWidth={1.9} />
+                )}
+                {workerHealthy ? "Worker працює" : "Worker недоступний"}
+              </span>
+            </header>
+
+            <dl className="admin-integration-metrics">
+              <div>
+                <dt>Очікують</dt>
+                <dd>{integrationSummary.pending_count}</dd>
+              </div>
+              <div>
+                <dt>Повторюються</dt>
+                <dd>{integrationSummary.retrying_count}</dd>
+              </div>
+              <div>
+                <dt>Потребують уваги</dt>
+                <dd>{integrationSummary.failed_count}</dd>
+              </div>
+              <div>
+                <dt>Надіслано за 24 год.</dt>
+                <dd>{integrationSummary.processed_24h_count}</dd>
+              </div>
+            </dl>
+
+            {integrationSummary.oldest_pending_at ? (
+              <p className="admin-integration-oldest">
+                Найстаріша подія в черзі: {dateTimeFormatter.format(
+                  new Date(integrationSummary.oldest_pending_at),
+                )}
+              </p>
+            ) : null}
+
+            {failedEvents.length ? (
+              <div className="admin-integration-list">
+                {failedEvents.map((event) => (
+                  <article className="admin-integration-row" key={event.id}>
+                    <div>
+                      <strong>
+                        {integrationEventLabels[event.event_type] ??
+                          event.event_type}
+                      </strong>
+                      <span>
+                        {dateTimeFormatter.format(new Date(event.created_at))}
+                        {event.aggregate_id
+                          ? ` · ${event.aggregate_id.slice(0, 8)}`
+                          : ""}
+                      </span>
+                    </div>
+                    <span>{event.attempts} спроб</span>
+                    <span>{event.last_error ?? "Невідома помилка"}</span>
+                    <IntegrationRetryForm eventId={event.id} />
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="admin-integration-ok">
+                <CircleCheck aria-hidden size={22} strokeWidth={1.6} />
+                <p>Невідправлених повідомлень немає</p>
+              </div>
+            )}
+          </section>
         </div>
       </div>
     </main>

@@ -128,6 +128,8 @@ describe("DreamShop Worker", () => {
         delivery_city: "Одеса",
         delivery_details: "Відділення 1",
         delivery_method: "post_office",
+        establishment_name: "Кав'ярня & Друзі",
+        is_private_person: false,
         order_number: 42,
         payment_method: "cash_on_delivery",
         total: 300,
@@ -137,6 +139,8 @@ describe("DreamShop Worker", () => {
 
     expect(message).toContain("<b>Замовлення №42 скасовано</b>");
     expect(message).toContain("Манго");
+    expect(message).toContain("Кав'ярня &amp; Друзі");
+    expect(message).toContain("<b>Тип клієнта:</b> Бізнес");
   });
 
   it("rejects an admin upload without a bearer token", async () => {

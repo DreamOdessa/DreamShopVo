@@ -23,6 +23,8 @@ type OrderRow = {
   delivery_city: string;
   delivery_details: string;
   delivery_method: string;
+  establishment_name: string | null;
+  is_private_person: boolean;
   order_number: number;
   payment_method: string;
   total: number;
@@ -134,6 +136,16 @@ export function formatOrderNotification(
     lines.push("<b>Потрібен дзвінок для уточнення</b>");
   }
 
+  if (order.establishment_name) {
+    lines.push(
+      `<b>Заклад:</b> ${escapeHtml(truncate(order.establishment_name, 160))}`,
+    );
+  }
+
+  lines.push(
+    `<b>Тип клієнта:</b> ${order.is_private_person ? "Приватна особа" : "Бізнес"}`,
+  );
+
   if (order.customer_note) {
     lines.push(
       `<b>Коментар:</b> ${escapeHtml(truncate(order.customer_note, 500))}`,
@@ -166,7 +178,11 @@ async function sendOrderMessage(
     },
   );
 
-  if (!response.ok) {
+  const result = response.ok
+    ? ((await response.json().catch(() => null)) as { ok?: unknown } | null)
+    : null;
+
+  if (!response.ok || result?.ok !== true) {
     throw new Error("Telegram rejected the order notification.");
   }
 }
@@ -215,7 +231,7 @@ export async function processOrderOutbox(env: WorkerEnv) {
           supabase
             .from("orders")
             .select(
-              "order_number,total,customer_first_name,customer_last_name,customer_phone,delivery_city,delivery_method,delivery_details,payment_method,contact_for_clarification,customer_note",
+              "order_number,total,customer_first_name,customer_last_name,customer_phone,delivery_city,delivery_method,delivery_details,establishment_name,is_private_person,payment_method,contact_for_clarification,customer_note",
             )
             .eq("id", event.aggregate_id)
             .maybeSingle(),

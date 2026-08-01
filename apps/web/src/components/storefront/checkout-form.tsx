@@ -143,6 +143,12 @@ export function CheckoutForm({
             <label className="checkout-field">
               <span>Ім’я</span>
               <input
+                aria-describedby={
+                  state.fieldErrors?.firstName
+                    ? "checkout-first-name-error"
+                    : undefined
+                }
+                aria-invalid={Boolean(state.fieldErrors?.firstName)}
                 autoComplete="given-name"
                 defaultValue={initialProfile.firstName}
                 maxLength={80}
@@ -150,10 +156,24 @@ export function CheckoutForm({
                 name="firstName"
                 required
               />
+              {state.fieldErrors?.firstName ? (
+                <small
+                  className="checkout-field-error"
+                  id="checkout-first-name-error"
+                >
+                  {state.fieldErrors.firstName}
+                </small>
+              ) : null}
             </label>
             <label className="checkout-field">
               <span>Прізвище</span>
               <input
+                aria-describedby={
+                  state.fieldErrors?.lastName
+                    ? "checkout-last-name-error"
+                    : undefined
+                }
+                aria-invalid={Boolean(state.fieldErrors?.lastName)}
                 autoComplete="family-name"
                 defaultValue={initialProfile.lastName}
                 maxLength={80}
@@ -161,10 +181,24 @@ export function CheckoutForm({
                 name="lastName"
                 required
               />
+              {state.fieldErrors?.lastName ? (
+                <small
+                  className="checkout-field-error"
+                  id="checkout-last-name-error"
+                >
+                  {state.fieldErrors.lastName}
+                </small>
+              ) : null}
             </label>
             <label className="checkout-field checkout-field-wide">
               <span>Телефон</span>
               <input
+                aria-describedby={
+                  state.fieldErrors?.phone
+                    ? "checkout-phone-error"
+                    : undefined
+                }
+                aria-invalid={Boolean(state.fieldErrors?.phone)}
                 autoComplete="tel"
                 defaultValue={initialProfile.phone}
                 inputMode="tel"
@@ -174,6 +208,14 @@ export function CheckoutForm({
                 required
                 type="tel"
               />
+              {state.fieldErrors?.phone ? (
+                <small
+                  className="checkout-field-error"
+                  id="checkout-phone-error"
+                >
+                  {state.fieldErrors.phone}
+                </small>
+              ) : null}
             </label>
           </div>
         </section>
@@ -186,6 +228,10 @@ export function CheckoutForm({
           <div className="checkout-field-grid">
             <NovaPoshtaFields
               apiUrl={apiUrl}
+              fieldErrors={{
+                city: state.fieldErrors?.city,
+                deliveryDetails: state.fieldErrors?.deliveryDetails,
+              }}
               initialAddress={initialAddress}
             />
             <label className="checkout-field checkout-field-wide">

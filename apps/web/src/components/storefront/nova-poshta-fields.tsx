@@ -22,6 +22,10 @@ type DeliveryMethod = "address" | "post_office" | "schedule" | "taxi";
 
 type NovaPoshtaFieldsProps = {
   apiUrl: string;
+  fieldErrors?: {
+    city?: string;
+    deliveryDetails?: string;
+  };
   initialAddress: {
     city: string;
     deliveryDetails: string;
@@ -74,6 +78,7 @@ async function deliveryRequest<T>(
 
 export function NovaPoshtaFields({
   apiUrl,
+  fieldErrors,
   initialAddress,
 }: NovaPoshtaFieldsProps) {
   const [deliveryMethod, setDeliveryMethod] = useState(
@@ -295,7 +300,12 @@ export function NovaPoshtaFields({
             <span className="checkout-input-wrap">
               <MapPin aria-hidden size={17} />
               <input
-                aria-describedby="nova-poshta-status"
+                aria-describedby={
+                  fieldErrors?.city
+                    ? "checkout-city-error nova-poshta-status"
+                    : "nova-poshta-status"
+                }
+                aria-invalid={Boolean(fieldErrors?.city)}
                 autoComplete="address-level2"
                 list="nova-poshta-cities"
                 maxLength={80}
@@ -314,6 +324,14 @@ export function NovaPoshtaFields({
                 />
               ) : null}
             </span>
+            {fieldErrors?.city ? (
+              <small
+                className="checkout-field-error"
+                id="checkout-city-error"
+              >
+                {fieldErrors.city}
+              </small>
+            ) : null}
             <datalist id="nova-poshta-cities">
               {cities.map((city) => (
                 <option key={city.ref} value={city.name} />
@@ -350,7 +368,12 @@ export function NovaPoshtaFields({
             <span className="checkout-input-wrap">
               <Search aria-hidden size={17} />
               <input
-                aria-describedby="nova-poshta-status"
+                aria-describedby={
+                  fieldErrors?.deliveryDetails
+                    ? "checkout-delivery-error nova-poshta-status"
+                    : "nova-poshta-status"
+                }
+                aria-invalid={Boolean(fieldErrors?.deliveryDetails)}
                 disabled={!selectedCityRef}
                 list="nova-poshta-warehouses"
                 maxLength={500}
@@ -378,6 +401,14 @@ export function NovaPoshtaFields({
                 />
               ) : null}
             </span>
+            {fieldErrors?.deliveryDetails ? (
+              <small
+                className="checkout-field-error"
+                id="checkout-delivery-error"
+              >
+                {fieldErrors.deliveryDetails}
+              </small>
+            ) : null}
             <datalist id="nova-poshta-warehouses">
               {warehouses.map((warehouse) => (
                 <option key={warehouse.ref} value={warehouse.name}>
@@ -410,6 +441,10 @@ export function NovaPoshtaFields({
           <label className="checkout-field">
             <span>Місто</span>
             <input
+              aria-describedby={
+                fieldErrors?.city ? "checkout-city-error" : undefined
+              }
+              aria-invalid={Boolean(fieldErrors?.city)}
               autoComplete="address-level2"
               defaultValue={cityQuery}
               maxLength={120}
@@ -417,6 +452,14 @@ export function NovaPoshtaFields({
               name="city"
               required
             />
+            {fieldErrors?.city ? (
+              <small
+                className="checkout-field-error"
+                id="checkout-city-error"
+              >
+                {fieldErrors.city}
+              </small>
+            ) : null}
           </label>
           <label className="checkout-field checkout-field-wide">
             <span>
@@ -427,6 +470,12 @@ export function NovaPoshtaFields({
                 : "Адреса або деталі доставки"}
             </span>
             <textarea
+              aria-describedby={
+                fieldErrors?.deliveryDetails
+                  ? "checkout-delivery-error"
+                  : undefined
+              }
+              aria-invalid={Boolean(fieldErrors?.deliveryDetails)}
               defaultValue={warehouseQuery}
               maxLength={500}
               minLength={2}
@@ -441,6 +490,14 @@ export function NovaPoshtaFields({
               required
               rows={3}
             />
+            {fieldErrors?.deliveryDetails ? (
+              <small
+                className="checkout-field-error"
+                id="checkout-delivery-error"
+              >
+                {fieldErrors.deliveryDetails}
+              </small>
+            ) : null}
           </label>
           {deliveryMethod === "post_office" ? (
             <div className="checkout-delivery-status checkout-field-wide">

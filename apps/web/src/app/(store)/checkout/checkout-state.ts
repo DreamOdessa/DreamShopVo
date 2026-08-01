@@ -1,4 +1,12 @@
+export type CheckoutField =
+  | "city"
+  | "deliveryDetails"
+  | "firstName"
+  | "lastName"
+  | "phone";
+
 export type CheckoutState = {
+  fieldErrors?: Partial<Record<CheckoutField, string>>;
   message: string;
   orderId?: string;
   orderNumber?: number;

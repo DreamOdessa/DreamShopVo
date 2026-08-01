@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import type { CheckoutState } from "./checkout-state";
+import type { CheckoutField, CheckoutState } from "./checkout-state";
 import { normalizePhone } from "../../../lib/phone";
 import { createClient } from "../../../lib/supabase/server";
 
@@ -27,8 +27,15 @@ function valueFrom(formData: FormData, name: string) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function errorState(message: string): CheckoutState {
-  return { message, status: "error" };
+function errorState(
+  message: string,
+  fieldErrors?: Partial<Record<CheckoutField, string>>,
+): CheckoutState {
+  return { fieldErrors, message, status: "error" };
+}
+
+function normalizedText(value: string) {
+  return value.trim().replace(/\s+/g, " ");
 }
 
 function parseItems(value: string) {
@@ -84,12 +91,12 @@ export async function createOrder(
   formData: FormData,
 ): Promise<CheckoutState> {
   const items = parseItems(valueFrom(formData, "items"));
-  const firstName = valueFrom(formData, "firstName");
-  const lastName = valueFrom(formData, "lastName");
+  const firstName = normalizedText(valueFrom(formData, "firstName"));
+  const lastName = normalizedText(valueFrom(formData, "lastName"));
   const phone = normalizePhone(valueFrom(formData, "phone"));
-  const city = valueFrom(formData, "city");
+  const city = normalizedText(valueFrom(formData, "city"));
   const deliveryMethod = valueFrom(formData, "deliveryMethod");
-  const deliveryDetails = valueFrom(formData, "deliveryDetails");
+  const deliveryDetails = normalizedText(valueFrom(formData, "deliveryDetails"));
   const establishmentName = valueFrom(formData, "establishmentName");
   const paymentMethod = valueFrom(formData, "paymentMethod");
   const note = valueFrom(formData, "note");
@@ -99,23 +106,36 @@ export async function createOrder(
     return errorState("Кошик порожній або містить некоректні дані.");
   }
 
+  const fieldErrors: Partial<Record<CheckoutField, string>> = {};
+
+  if (firstName.length < 2 || firstName.length > 80) {
+    fieldErrors.firstName = "Вкажіть ім’я від 2 до 80 символів.";
+  }
+  if (lastName.length < 2 || lastName.length > 80) {
+    fieldErrors.lastName = "Вкажіть прізвище від 2 до 80 символів.";
+  }
+  if (!phone) {
+    fieldErrors.phone = "Вкажіть коректний номер телефону.";
+  }
+  if (city.length < 2 || city.length > 120) {
+    fieldErrors.city = "Вкажіть місто або населений пункт.";
+  }
+  if (deliveryDetails.length < 2 || deliveryDetails.length > 500) {
+    fieldErrors.deliveryDetails = "Вкажіть адресу, відділення або поштомат.";
+  }
+
+  if (Object.keys(fieldErrors).length) {
+    return errorState("Перевірте виділені поля.", fieldErrors);
+  }
+
   if (
-    firstName.length < 2 ||
-    firstName.length > 80 ||
-    lastName.length < 2 ||
-    lastName.length > 80 ||
-    !phone ||
-    city.length < 2 ||
-    city.length > 120 ||
-    deliveryDetails.length < 2 ||
-    deliveryDetails.length > 500 ||
     establishmentName.length > 160 ||
     note.length > 1000 ||
     !UUID_PATTERN.test(checkoutToken) ||
     !DELIVERY_METHODS.has(deliveryMethod) ||
     !PAYMENT_METHODS.has(paymentMethod)
   ) {
-    return errorState("Перевірте контактні дані та спосіб доставки.");
+    return errorState("Перевірте дані замовлення та повторіть спробу.");
   }
 
   const supabase = await createClient();
@@ -156,6 +176,10 @@ export async function createOrder(
     return errorState(
       error?.code === "54000"
         ? "Забагато замовлень за короткий час. Спробуйте трохи пізніше."
+        : error?.code === "42501"
+          ? "Сесія завершилася. Увійдіть знову та повторіть замовлення."
+          : error?.code === "22023"
+            ? "Дані замовлення не пройшли перевірку. Перевірте форму."
         : errorMessage.includes("Online card payments")
           ? "Онлайн-оплата карткою поки недоступна."
           : errorMessage.includes("unavailable")

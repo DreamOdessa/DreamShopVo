@@ -4360,6 +4360,17 @@ input:focus-visible {
   outline: 3px solid rgba(28, 127, 145, 0.14);
 }
 
+.checkout-field [aria-invalid="true"] {
+  border-color: #b83d3d;
+}
+
+.checkout-field-error {
+  color: #a52f2f;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
 .checkout-input-wrap {
   position: relative;
   display: block;

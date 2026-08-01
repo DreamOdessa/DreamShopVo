@@ -209,6 +209,26 @@ select 1 / case
   else 0
 end as customer_manages_own_address
 from public.customer_addresses;
+select public.save_default_checkout_address(
+  'Updated',
+  'Customer',
+  '+380931234567',
+  'Kyiv',
+  'post_office',
+  'Відділення 7',
+  null,
+  true
+);
+select 1 / case
+  when count(*) = 1
+    and min(first_name) = 'Updated'
+    and min(city) = 'Kyiv'
+    and min(delivery_details) = 'Відділення 7' then 1
+  else 0
+end as customer_atomically_updates_default_address
+from public.customer_addresses
+where user_id = '00000000-0000-4000-8000-000000000001'
+  and is_default;
 delete from public.customer_addresses
 where id = '30000000-0000-4000-8000-000000000001';
 select 1 / case
@@ -662,6 +682,20 @@ end as only_authenticated_clients_can_create_orders;
 select 1 / case
   when not has_function_privilege(
       'anon',
+      'public.save_default_checkout_address(text,text,text,text,public.delivery_method,text,text,boolean)',
+      'EXECUTE'
+    )
+    and has_function_privilege(
+      'authenticated',
+      'public.save_default_checkout_address(text,text,text,text,public.delivery_method,text,text,boolean)',
+      'EXECUTE'
+    ) then 1
+  else 0
+end as only_authenticated_clients_can_save_checkout_address;
+
+select 1 / case
+  when not has_function_privilege(
+      'anon',
       'public.cancel_own_order(uuid)',
       'EXECUTE'
     )
@@ -709,6 +743,16 @@ select 1 / case
     and not has_function_privilege(
       'authenticated',
       'public.enqueue_cancelled_order_event()',
+      'EXECUTE'
+    )
+    and not has_function_privilege(
+      'anon',
+      'public.enforce_order_creation_rate_limit()',
+      'EXECUTE'
+    )
+    and not has_function_privilege(
+      'authenticated',
+      'public.enforce_order_creation_rate_limit()',
       'EXECUTE'
     ) then 1
   else 0

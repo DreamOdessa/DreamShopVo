@@ -242,6 +242,11 @@ export function CheckoutForm({
 
       <aside className="cart-summary checkout-summary">
         <h2>Ваше замовлення</h2>
+        {inventory.changed ? (
+          <p className="cart-sync-notice" role="status">
+            Ціни або доступна кількість змінилися. Підсумок уже оновлено.
+          </p>
+        ) : null}
         <ul className="checkout-item-list">
           {items.map((item) => (
             <li key={item.id}>

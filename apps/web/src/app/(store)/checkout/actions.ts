@@ -67,6 +67,12 @@ function parseItems(value: string) {
       return null;
     }
 
+    const productIds = normalized.map((item) => item?.productId);
+
+    if (new Set(productIds).size !== productIds.length) {
+      return null;
+    }
+
     return normalized;
   } catch {
     return null;
@@ -148,45 +154,27 @@ export async function createOrder(
     const errorMessage = error?.message ?? "";
 
     return errorState(
-      errorMessage.includes("Online card payments")
-        ? "Онлайн-оплата карткою поки недоступна."
-        : errorMessage.includes("unavailable")
-        ? "Один із товарів уже недоступний. Оновіть кошик."
-        : "Не вдалося створити замовлення. Спробуйте ще раз.",
+      error?.code === "54000"
+        ? "Забагато замовлень за короткий час. Спробуйте трохи пізніше."
+        : errorMessage.includes("Online card payments")
+          ? "Онлайн-оплата карткою поки недоступна."
+          : errorMessage.includes("unavailable")
+            ? "Один із товарів уже недоступний. Оновіть кошик."
+            : "Не вдалося створити замовлення. Спробуйте ще раз.",
     );
   }
 
   if (formData.get("saveAddress") === "on") {
-    const userId = claimsData.claims.sub;
-    const address = {
-      city,
-      delivery_details: deliveryDetails,
-      delivery_method: deliveryMethod as DeliveryMethod,
-      establishment_name: establishmentName || null,
-      first_name: firstName,
-      is_default: true,
-      is_private_person: formData.get("isPrivatePerson") === "on",
-      label: "Основна",
-      last_name: lastName,
-      phone,
-      user_id: userId,
-    };
-    const { data: existingAddress } = await supabase
-      .from("customer_addresses")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("is_default", true)
-      .maybeSingle();
-
-    if (existingAddress?.id) {
-      await supabase
-        .from("customer_addresses")
-        .update(address)
-        .eq("id", existingAddress.id)
-        .eq("user_id", userId);
-    } else {
-      await supabase.from("customer_addresses").insert(address);
-    }
+    await supabase.rpc("save_default_checkout_address", {
+      p_city: city,
+      p_delivery_details: deliveryDetails,
+      p_delivery_method: deliveryMethod as DeliveryMethod,
+      p_establishment_name: establishmentName || null,
+      p_first_name: firstName,
+      p_is_private_person: formData.get("isPrivatePerson") === "on",
+      p_last_name: lastName,
+      p_phone: phone,
+    });
 
     revalidatePath("/account");
     revalidatePath("/checkout");

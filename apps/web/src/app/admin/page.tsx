@@ -1,12 +1,10 @@
 import {
   ArrowLeft,
   ArrowRight,
+  ExternalLink,
   FolderTree,
   PackageOpen,
   Pencil,
-  Search,
-  SlidersHorizontal,
-  X,
 } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -14,8 +12,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getAdminContext } from "../../lib/auth/admin";
+import { publicMediaUrl } from "../../lib/media-url";
 
 import { AdminNavigation } from "./admin-navigation";
+import { CatalogFilters } from "./catalog-filters";
 import { CategoryForm } from "./category-form";
 import { ProductForm } from "./product-form";
 import { QuickStockForm } from "./quick-stock-form";
@@ -45,6 +45,7 @@ type ProductRow = {
   price: number;
   slug: string;
   stock_quantity: number | null;
+  media: Array<{ object_key: string; sort_order: number }>;
 };
 
 type ProductFilter = "active" | "all" | "inactive" | "low" | "out";
@@ -111,6 +112,14 @@ function productSortFrom(value?: string): ProductSort {
     : "newest";
 }
 
+function primaryMedia(product: ProductRow) {
+  return product.media.reduce<(typeof product.media)[number] | null>(
+    (selected, item) =>
+      !selected || item.sort_order < selected.sort_order ? item : selected,
+    null,
+  );
+}
+
 function catalogHref({
   category,
   page,
@@ -174,7 +183,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   let productsQuery = supabase
     .from("products")
     .select(
-      "id,name,slug,price,is_active,in_stock,stock_quantity,category:categories!products_category_id_fkey(name)",
+      "id,name,slug,price,is_active,in_stock,stock_quantity,category:categories!products_category_id_fkey(name),media:product_media(object_key,sort_order)",
       { count: "exact" },
     );
 
@@ -247,6 +256,12 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
 
   const categories = (categoriesResult.data ?? []) as CategoryRow[];
   const products = (productsResult.data ?? []) as unknown as ProductRow[];
+  const productMediaUrls = new Map(
+    products.map((product) => {
+      const media = primaryMedia(product);
+      return [product.id, media ? publicMediaUrl(media.object_key) : null];
+    }),
+  );
   const filteredProductCount = productsResult.count ?? 0;
   const totalProductCount = productCountResult.count ?? 0;
   const pageCount = Math.max(1, Math.ceil(filteredProductCount / PAGE_SIZE));
@@ -361,116 +376,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <h2 id="products-title">Товари</h2>
             </div>
             <div className="admin-catalog-controls">
-              <div className="admin-catalog-control-row">
-                <form
-                  action="/admin#products-title"
-                  aria-label="Пошук товарів"
-                  className="admin-order-search"
-                  method="get"
-                >
-                  {activeFilter !== "all" ? (
-                    <input
-                      name="stock"
-                      type="hidden"
-                      value={activeFilter}
-                    />
-                  ) : null}
-                  {activeCategory ? (
-                    <input
-                      name="category"
-                      type="hidden"
-                      value={activeCategory}
-                    />
-                  ) : null}
-                  {activeSort !== "newest" ? (
-                    <input name="sort" type="hidden" value={activeSort} />
-                  ) : null}
-                  <label>
-                    <span className="sr-only">Назва або slug товару</span>
-                    <input
-                      autoComplete="off"
-                      defaultValue={searchQuery}
-                      maxLength={80}
-                      name="q"
-                      placeholder="Назва або slug товару"
-                      type="search"
-                    />
-                  </label>
-                  <button title="Знайти товар" type="submit">
-                    <Search aria-hidden size={17} strokeWidth={1.8} />
-                    <span className="sr-only">Знайти товар</span>
-                  </button>
-                  {searchQuery ? (
-                    <Link
-                      href={catalogHref({
-                        category: activeCategory,
-                        query: "",
-                        sort: activeSort,
-                        stock: activeFilter,
-                      })}
-                      title="Очистити пошук"
-                    >
-                      <X aria-hidden size={17} strokeWidth={1.8} />
-                      <span className="sr-only">Очистити пошук</span>
-                    </Link>
-                  ) : null}
-                </form>
-
-                <form
-                  action="/admin#products-title"
-                  aria-label="Категорія та сортування товарів"
-                  className="admin-catalog-selectors"
-                  method="get"
-                >
-                  {searchQuery ? (
-                    <input name="q" type="hidden" value={searchQuery} />
-                  ) : null}
-                  {activeFilter !== "all" ? (
-                    <input
-                      name="stock"
-                      type="hidden"
-                      value={activeFilter}
-                    />
-                  ) : null}
-                  <label>
-                    <span className="sr-only">Категорія товарів</span>
-                    <select
-                      aria-label="Категорія товарів"
-                      defaultValue={activeCategory ?? ""}
-                      name="category"
-                    >
-                      <option value="">Усі категорії</option>
-                      {categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    <span className="sr-only">Сортування товарів</span>
-                    <select
-                      aria-label="Сортування товарів"
-                      defaultValue={activeSort}
-                      name="sort"
-                    >
-                      {PRODUCT_SORTS.map((sort) => (
-                        <option key={sort.value} value={sort.value}>
-                          {sort.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button title="Застосувати фільтри" type="submit">
-                    <SlidersHorizontal
-                      aria-hidden
-                      size={17}
-                      strokeWidth={1.8}
-                    />
-                    <span className="sr-only">Застосувати фільтри</span>
-                  </button>
-                </form>
-              </div>
+              <CatalogFilters
+                categories={categories.map(({ id, name }) => ({
+                  label: name,
+                  value: id,
+                }))}
+                category={activeCategory ?? ""}
+                query={searchQuery}
+                sort={activeSort}
+                sorts={PRODUCT_SORTS}
+                stock={activeFilter}
+              />
 
               <nav
                 aria-label="Фільтр товарів"
@@ -505,15 +421,29 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 {products.length ? (
                   products.map((product) => (
                     <div className="admin-list-row" key={product.id}>
-                      <div>
-                        <strong>{product.name}</strong>
-                        <span>
-                          {product.category?.name ?? "Без категорії"} ·{" "}
-                          {priceFormatter.format(product.price)} ·{" "}
-                          {product.stock_quantity === null
-                            ? "без обліку залишку"
-                            : `${product.stock_quantity} шт.`}
-                        </span>
+                      <div className="admin-product-summary">
+                        <div className="admin-product-thumbnail">
+                          {productMediaUrls.get(product.id) ? (
+                            <Image
+                              alt=""
+                              fill
+                              sizes="52px"
+                              src={productMediaUrls.get(product.id)!}
+                            />
+                          ) : (
+                            <PackageOpen aria-hidden size={20} strokeWidth={1.5} />
+                          )}
+                        </div>
+                        <div>
+                          <strong>{product.name}</strong>
+                          <span>
+                            {product.category?.name ?? "Без категорії"} ·{" "}
+                            {priceFormatter.format(product.price)} ·{" "}
+                            {product.stock_quantity === null
+                              ? "без обліку залишку"
+                              : `${product.stock_quantity} шт.`}
+                          </span>
+                        </div>
                       </div>
                       <div className="admin-list-actions">
                         <span
@@ -529,13 +459,26 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                           product.in_stock &&
                           product.stock_quantity !== 0
                             ? "У продажу"
-                            : "Неактивний"}
+                            : !product.is_active
+                              ? "Прихований"
+                              : "Немає в наявності"}
                         </span>
                         <QuickStockForm
                           expectedStock={product.stock_quantity}
                           productId={product.id}
                           productName={product.name}
                         />
+                        <Link
+                          className="admin-row-button"
+                          href={`/product/${product.slug}`}
+                          target="_blank"
+                          title={`Відкрити ${product.name} у магазині`}
+                        >
+                          <ExternalLink aria-hidden size={16} strokeWidth={1.8} />
+                          <span className="sr-only">
+                            Відкрити {product.name} у магазині
+                          </span>
+                        </Link>
                         <Link
                           className="admin-row-button"
                           href={`/admin/products/${product.id}`}

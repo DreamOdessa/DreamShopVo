@@ -4,10 +4,13 @@ import {
   BellOff,
   Check,
   CheckCheck,
+  Heart,
+  KeyRound,
   LayoutDashboard,
   LogOut,
   MapPin,
   PackageOpen,
+  ShoppingBag,
   ShieldCheck,
 } from "lucide-react";
 import type { Metadata } from "next";
@@ -82,6 +85,7 @@ type SavedAddress = {
   delivery_method: "address" | "post_office" | "schedule" | "taxi";
   first_name: string;
   id: string;
+  is_default: boolean;
   label: string;
   last_name: string;
   phone: string;
@@ -150,11 +154,11 @@ export default async function AccountPage() {
     supabase
       .from("customer_addresses")
       .select(
-        "id,label,first_name,last_name,phone,city,delivery_method,delivery_details",
+        "id,label,first_name,last_name,phone,city,delivery_method,delivery_details,is_default",
       )
       .eq("user_id", userId)
-      .eq("is_default", true)
-      .maybeSingle(),
+      .order("is_default", { ascending: false })
+      .order("updated_at", { ascending: false }),
   ]);
 
   if (initialProfileResult.error) {
@@ -234,9 +238,9 @@ export default async function AccountPage() {
   const unreadNotifications = notifications.filter(
     (notification) => !notification.read_at,
   ).length;
-  const savedAddress = addressResult.error
-    ? null
-    : (addressResult.data as SavedAddress | null);
+  const savedAddresses = addressResult.error
+    ? []
+    : ((addressResult.data ?? []) as SavedAddress[]);
   const telegramVerified =
     Boolean(profile?.phone) &&
     (!profile?.email || isTelegramAuthEmail(profile.email));
@@ -321,8 +325,8 @@ export default async function AccountPage() {
             <dd>{contactPhone || "Не додано"}</dd>
           </div>
           <div>
-            <dt>Роль</dt>
-            <dd>{profile?.role ?? "customer"}</dd>
+            <dt>Замовлень</dt>
+            <dd>{orders.length}</dd>
           </div>
           <div>
             <dt>Персональна знижка</dt>
@@ -333,6 +337,21 @@ export default async function AccountPage() {
             </dd>
           </div>
         </dl>
+
+        <nav className="account-quick-links" aria-label="Швидкі дії">
+          <Link href="/catalog">
+            <ShoppingBag aria-hidden size={18} strokeWidth={1.8} />
+            Каталог
+          </Link>
+          <Link href="/wishlist">
+            <Heart aria-hidden size={18} strokeWidth={1.8} />
+            Обране
+          </Link>
+          <Link href="/auth/forgot-password?next=%2Faccount">
+            <KeyRound aria-hidden size={18} strokeWidth={1.8} />
+            Змінити пароль
+          </Link>
+        </nav>
 
         <section
           className="account-profile-section"
@@ -357,23 +376,30 @@ export default async function AccountPage() {
             <h2 id="address-title">Збережена доставка</h2>
             <p>Основні дані для швидкого повторного замовлення.</p>
           </div>
-          {savedAddress ? (
-            <div className="account-address-details">
-              <span className="account-address-icon">
-                <MapPin aria-hidden size={20} strokeWidth={1.7} />
-              </span>
-              <div>
-                <strong>{savedAddress.label}</strong>
-                <p>
-                  {savedAddress.first_name} {savedAddress.last_name} ·{" "}
-                  {savedAddress.phone}
-                </p>
-                <p>
-                  {deliveryMethodLabels[savedAddress.delivery_method]} ·{" "}
-                  {savedAddress.city}, {savedAddress.delivery_details}
-                </p>
-              </div>
-              <DeleteAddressButton addressId={savedAddress.id} />
+          {savedAddresses.length ? (
+            <div className="account-address-list">
+              {savedAddresses.map((savedAddress) => (
+                <div className="account-address-details" key={savedAddress.id}>
+                  <span className="account-address-icon">
+                    <MapPin aria-hidden size={20} strokeWidth={1.7} />
+                  </span>
+                  <div>
+                    <strong>
+                      {savedAddress.label}
+                      {savedAddress.is_default ? " · Основна" : ""}
+                    </strong>
+                    <p>
+                      {savedAddress.first_name} {savedAddress.last_name} ·{" "}
+                      {savedAddress.phone}
+                    </p>
+                    <p>
+                      {deliveryMethodLabels[savedAddress.delivery_method]} ·{" "}
+                      {savedAddress.city}, {savedAddress.delivery_details}
+                    </p>
+                  </div>
+                  <DeleteAddressButton addressId={savedAddress.id} />
+                </div>
+              ))}
             </div>
           ) : addressResult.error ? (
             <div className="account-address-empty account-section-error">

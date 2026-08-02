@@ -24,6 +24,7 @@ type ProductRow = {
   category_id: string;
   description: string;
   id: string;
+  ingredients: string[];
   in_stock: boolean;
   is_active: boolean;
   is_popular: boolean;
@@ -74,7 +75,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     supabase
       .from("products")
       .select(
-        "id,category_id,name,slug,description,price,original_price,organic,in_stock,is_active,is_popular,weight,sort_order,stock_quantity",
+        "id,category_id,name,slug,description,price,original_price,organic,in_stock,is_active,is_popular,weight,ingredients,sort_order,stock_quantity",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -161,6 +162,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                   categoryId: product.category_id,
                   description: product.description,
                   id: product.id,
+                  ingredients: product.ingredients,
                   inStock: product.in_stock,
                   isActive: product.is_active,
                   isPopular: product.is_popular,

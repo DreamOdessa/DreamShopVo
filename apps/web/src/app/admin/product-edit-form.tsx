@@ -18,6 +18,7 @@ type ProductEditFormProps = {
     categoryId: string;
     description: string;
     id: string;
+    ingredients: string[];
     inStock: boolean;
     isActive: boolean;
     isPopular: boolean;
@@ -172,6 +173,17 @@ export function ProductEditForm({
               maxLength={10000}
               name="description"
               rows={5}
+            />
+          </label>
+
+          <label className="auth-field admin-field-wide">
+            <span>Склад</span>
+            <textarea
+              defaultValue={product.ingredients.join(", ")}
+              maxLength={16000}
+              name="ingredients"
+              placeholder="Інгредієнти через кому або з нового рядка"
+              rows={3}
             />
           </label>
         </div>

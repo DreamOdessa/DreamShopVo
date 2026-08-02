@@ -149,6 +149,16 @@ export function ProductForm({ categories }: ProductFormProps) {
             rows={4}
           />
         </label>
+
+        <label className="auth-field admin-field-wide">
+          <span>Склад</span>
+          <textarea
+            maxLength={16000}
+            name="ingredients"
+            placeholder="Манго, цукор, лимонний сік (через кому або з нового рядка)"
+            rows={3}
+          />
+        </label>
       </div>
 
       <div className="admin-checks">

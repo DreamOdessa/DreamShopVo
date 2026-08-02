@@ -37,6 +37,7 @@
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",
     "migrate:catalog": "node scripts/migrate-live-catalog-to-supabase.mjs",
+    "covers:products": "node scripts/generate-product-covers.mjs",
     "postinstall": "prisma generate",
     "eject": "react-scripts eject",
     "vercel-build": "react-scripts build"

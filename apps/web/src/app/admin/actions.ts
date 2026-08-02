@@ -24,6 +24,7 @@ type CategoryValues = {
 type ProductValues = {
   category_id: string;
   description: string;
+  ingredients: string[];
   in_stock: boolean;
   is_active: boolean;
   is_popular: boolean;
@@ -144,6 +145,10 @@ function validateProduct(formData: FormData): ValidatedValues<ProductValues> {
   const name = normalizedText(formData, "name");
   const slug = stringValue(formData, "slug").toLowerCase();
   const description = stringValue(formData, "description");
+  const ingredients = stringValue(formData, "ingredients")
+    .split(/[,;\n]/)
+    .map((ingredient) => ingredient.trim().replace(/\s+/g, " "))
+    .filter(Boolean);
   const categoryId = stringValue(formData, "categoryId");
   const price = numericValue(stringValue(formData, "price"));
   const originalPrice = numericValue(stringValue(formData, "originalPrice"));
@@ -182,8 +187,13 @@ function validateProduct(formData: FormData): ValidatedValues<ProductValues> {
     };
   }
 
-  if (description.length > 10000 || weight.length > 100) {
-    return { error: errorState("Опис або вага товару занадто довгі.") };
+  if (
+    description.length > 10000 ||
+    weight.length > 100 ||
+    ingredients.length > 100 ||
+    ingredients.some((ingredient) => ingredient.length > 160)
+  ) {
+    return { error: errorState("Опис, склад або вага товару занадто довгі.") };
   }
 
   if (
@@ -214,6 +224,7 @@ function validateProduct(formData: FormData): ValidatedValues<ProductValues> {
     values: {
       category_id: categoryId,
       description,
+      ingredients,
       in_stock:
         stockQuantity === 0
           ? false
@@ -402,20 +413,18 @@ export async function createProduct(
     return errorState("Сесія адміністратора недійсна. Увійдіть повторно.");
   }
 
-  const { error } = await context.supabase
+  const { data, error } = await context.supabase
     .from("products")
-    .insert(validation.values);
+    .insert(validation.values)
+    .select("id")
+    .single();
 
-  if (error) {
-    return databaseErrorState(error.code);
+  if (error || !data) {
+    return databaseErrorState(error?.code);
   }
 
   revalidatePath("/admin");
-
-  return {
-    message: "Товар створено без фотографій.",
-    status: "success",
-  };
+  redirect(`/admin/products/${data.id}`);
 }
 
 export async function updateProduct(

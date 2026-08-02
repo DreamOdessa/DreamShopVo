@@ -51,5 +51,6 @@ pids
 # OS
 Thumbs.db
 /test
+.generated/
 .vercel
 .env*.local

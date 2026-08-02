@@ -52,8 +52,9 @@ Do not repeat full investigations of these areas unless a new regression is repo
 
 ## Deployment State
 
-- Latest catalog/account commit before this status update: `6e9e2d8`.
-- Production deployment for that commit: `dpl_28ai9s3wzgTg2pAVri1JEiXecPwC`.
+- Catalog/account management commit: `6e9e2d8`.
+- Quick product deletion and handoff commit: `7f87737`.
+- Production deployment containing both commits: `dpl_3m9orr143JpXWyCq6Cj9PxDfkj2A` (`READY`).
 - Alias: `https://dreamshop-next.vercel.app`.
 - The older design reference remains `https://dream-shop-vo.vercel.app/`; visual parity is still an active migration requirement.
 

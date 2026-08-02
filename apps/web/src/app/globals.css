@@ -1705,6 +1705,24 @@ input:focus-visible {
   background: #eef7f6;
 }
 
+.admin-row-delete-form {
+  display: block !important;
+}
+
+.admin-row-delete-button {
+  color: #a43d35;
+}
+
+.admin-row-delete-button:hover:not(:disabled) {
+  border-color: #d5a09a;
+  background: #fff2f0;
+}
+
+.admin-row-delete-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .admin-state {
   flex: 0 0 auto;
   color: #886233;

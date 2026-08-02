@@ -18,6 +18,7 @@ import { AdminNavigation } from "./admin-navigation";
 import { CatalogFilters } from "./catalog-filters";
 import { CategoryForm } from "./category-form";
 import { ProductForm } from "./product-form";
+import { ProductDeleteButton } from "./product-delete-button";
 import { QuickStockForm } from "./quick-stock-form";
 
 export const metadata: Metadata = {
@@ -489,6 +490,10 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                             Редагувати {product.name}
                           </span>
                         </Link>
+                        <ProductDeleteButton
+                          productId={product.id}
+                          productName={product.name}
+                        />
                       </div>
                     </div>
                   ))

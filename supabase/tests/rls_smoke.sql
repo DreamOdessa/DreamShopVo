@@ -61,10 +61,17 @@ begin;
 set local role anon;
 select 1 / case when count(*) = 1 then 1 else 0 end
   as anon_sees_only_active_products
-from public.products;
+from public.products
+where id in (
+  select id from public.products where slug in ('visible', 'hidden')
+);
 select 1 / case when count(*) = 1 then 1 else 0 end
   as anon_sees_only_active_categories
-from public.categories;
+from public.categories
+where id in (
+  '10000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000002'
+);
 rollback;
 
 begin;

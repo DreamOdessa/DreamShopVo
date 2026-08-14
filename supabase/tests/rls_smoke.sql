@@ -497,7 +497,8 @@ from public.profiles
 where id = '00000000-0000-4000-8000-000000000001';
 select 1 / case when count(*) = 2 then 1 else 0 end
   as admin_sees_draft_products
-from public.products;
+from public.products
+where slug in ('visible', 'hidden');
 update public.orders
 set status = 'cancelled'
 where id = '20000000-0000-4000-8000-000000000002';

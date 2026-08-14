@@ -26,6 +26,7 @@ export type CatalogProduct = {
   description: string;
   id: string;
   images: CatalogMedia[];
+  ingredients: string[];
   inStock: boolean;
   name: string;
   organic: boolean;
@@ -57,6 +58,7 @@ type ProductRow = {
   } | null;
   description: string;
   id: string;
+  ingredients: string[] | null;
   in_stock: boolean;
   media: Array<{
     alt_text: string;
@@ -99,6 +101,7 @@ function mapProduct(row: ProductRow): CatalogProduct | null {
     description: row.description,
     id: row.id,
     images: mapMedia(row.media),
+    ingredients: (row.ingredients ?? []).filter(Boolean),
     inStock: row.in_stock && row.stock_quantity !== 0,
     name: row.name,
     organic: row.organic,
@@ -168,10 +171,18 @@ function escapedSearchPattern(value: string) {
   return `%${value.replace(/[\\%_]/g, "\\$&")}%`;
 }
 
+function decodedRouteSegment(value: string) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 const catalogProductSelection =
-  "id,name,slug,description,price,original_price,weight,in_stock,stock_quantity,organic,category:categories!products_category_id_fkey(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)";
+  "id,name,slug,description,price,original_price,weight,ingredients,in_stock,stock_quantity,organic,category:categories!products_category_id_fkey(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)";
 const catalogProductPageSelection =
-  "id,name,slug,description,price,original_price,weight,in_stock,stock_quantity,organic,category:categories!products_category_id_fkey!inner(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)";
+  "id,name,slug,description,price,original_price,weight,ingredients,in_stock,stock_quantity,organic,category:categories!products_category_id_fkey!inner(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)";
 
 function sortedProductQuery<T>(query: T, sort: CatalogSort) {
   const sortable = query as T & {
@@ -209,7 +220,7 @@ export const getCatalogProducts = cache(async (
   let query = supabase
     .from("products")
     .select(
-      "id,name,slug,description,price,original_price,weight,in_stock,stock_quantity,organic,category:categories!products_category_id_fkey(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)",
+      catalogProductSelection,
     )
     .eq("is_active", true)
     .limit(120);
@@ -363,13 +374,13 @@ export const getCatalogProductPage = cache(
 );
 
 export const getCatalogProduct = cache(async (slug: string) => {
-    const supabase = createPublicClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("products")
     .select(
-      "id,name,slug,description,price,original_price,weight,in_stock,stock_quantity,organic,category:categories!products_category_id_fkey(id,name,slug,is_active),media:product_media(object_key,alt_text,sort_order)",
+      catalogProductSelection,
     )
-    .eq("slug", slug)
+    .eq("slug", decodedRouteSegment(slug))
     .eq("is_active", true)
     .maybeSingle();
 

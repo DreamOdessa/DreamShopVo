@@ -30,6 +30,9 @@ type CartContextValue = {
   hydrated: boolean;
   itemCount: number;
   items: CartItem[];
+  miniCartOpen: boolean;
+  closeMiniCart: () => void;
+  openMiniCart: () => void;
   removeItem: (productId: string) => void;
   syncItems: (products: CartProduct[]) => void;
   updateQuantity: (productId: string, quantity: number) => void;
@@ -106,6 +109,7 @@ function storedItems(): CartItem[] {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [miniCartOpen, setMiniCartOpen] = useState(false);
 
   useEffect(() => {
     setItems(storedItems());
@@ -133,6 +137,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItems = useCallback((additions: CartAddition[]) => {
     setItems((current) => mergeCartItems(current, additions));
+    setMiniCartOpen(true);
   }, []);
 
   const addItem = useCallback(
@@ -194,14 +199,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const clear = useCallback(() => setItems([]), []);
+  const closeMiniCart = useCallback(() => setMiniCartOpen(false), []);
+  const openMiniCart = useCallback(() => setMiniCartOpen(true), []);
   const value = useMemo(
     () => ({
       addItem,
       addItems,
       clear,
+      closeMiniCart,
       hydrated,
       itemCount: items.reduce((count, item) => count + item.quantity, 0),
       items,
+      miniCartOpen,
+      openMiniCart,
       removeItem,
       syncItems,
       updateQuantity,
@@ -210,8 +220,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       addItem,
       addItems,
       clear,
+      closeMiniCart,
       hydrated,
       items,
+      miniCartOpen,
+      openMiniCart,
       removeItem,
       syncItems,
       updateQuantity,

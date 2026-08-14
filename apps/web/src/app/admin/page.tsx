@@ -13,10 +13,12 @@ import { redirect } from "next/navigation";
 
 import { getAdminContext } from "../../lib/auth/admin";
 import { publicMediaUrl } from "../../lib/media-url";
+import { getHomeHeroSettings } from "../../lib/site-settings";
 
 import { AdminNavigation } from "./admin-navigation";
 import { CatalogFilters } from "./catalog-filters";
 import { CategoryForm } from "./category-form";
+import { HomeHeroSettingsForm } from "./home-hero-settings-form";
 import { ProductForm } from "./product-form";
 import { ProductDeleteButton } from "./product-delete-button";
 import { QuickStockForm } from "./quick-stock-form";
@@ -236,7 +238,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     rangeStart + PAGE_SIZE - 1,
   );
 
-  const [categoriesResult, productsResult, productCountResult] =
+  const [categoriesResult, productsResult, productCountResult, homeHeroSettings] =
     await Promise.all([
       supabase
         .from("categories")
@@ -245,6 +247,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
         .order("name"),
       productsQuery,
       supabase.from("products").select("id", { count: "exact", head: true }),
+      getHomeHeroSettings(),
     ]);
 
   if (
@@ -319,6 +322,17 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               </div>
             </dl>
           </header>
+
+          <section className="admin-section" aria-labelledby="home-hero-title">
+            <div className="admin-section-title">
+              <Pencil aria-hidden size={21} strokeWidth={1.8} />
+              <h2 id="home-hero-title">Головний екран</h2>
+            </div>
+            <div className="admin-tool">
+              <h3>Текст і основна кнопка головної сторінки</h3>
+              <HomeHeroSettingsForm settings={homeHeroSettings} />
+            </div>
+          </section>
 
           <section className="admin-section" aria-labelledby="categories-title">
             <div className="admin-section-title">

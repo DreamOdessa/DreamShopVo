@@ -178,6 +178,23 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <p>{product.description}</p>
             </div>
           ) : null}
+
+          {product.ingredients.length ? (
+            <section className="product-detail-ingredients" aria-labelledby="product-ingredients-title">
+              <h2 id="product-ingredients-title">Склад</h2>
+              <ul>
+                {product.ingredients.map((ingredient) => (
+                  <li key={ingredient}>{ingredient}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          <aside className="product-detail-service" aria-label="Доставка та оплата">
+            <strong>Доставка по Україні</strong>
+            <span>Нова пошта: відділення, поштомат або адресна доставка.</span>
+            <Link href="/delivery">Умови доставки та оплати</Link>
+          </aside>
         </section>
       </div>
 

@@ -3,17 +3,19 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { getCatalogCategories, getCatalogProducts } from "../../lib/catalog";
+import { getHomeHeroSettings } from "../../lib/site-settings";
 import { getWishlistState } from "../../lib/wishlist";
 
 import { CategoryCard } from "./category-card";
 import { ProductCard } from "./product-card";
 
 export async function StoreHome() {
-  const [categoriesResult, productsResult, wishlistResult] =
+  const [categoriesResult, productsResult, wishlistResult, heroResult] =
     await Promise.allSettled([
     getCatalogCategories(),
     getCatalogProducts(undefined, "", "featured"),
     getWishlistState(),
+    getHomeHeroSettings(),
   ]);
   const categories =
     categoriesResult.status === "fulfilled" ? categoriesResult.value : [];
@@ -23,14 +25,25 @@ export async function StoreHome() {
     wishlistResult.status === "fulfilled"
       ? wishlistResult.value
       : { authenticated: false, available: false, productIds: [] };
+  const hero =
+    heroResult.status === "fulfilled"
+      ? heroResult.value
+      : {
+          ctaHref: "/catalog",
+          ctaLabel: "Перейти до каталогу",
+          subtitle:
+            "Фруктові чипси та прикраси для коктейлів. Натуральні продукти для здорового харчування та гарної подачі.",
+          title: "Ласкаво просимо до DreamShop",
+        };
   const featuredProducts = products.slice(0, 8);
   const wishlistedIds = new Set(wishlist.productIds);
   const showcaseCategories = categories
+    .slice(0, 4)
     .map((category) => ({
       ...category,
       products: products
         .filter((product) => product.category.id === category.id)
-        .slice(0, 4),
+        .slice(0, 3),
     }))
     .filter((category) => category.products.length > 0);
 
@@ -47,13 +60,10 @@ export async function StoreHome() {
             src="/logo.png"
             width={1483}
           />
-          <h1 id="store-home-title">Ласкаво просимо до DreamShop</h1>
-          <span>
-            Фруктові чипси та прикраси для коктейлів. Натуральні продукти
-            для здорового харчування та гарної подачі.
-          </span>
-          <Link className="store-home-primary-action" href="/catalog">
-            Перейти до каталогу
+          <h1 id="store-home-title">{hero.title}</h1>
+          <span>{hero.subtitle}</span>
+          <Link className="store-home-primary-action" href={hero.ctaHref}>
+            {hero.ctaLabel}
             <ArrowRight aria-hidden size={18} />
           </Link>
         </div>

@@ -29,9 +29,17 @@ const apply = process.argv.includes("--apply");
 const force = process.argv.includes("--force");
 const keepFiles = process.argv.includes("--keep-files") || !apply;
 const limitArg = process.argv.find((argument) => argument.startsWith("--limit="));
+const offsetArg = process.argv.find((argument) => argument.startsWith("--offset="));
 const productArg = process.argv.find((argument) => argument.startsWith("--product="));
 const limit = limitArg ? Math.max(1, Number(limitArg.split("=")[1]) || 1) : Infinity;
+const offset = offsetArg ? Math.max(0, Number(offsetArg.split("=")[1]) || 0) : 0;
 const productFilter = productArg?.split("=").slice(1).join("=").trim().toLowerCase();
+
+if (apply && !limitArg && !productArg && !process.argv.includes("--all")) {
+  throw new Error(
+    "For safety, --apply requires --limit=N, --product=VALUE or explicit --all.",
+  );
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = apply
@@ -311,9 +319,11 @@ const selected = (products || [])
     if (!productFilter) return true;
     return `${product.id} ${product.slug} ${product.name}`.toLowerCase().includes(productFilter);
   })
-  .slice(0, limit);
+  .slice(offset, Number.isFinite(limit) ? offset + limit : undefined);
 
-console.log(`${apply ? "APPLY" : "DRY RUN"}: ${selected.length} covers selected.`);
+console.log(
+  `${apply ? "APPLY" : "DRY RUN"}: ${selected.length} covers selected (offset ${offset}).`,
+);
 let completed = 0;
 let failed = 0;
 
@@ -339,5 +349,11 @@ for (const product of selected) {
   }
 }
 
-console.log(JSON.stringify({ completed, failed, mode: apply ? "apply" : "dry-run" }));
+console.log(JSON.stringify({
+  completed,
+  failed,
+  limit: Number.isFinite(limit) ? limit : null,
+  mode: apply ? "apply" : "dry-run",
+  offset,
+}));
 if (failed) process.exitCode = 1;

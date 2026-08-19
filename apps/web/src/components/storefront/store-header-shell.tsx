@@ -6,6 +6,8 @@ import {
   Home,
   LayoutGrid,
   Menu,
+  Phone,
+  Search,
   X,
 } from "lucide-react";
 import Image from "next/image";
@@ -15,10 +17,11 @@ import { useEffect, useState } from "react";
 import { CartLink } from "./cart-link";
 
 type StoreHeaderShellProps = {
+  authenticated: boolean;
   wishlistCount: number;
 };
 
-export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
+export function StoreHeaderShell({ authenticated, wishlistCount }: StoreHeaderShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -82,7 +85,16 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
             <Link href="/catalog">Каталог</Link>
           </nav>
 
+          <form action="/catalog" className="store-header-search" role="search">
+            <Search aria-hidden size={17} />
+            <input aria-label="Пошук товарів" name="q" placeholder="Знайти товар" type="search" />
+          </form>
+
           <div className="store-header-actions">
+            <a className="icon-button store-phone-link" href="tel:+380939097484" title="Зателефонувати">
+              <Phone aria-hidden size={19} strokeWidth={1.8} />
+              <span className="sr-only">Зателефонувати до DreamShop</span>
+            </a>
             <Link
               aria-label={
                 wishlistCount ? `Обране: ${wishlistCount} товарів` : "Обране"
@@ -102,10 +114,10 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
             <Link
               className="icon-button store-account-link"
               href="/account"
-              title="Мій акаунт"
+              title={authenticated ? "Мій акаунт" : "Увійти"}
             >
               <CircleUserRound aria-hidden size={21} strokeWidth={1.8} />
-              <span className="sr-only">Мій акаунт</span>
+              <span className="sr-only">{authenticated ? "Мій акаунт" : "Увійти"}</span>
             </Link>
           </div>
         </div>
@@ -146,6 +158,14 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
           <LayoutGrid aria-hidden size={19} />
           Каталог
         </Link>
+        <form action="/catalog" className="store-mobile-search" role="search">
+          <Search aria-hidden size={18} />
+          <input aria-label="Пошук товарів" name="q" placeholder="Знайти товар" tabIndex={menuOpen ? 0 : -1} type="search" />
+        </form>
+        <a href="tel:+380939097484" onClick={closeMenu} tabIndex={menuOpen ? 0 : -1}>
+          <Phone aria-hidden size={19} />
+          +380 (93) 909-74-84
+        </a>
         <Link href="/wishlist" onClick={closeMenu} tabIndex={menuOpen ? 0 : -1}>
           <Heart aria-hidden size={19} />
           Обране

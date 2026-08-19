@@ -94,6 +94,54 @@ async function verifiedAdmin() {
   return context.userId && context.isAdmin ? context : null;
 }
 
+export async function updateHomeHeroSettings(
+  _previousState: AdminActionState,
+  formData: FormData,
+): Promise<AdminActionState> {
+  const title = normalizedText(formData, "title");
+  const subtitle = normalizedText(formData, "subtitle");
+  const ctaLabel = normalizedText(formData, "ctaLabel");
+  const ctaHref = stringValue(formData, "ctaHref");
+
+  if (title.length < 4 || title.length > 100) {
+    return errorState("Заголовок має містити від 4 до 100 символів.");
+  }
+
+  if (subtitle.length < 10 || subtitle.length > 320) {
+    return errorState("Підзаголовок має містити від 10 до 320 символів.");
+  }
+
+  if (ctaLabel.length < 2 || ctaLabel.length > 60) {
+    return errorState("Текст кнопки має містити від 2 до 60 символів.");
+  }
+
+  if (!ctaHref.startsWith("/") || ctaHref.startsWith("//") || ctaHref.length > 160) {
+    return errorState("Посилання має бути внутрішнім шляхом, наприклад /catalog.");
+  }
+
+  const context = await verifiedAdmin();
+
+  if (!context) {
+    return errorState("Сесія адміністратора недійсна. Увійдіть повторно.");
+  }
+
+  const { error } = await context.supabase.from("site_settings").upsert({
+    is_public: true,
+    key: "home.hero",
+    updated_by: context.userId,
+    value: { ctaHref, ctaLabel, subtitle, title },
+  });
+
+  if (error) {
+    return databaseErrorState(error.code);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+
+  return { message: "Головний екран оновлено.", status: "success" };
+}
+
 function validateCategory(formData: FormData): ValidatedValues<CategoryValues> {
   const name = normalizedText(formData, "name");
   const slug = stringValue(formData, "slug").toLowerCase();

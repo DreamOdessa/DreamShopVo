@@ -12,17 +12,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   const siteUrl = getSiteUrl();
-  const [categories, products] = await Promise.all([
-    getCatalogCategories(),
-    getCatalogProducts(),
-  ]);
-
-  return [
+  const staticRoutes: MetadataRoute.Sitemap = [
     {
       changeFrequency: "daily",
       priority: 1,
+      url: siteUrl,
+    },
+    {
+      changeFrequency: "daily",
+      priority: 0.9,
       url: `${siteUrl}/catalog`,
     },
+    ...["about", "contacts", "delivery", "privacy", "returns", "terms"].map(
+      (path) => ({
+        changeFrequency: "monthly" as const,
+        priority: 0.5,
+        url: `${siteUrl}/${path}`,
+      }),
+    ),
+  ];
+
+  try {
+    const [categories, products] = await Promise.all([
+      getCatalogCategories(),
+      getCatalogProducts(),
+    ]);
+
+    return [
+      ...staticRoutes,
     ...categories.map((category) => ({
       changeFrequency: "weekly" as const,
       priority: 0.8,
@@ -33,5 +50,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
       url: `${siteUrl}/product/${product.slug}`,
     })),
-  ];
+    ];
+  } catch {
+    // Keep the static storefront discoverable during builds or temporary data outages.
+    return staticRoutes;
+  }
 }

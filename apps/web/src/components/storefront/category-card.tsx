@@ -13,7 +13,10 @@ type CategoryCardProps = {
 export function CategoryCard({ category, eager = false }: CategoryCardProps) {
   return (
     <article className="category-card">
-      <Link href={`/catalog/${category.slug}`}>
+      <Link
+        aria-label={`Перейти до категорії ${category.name}`}
+        href={`/catalog/${category.slug}`}
+      >
         <div className="category-card-media">
           {category.cover ? (
             <Image

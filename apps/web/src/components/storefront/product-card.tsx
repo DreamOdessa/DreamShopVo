@@ -38,7 +38,11 @@ export function ProductCard({
         returnPath={returnPath}
         wishlisted={wishlisted}
       />
-      <Link className="product-card-media" href={`/product/${product.slug}`}>
+      <Link
+        aria-label={`Відкрити товар ${product.name}`}
+        className="product-card-media"
+        href={`/product/${product.slug}`}
+      >
         {mainImage ? (
           <Image
             alt={mainImage.altText || product.name}

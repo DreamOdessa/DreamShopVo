@@ -5,6 +5,8 @@ node_modules/
 
 # Testing
 /coverage
+apps/web/playwright-report/
+apps/web/test-results/
 
 # Production
 /build

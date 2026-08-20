@@ -19,3 +19,7 @@ This directory is evidence for visual parity review, not an approval to change t
 - Chrome, Firefox and WebKit review, including keyboard focus, contrast and reduced-motion checks.
 
 The initial captures were taken locally from the production build on 2026-08-20. They are a baseline for the new application only; the legacy site has not been bypassed or treated as an approved visual reference.
+
+## Reproducible public-state checks
+
+From `apps/web`, run `npm run test`, then `npm run test:e2e` after installing the Playwright browsers. The E2E suite covers Chromium, Firefox, and WebKit; it checks the three reference viewports, keyboard mobile navigation, reduced-motion behavior, horizontal overflow, and serious/critical axe violations. It deliberately does not authenticate or access the closed legacy maintenance route.

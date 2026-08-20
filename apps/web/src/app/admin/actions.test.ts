@@ -71,6 +71,29 @@ describe("admin catalog actions", () => {
     });
   });
 
+  it("reports a stale inventory update without overwriting a newer value", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: false, error: null });
+    mocks.getAdminContext.mockResolvedValue({
+      isAdmin: true,
+      supabase: { rpc },
+      userId: productId,
+    });
+    const formData = new FormData();
+    formData.set("productId", productId);
+    formData.set("expectedStock", "3");
+    formData.set("stockQuantity", "4");
+
+    await expect(updateProductStock(initialState, formData)).resolves.toEqual({
+      message: "Залишок уже змінився. Оновіть сторінку.",
+      status: "error",
+    });
+    expect(rpc).toHaveBeenCalledWith("set_product_stock", {
+      p_expected_stock: 3,
+      p_new_stock: 4,
+      p_product_id: productId,
+    });
+  });
+
   it("denies an unauthenticated product deletion", async () => {
     const formData = new FormData();
     formData.set("productId", productId);

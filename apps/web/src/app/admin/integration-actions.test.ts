@@ -31,4 +31,23 @@ describe("admin integration actions", () => {
       status: "error",
     });
   });
+
+  it("reports an already-processed integration event without retrying it", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: false, error: null });
+    mocks.getAdminContext.mockResolvedValue({
+      isAdmin: true,
+      supabase: { rpc },
+      userId: "11111111-1111-4111-8111-111111111111",
+    });
+    const formData = new FormData();
+    formData.set("eventId", "1");
+
+    await expect(retryIntegrationEvent(initialState, formData)).resolves.toEqual({
+      message: "Подію вже оброблено або повтор уже запущено.",
+      status: "error",
+    });
+    expect(rpc).toHaveBeenCalledWith("retry_admin_integration_event", {
+      p_event_id: 1,
+    });
+  });
 });

@@ -43,4 +43,29 @@ describe("admin order actions", () => {
 
     await expect(updateOrderTracking(initialState, formData)).resolves.toEqual(denial);
   });
+
+  it("reports a stale order status transition", async () => {
+    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+    const select = vi.fn().mockReturnValue({ maybeSingle });
+    const secondEq = vi.fn().mockReturnValue({ select });
+    const firstEq = vi.fn().mockReturnValue({ eq: secondEq });
+    const update = vi.fn().mockReturnValue({ eq: firstEq });
+    const from = vi.fn().mockReturnValue({ update });
+    mocks.getAdminContext.mockResolvedValue({
+      isAdmin: true,
+      supabase: { from },
+      userId: orderId,
+    });
+    const formData = new FormData();
+    formData.set("orderId", orderId);
+    formData.set("currentStatus", "pending");
+    formData.set("status", "processing");
+
+    await expect(updateOrderStatus(initialState, formData)).resolves.toEqual({
+      message: "Статус уже змінився в іншій вкладці. Оновіть сторінку.",
+      status: "error",
+    });
+    expect(firstEq).toHaveBeenCalledWith("id", orderId);
+    expect(secondEq).toHaveBeenCalledWith("status", "pending");
+  });
 });

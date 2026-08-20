@@ -599,6 +599,83 @@ select 1 / case
   ) then 1
   else 0
 end as stale_inventory_update_is_rejected;
+insert into public.products (
+  id,
+  category_id,
+  name,
+  slug,
+  price,
+  is_active,
+  stock_quantity
+)
+values (
+  '30000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001',
+  'Admin media slot test',
+  'admin-media-slot-test',
+  10,
+  true,
+  1
+);
+insert into public.product_media (
+  product_id,
+  object_key,
+  kind,
+  mime_type,
+  sort_order
+)
+values
+  (
+    '30000000-0000-4000-8000-000000000001',
+    'tests/admin-media-slot-0.jpg',
+    'main',
+    'image/jpeg',
+    0
+  ),
+  (
+    '30000000-0000-4000-8000-000000000001',
+    'tests/admin-media-slot-1.jpg',
+    'gallery',
+    'image/jpeg',
+    1
+  ),
+  (
+    '30000000-0000-4000-8000-000000000001',
+    'tests/admin-media-slot-2.jpg',
+    'gallery',
+    'image/jpeg',
+    2
+  );
+select 1 / case
+  when count(*) = 3 then 1
+  else 0
+end as admin_can_save_exactly_three_product_media_slots
+from public.product_media
+where product_id = '30000000-0000-4000-8000-000000000001';
+do $$
+begin
+  begin
+    insert into public.product_media (
+      product_id,
+      object_key,
+      kind,
+      mime_type,
+      sort_order
+    )
+    values (
+      '30000000-0000-4000-8000-000000000001',
+      'tests/admin-media-slot-3.jpg',
+      'gallery',
+      'image/jpeg',
+      3
+    );
+
+    raise exception 'A fourth product media slot was accepted';
+  exception
+    when check_violation then null;
+  end;
+end;
+$$;
 select 1 / case
   when count(*) = 3 then 1
   else 0

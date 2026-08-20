@@ -7,6 +7,9 @@ This directory is evidence for visual parity review, not an approval to change t
 | Screen | 1440×900 | 768×1024 | 390×844 | Review result |
 | --- | --- | --- | --- | --- |
 | Home | [PNG](new/home/desktop-1440x900.png) | [PNG](new/home/tablet-768x1024.png) | [PNG](new/home/mobile-390x844.png) | No horizontal overflow; primary navigation, header actions, hero CTA and next-section entry remain visible. |
+| Catalog | [PNG](new/catalog/desktop-1440x900.png) | [PNG](new/catalog/tablet-768x1024.png) | [PNG](new/catalog/mobile-390x844.png) | No horizontal overflow; filters remain stacked and tappable on mobile. |
+| Product | [PNG](new/product/desktop-1440x900.png) | [PNG](new/product/tablet-768x1024.png) | [PNG](new/product/mobile-390x844.png) | No horizontal overflow; quantity, cart and wishlist actions remain visible on mobile. |
+| Empty cart | [PNG](new/cart/desktop-1440x900.png) | [PNG](new/cart/tablet-768x1024.png) | [PNG](new/cart/mobile-390x844.png) | No horizontal overflow in the guest empty state. |
 
 ## Required before visual parity sign-off
 

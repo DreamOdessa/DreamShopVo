@@ -10,7 +10,7 @@ Grid: 1440px desktop content max-width with 24px gutters; 768px tablet with 20px
 
 ## Required reference artifacts
 
-Create and commit approved captures under `docs/design-reference/` before visual parity sign-off. Each screen needs old/new screenshots and annotated wireframes at 1440×900, 768×1024 and 390×844: home, catalog, product, cart, checkout, account, admin dashboard, product editor and orders. Include loading, empty, error, disabled and success states. The current home captures exist at all three viewports and are indexed in `docs/design-reference/README.md`; legacy comparison assets and the remaining screen/state matrix are still required before parity sign-off.
+Create and commit approved captures under `docs/design-reference/` before visual parity sign-off. Each screen needs old/new screenshots and annotated wireframes at 1440×900, 768×1024 and 390×844: home, catalog, product, cart, checkout, account, admin dashboard, product editor and orders. Include loading, empty, error, disabled and success states. Current public home, catalog, product and empty-cart captures exist at all three viewports and are indexed in `docs/design-reference/README.md`; legacy comparison assets and the remaining screen/state matrix are still required before parity sign-off.
 
 ## Parity checklist
 

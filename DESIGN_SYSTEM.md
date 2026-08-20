@@ -4,13 +4,13 @@ This is a versioned implementation reference, not an AI-generated redesign. The 
 
 ## Tokens and rules
 
-Use CSS custom properties in `apps/web/src/app/globals.css`: semantic background/surface/text/accent/danger/success tokens; spacing scale 4/8/12/16/24/32/48/64; radius 8/12/20; clear focus ring; motion disabled or reduced with `prefers-reduced-motion`. Prefer system/installed typography until a licensed font is explicitly selected. Do not add Tailwind, shadcn, TanStack, RHF, or animation packages by default.
+Use CSS custom properties in `apps/web/src/app/globals.css`. The active semantic set is `--color-canvas`, `--color-surface`, `--color-surface-muted`, `--color-surface-feature`, `--color-text`, `--color-text-strong`, `--color-text-muted`, `--color-brand`, `--color-brand-strong`, `--color-brand-deep`, `--color-accent`, `--color-success`, `--color-danger`, and `--color-focus`. Layout tokens are `--content-max`, desktop/tablet/mobile gutters, the 4/8/12/16/24/32/48/64 spacing scale, 8/12/20 radii, and fast/standard motion. The visual direction is a calm aqua-and-cream storefront with a single berry accent; typography remains system/installed until a licensed font is selected. Reduced motion is respected. Do not add Tailwind, shadcn, TanStack, RHF, or animation packages by default.
 
 Grid: 1440px desktop content max-width with 24px gutters; 768px tablet with 20px gutters; 390px mobile with 16px gutters. Images need intrinsic dimensions, product-specific alt text, and a visible fallback. Every interactive control needs keyboard focus, target size, disabled/pending feedback and an error message connected to its field.
 
 ## Required reference artifacts
 
-Create and commit approved captures under `docs/design-reference/` before visual parity sign-off. Each screen needs old/new screenshots and annotated wireframes at 1440×900, 768×1024 and 390×844: home, catalog, product, cart, checkout, account, admin dashboard, product editor and orders. Include loading, empty, error, disabled and success states. This audit did not create captures because a safe legacy preview/data setup and browser matrix were not available; this is an explicit acceptance gap, not approval to use production bypasses.
+Create and commit approved captures under `docs/design-reference/` before visual parity sign-off. Each screen needs old/new screenshots and annotated wireframes at 1440×900, 768×1024 and 390×844: home, catalog, product, cart, checkout, account, admin dashboard, product editor and orders. Include loading, empty, error, disabled and success states. The current home captures exist at all three viewports and are indexed in `docs/design-reference/README.md`; legacy comparison assets and the remaining screen/state matrix are still required before parity sign-off.
 
 ## Parity checklist
 

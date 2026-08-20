@@ -1,7 +1,8 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   orderStatusLabels,
@@ -27,10 +28,20 @@ export function OrderStatusForm({
     updateOrderStatus,
     initialAdminActionState,
   );
+  const router = useRouter();
   const availableStatuses = orderStatusTransitions[status];
   const [nextStatus, setNextStatus] = useState<OrderStatus>(
     availableStatuses[0] ?? status,
   );
+
+  useEffect(() => {
+    if (state.status !== "success") {
+      return;
+    }
+
+    const refreshTimer = window.setTimeout(() => router.refresh(), 1500);
+    return () => window.clearTimeout(refreshTimer);
+  }, [router, state.status]);
 
   if (!availableStatuses.length) {
     return (

@@ -1,7 +1,8 @@
 "use client";
 
 import { LoaderCircle } from "lucide-react";
-import { useActionState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect } from "react";
 
 import { initialAdminActionState } from "../action-state";
 import { updateOrderTracking } from "./actions";
@@ -19,6 +20,16 @@ export function OrderTrackingForm({
     updateOrderTracking,
     initialAdminActionState,
   );
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.status !== "success") {
+      return;
+    }
+
+    const refreshTimer = window.setTimeout(() => router.refresh(), 1500);
+    return () => window.clearTimeout(refreshTimer);
+  }, [router, state.status]);
 
   return (
     <form action={formAction} className="admin-order-status-form">

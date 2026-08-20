@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
 import { getAdminContext } from "../../../lib/auth/admin";
 import { isOrderStatus, type OrderStatus } from "../../../lib/orders";
 
@@ -72,7 +70,7 @@ export async function updateOrderStatus(
     .update(update)
     .eq("id", orderId)
     .eq("status", currentStatus)
-    .select("id,user_id")
+    .select("id")
     .maybeSingle();
 
   if (error) {
@@ -90,15 +88,6 @@ export async function updateOrderStatus(
       "Статус уже змінився в іншій вкладці. Оновіть сторінку.",
     );
   }
-
-  revalidatePath("/account");
-  revalidatePath("/admin/dashboard");
-  revalidatePath("/admin/orders");
-  revalidatePath(`/admin/orders/${orderId}`);
-  if (data.user_id) {
-    revalidatePath(`/admin/customers/${data.user_id}`);
-  }
-  revalidatePath(`/orders/${orderId}`);
 
   return {
     message: "Статус замовлення оновлено.",
@@ -128,7 +117,7 @@ export async function updateOrderTracking(
     .update({ tracking_number: trackingNumber })
     .eq("id", orderId)
     .eq("status", "shipped")
-    .select("id,user_id")
+    .select("id")
     .maybeSingle();
 
   if (error) {
@@ -138,15 +127,6 @@ export async function updateOrderTracking(
   if (!data) {
     return errorState("ТТН можна змінити лише для відправленого замовлення.");
   }
-
-  revalidatePath("/account");
-  revalidatePath("/admin/dashboard");
-  revalidatePath("/admin/orders");
-  revalidatePath(`/admin/orders/${orderId}`);
-  if (data.user_id) {
-    revalidatePath(`/admin/customers/${data.user_id}`);
-  }
-  revalidatePath(`/orders/${orderId}`);
 
   return {
     message: "ТТН оновлено.",

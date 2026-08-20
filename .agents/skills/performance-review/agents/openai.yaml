@@ -1,0 +1,6 @@
+interface:
+  display_name: "Performance Review"
+  short_description: "Find and verify performance bottlenecks"
+  default_prompt: "Use $performance-review to review this repository's performance."
+policy:
+  allow_implicit_invocation: true

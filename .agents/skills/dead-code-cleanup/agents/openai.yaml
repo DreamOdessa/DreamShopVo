@@ -1,0 +1,6 @@
+interface:
+  display_name: "Dead Code Cleanup"
+  short_description: "Find and remove proven dead code"
+  default_prompt: "Use $dead-code-cleanup to find and safely remove dead code."
+policy:
+  allow_implicit_invocation: true

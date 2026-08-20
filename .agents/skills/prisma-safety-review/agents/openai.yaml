@@ -1,0 +1,6 @@
+interface:
+  display_name: "Prisma Safety Review"
+  short_description: "Review Prisma data safety and migrations"
+  default_prompt: "Use $prisma-safety-review to review database safety in this repository."
+policy:
+  allow_implicit_invocation: true

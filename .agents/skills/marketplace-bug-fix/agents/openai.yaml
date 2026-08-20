@@ -1,0 +1,6 @@
+interface:
+  display_name: "Marketplace Bug Fix"
+  short_description: "Fix marketplace bugs with regression checks"
+  default_prompt: "Use $marketplace-bug-fix to fix the reported marketplace bug."
+policy:
+  allow_implicit_invocation: true

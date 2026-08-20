@@ -1,0 +1,6 @@
+interface:
+  display_name: "SEO Review"
+  short_description: "Review technical SEO for products"
+  default_prompt: "Use $seo-review to review ecommerce SEO in this repository."
+policy:
+  allow_implicit_invocation: true

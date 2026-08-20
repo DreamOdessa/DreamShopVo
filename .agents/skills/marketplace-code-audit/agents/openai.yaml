@@ -1,0 +1,6 @@
+interface:
+  display_name: "Marketplace Code Audit"
+  short_description: "Audit marketplace code and data flows"
+  default_prompt: "Use $marketplace-code-audit to audit this marketplace repository."
+policy:
+  allow_implicit_invocation: true

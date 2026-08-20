@@ -29,6 +29,12 @@ const PRODUCT_VIEWS_COLLECTION = 'product_views'; // doc(productId) { viewCount 
 const VISITORS_COLLECTION = 'visitors'; // daily visitor logs { visitorId, date, month, createdAt }
 const SITE_SETTINGS_COLLECTION = 'site_settings'; // single doc 'main' { heroSubtitle }
 const BUG_REPORTS_COLLECTION = 'bug_reports'; // bug reports from testers/admins
+const EXCLUDED_CATALOG_NAME_PATTERN = /(ликер|лікер|джин|джын|джинов|настойк|настоян|spicer)/i;
+
+const hasExcludedCatalogName = (item: Record<string, any> | null | undefined): boolean => {
+  const name = `${item?.name || ''} ${item?.title || ''}`.trim();
+  return EXCLUDED_CATALOG_NAME_PATTERN.test(name);
+};
 
 // === ТОВАРЫ ===
 export const productService = {
@@ -45,7 +51,7 @@ export const productService = {
         createdAt: data.createdAt?.toDate?.().toISOString() || 
                    (typeof data.createdAt === 'string' ? data.createdAt : new Date().toISOString())
       };
-    }) as Product[];
+    }).filter(product => !hasExcludedCatalogName(product)) as Product[];
     
     if (products.length > 0) {
       console.log('📝 Первые товары:', products.slice(0, 2).map(p => ({ id: p.id, name: p.name, category: p.category })));
@@ -66,7 +72,7 @@ export const productService = {
       id: doc.id,
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
-    })) as Product[];
+    })).filter(product => !hasExcludedCatalogName(product)) as Product[];
   },
 
 
@@ -76,11 +82,12 @@ export const productService = {
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
-      return {
+      const product = {
         id: docSnap.id,
         ...docSnap.data(),
         createdAt: docSnap.data().createdAt?.toDate().toISOString() || new Date().toISOString()
       } as Product;
+      return hasExcludedCatalogName(product) ? null : product;
     }
     return null;
   },
@@ -129,7 +136,7 @@ export const productService = {
       id: doc.id,
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
-    })) as Product[];
+    })).filter(product => !hasExcludedCatalogName(product)) as Product[];
   },
 
   // Получить товары с пагинацией (для каталога)
@@ -154,7 +161,7 @@ export const productService = {
       id: doc.id,
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
-    })) as Product[];
+    })).filter(product => !hasExcludedCatalogName(product)) as Product[];
 
     const newLastDoc = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
     return { products, lastDoc: newLastDoc };
@@ -184,7 +191,7 @@ export const productService = {
       id: doc.id,
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
-    })) as Product[];
+    })).filter(product => !hasExcludedCatalogName(product)) as Product[];
 
     const newLastDoc = snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
     return { products, lastDoc: newLastDoc };
@@ -199,7 +206,7 @@ export const categoryService = {
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    })) as Category[];
+    })).filter(category => !hasExcludedCatalogName(category)) as Category[];
   },
 
   // Добавить категорию

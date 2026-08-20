@@ -1,7 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
 import { createClient } from "../../../../lib/supabase/server";
 
 const UUID_PATTERN =
@@ -48,13 +46,6 @@ export async function cancelOrder(
           : "Не вдалося скасувати замовлення. Спробуйте ще раз.",
     );
   }
-
-  revalidatePath("/account");
-  revalidatePath("/admin/dashboard");
-  revalidatePath(`/orders/${orderId}`);
-  revalidatePath("/admin/orders");
-  revalidatePath(`/admin/orders/${orderId}`);
-  revalidatePath(`/admin/customers/${claimsData.claims.sub}`);
 
   return {
     message: "Замовлення скасовано.",

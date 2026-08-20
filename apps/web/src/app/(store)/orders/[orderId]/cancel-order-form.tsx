@@ -30,9 +30,12 @@ export function CancelOrderForm({
   const router = useRouter();
 
   useEffect(() => {
-    if (state.status === "success") {
-      router.refresh();
+    if (state.status !== "success") {
+      return;
     }
+
+    const refreshTimer = window.setTimeout(() => router.refresh(), 1500);
+    return () => window.clearTimeout(refreshTimer);
   }, [router, state.status]);
 
   return (

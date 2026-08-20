@@ -63,13 +63,12 @@ describe("customer order cancellation action", () => {
     expect(rpc).toHaveBeenCalledWith("cancel_own_order", { p_order_id: orderId });
   });
 
-  it("returns success after the owned-order cancellation RPC", async () => {
-    const customerId = "22222222-2222-4222-8222-222222222222";
+  it("returns success before the client refreshes the order page", async () => {
     const rpc = vi.fn().mockResolvedValue({ data: [{ id: orderId }], error: null });
     mocks.createClient.mockResolvedValue({
       auth: {
         getClaims: vi.fn().mockResolvedValue({
-          data: { claims: { sub: customerId } },
+          data: { claims: { sub: "22222222-2222-4222-8222-222222222222" } },
           error: null,
         }),
       },
@@ -81,9 +80,6 @@ describe("customer order cancellation action", () => {
       status: "success",
     });
     expect(rpc).toHaveBeenCalledWith("cancel_own_order", { p_order_id: orderId });
-    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/orders/${orderId}`);
-    expect(mocks.revalidatePath).toHaveBeenCalledWith(
-      `/admin/customers/${customerId}`,
-    );
+    expect(mocks.revalidatePath).not.toHaveBeenCalled();
   });
 });

@@ -676,6 +676,76 @@ begin
   end;
 end;
 $$;
+insert into public.categories (
+  id,
+  name,
+  slug,
+  is_active,
+  sort_order
+)
+values (
+  '40000000-0000-4000-8000-000000000001',
+  'Admin CRUD category',
+  'admin-crud-category',
+  false,
+  10
+);
+update public.categories
+set
+  is_active = true,
+  name = 'Admin CRUD category updated'
+where id = '40000000-0000-4000-8000-000000000001';
+insert into public.products (
+  id,
+  category_id,
+  name,
+  slug,
+  price,
+  is_active,
+  stock_quantity
+)
+values (
+  '40000000-0000-4000-8000-000000000002',
+  '40000000-0000-4000-8000-000000000001',
+  'Admin CRUD product',
+  'admin-crud-product',
+  10,
+  false,
+  1
+);
+update public.products
+set
+  is_active = true,
+  price = 12.5
+where id = '40000000-0000-4000-8000-000000000002';
+select 1 / case
+  when (
+    select name = 'Admin CRUD category updated' and is_active
+    from public.categories
+    where id = '40000000-0000-4000-8000-000000000001'
+  ) and (
+    select price = 12.5 and is_active
+    from public.products
+    where id = '40000000-0000-4000-8000-000000000002'
+  ) then 1
+  else 0
+end as admin_can_create_and_update_catalog_records;
+delete from public.products
+where id = '40000000-0000-4000-8000-000000000002';
+delete from public.categories
+where id = '40000000-0000-4000-8000-000000000001';
+select 1 / case
+  when not exists (
+    select 1
+    from public.categories
+    where id = '40000000-0000-4000-8000-000000000001'
+  ) and not exists (
+    select 1
+    from public.products
+    where id = '40000000-0000-4000-8000-000000000002'
+  ) then 1
+  else 0
+end as admin_can_delete_catalog_records;
 select 1 / case
   when count(*) = 3 then 1
   else 0

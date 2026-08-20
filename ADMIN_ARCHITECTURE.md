@@ -22,6 +22,6 @@ Admin UAT must cover role denial, product/category CRUD, three-image boundary, s
 
 ## Current automated evidence
 
-- `supabase/tests/rls_smoke.sql` exercises admin grants and protected RPCs, along with customer denials for dashboard/customer summaries, discounts and inventory mutations. It also proves the launch three-image limit: slots 0–2 are accepted and a fourth slot is rejected by the database constraint.
+- `supabase/tests/rls_smoke.sql` exercises admin catalog CRUD, grants and protected RPCs, along with customer denials for dashboard/customer summaries, discounts and inventory mutations. It also proves the launch three-image limit: slots 0–2 are accepted and a fourth slot is rejected by the database constraint.
 - `apps/web` Vitest checks deny valid-looking unauthenticated requests before any catalog mutation, inventory change, order status/tracking update, customer-discount update, media association or CSV order export. The export route also returns `403` to an authenticated non-admin.
 - This is not full launch UAT: positive browser scenarios still require disposable admin and customer accounts with isolated catalog, order and media data. RB-009 remains open until that context and the listed positive/stale-state cases are verified.

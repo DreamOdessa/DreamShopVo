@@ -19,3 +19,9 @@ Variants, promo codes, bulk edits/imports, CMS/site settings expansion, advanced
 ## Acceptance
 
 Admin UAT must cover role denial, product/category CRUD, three-image boundary, stock conflict, order transitions/export, customer data access, discount handling and retry idempotency. Each action must have loading/error/success states and a safe response to stale data.
+
+## Current automated evidence
+
+- `supabase/tests/rls_smoke.sql` exercises admin grants and protected RPCs, along with customer denials for dashboard/customer summaries, discounts and inventory mutations.
+- `apps/web` Vitest checks deny valid-looking unauthenticated requests before any catalog mutation, inventory change, order status/tracking update, customer-discount update, media association or CSV order export. The export route also returns `403` to an authenticated non-admin.
+- This is not full launch UAT: positive browser scenarios still require disposable admin and customer accounts with isolated catalog, order and media data. RB-009 remains open until that context and the listed positive/stale-state cases are verified.

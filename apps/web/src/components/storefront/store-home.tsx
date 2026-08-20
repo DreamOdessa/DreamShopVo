@@ -3,28 +3,21 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { getCatalogCategories, getCatalogProducts } from "../../lib/catalog";
-import { getWishlistState } from "../../lib/wishlist";
 
 import { CategoryCard } from "./category-card";
 import { ProductCard } from "./product-card";
 
 export async function StoreHome() {
-  const [categoriesResult, productsResult, wishlistResult] =
+  const [categoriesResult, productsResult] =
     await Promise.allSettled([
     getCatalogCategories(),
     getCatalogProducts(undefined, "", "featured"),
-    getWishlistState(),
   ]);
   const categories =
     categoriesResult.status === "fulfilled" ? categoriesResult.value : [];
   const products =
     productsResult.status === "fulfilled" ? productsResult.value : [];
-  const wishlist =
-    wishlistResult.status === "fulfilled"
-      ? wishlistResult.value
-      : { authenticated: false, available: false, productIds: [] };
   const featuredProducts = products.slice(0, 8);
-  const wishlistedIds = new Set(wishlist.productIds);
   const showcaseCategories = categories
     .map((category) => ({
       ...category,
@@ -83,7 +76,7 @@ export async function StoreHome() {
                       key={product.id}
                       product={product}
                       returnPath="/"
-                      wishlisted={wishlistedIds.has(product.id)}
+                      wishlisted={false}
                     />
                   ))}
                 </div>
@@ -117,7 +110,7 @@ export async function StoreHome() {
                   key={product.id}
                   product={product}
                   returnPath="/"
-                  wishlisted={wishlistedIds.has(product.id)}
+                  wishlisted={false}
                 />
               ))}
             </div>

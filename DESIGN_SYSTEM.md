@@ -1,0 +1,24 @@
+# DreamShop design-system and parity brief
+
+This is a versioned implementation reference, not an AI-generated redesign. The old site is the visual source until product approval.
+
+## Tokens and rules
+
+Use CSS custom properties in `apps/web/src/app/globals.css`: semantic background/surface/text/accent/danger/success tokens; spacing scale 4/8/12/16/24/32/48/64; radius 8/12/20; clear focus ring; motion disabled or reduced with `prefers-reduced-motion`. Prefer system/installed typography until a licensed font is explicitly selected. Do not add Tailwind, shadcn, TanStack, RHF, or animation packages by default.
+
+Grid: 1440px desktop content max-width with 24px gutters; 768px tablet with 20px gutters; 390px mobile with 16px gutters. Images need intrinsic dimensions, product-specific alt text, and a visible fallback. Every interactive control needs keyboard focus, target size, disabled/pending feedback and an error message connected to its field.
+
+## Required reference artifacts
+
+Create and commit approved captures under `docs/design-reference/` before visual parity sign-off. Each screen needs old/new screenshots and annotated wireframes at 1440×900, 768×1024 and 390×844: home, catalog, product, cart, checkout, account, admin dashboard, product editor and orders. Include loading, empty, error, disabled and success states. This audit did not create captures because a safe legacy preview/data setup and browser matrix were not available; this is an explicit acceptance gap, not approval to use production bypasses.
+
+## Parity checklist
+
+| Area | Required comparison |
+| --- | --- |
+| Storefront | hierarchy, product/card imagery, nav, cart and checkout states |
+| Responsive | three viewports, no overflow, readable controls and stable layout |
+| Accessibility | keyboard path, focus return/trap, contrast, headings, alt text, reduced motion |
+| SEO | per-route titles/descriptions/canonical; product JSON-LD; no indexable private routes |
+
+The current implementation has responsive image `sizes`, loading and fallback handling in `product-card.tsx`; visual/browser validation remains pending.

@@ -22,7 +22,6 @@ import {
   type CatalogFilters,
 } from "../../../lib/catalog-filters";
 import { getSiteUrl } from "../../../lib/env";
-import { getWishlistState } from "../../../lib/wishlist";
 
 export const metadata: Metadata = {
   alternates: {
@@ -57,10 +56,9 @@ export default async function CatalogPage({
     search: normalizeCatalogSearch(params.q),
     sort: normalizeCatalogSort(params.sort),
   };
-  const [categories, productPage, wishlist] = await Promise.all([
+  const [categories, productPage] = await Promise.all([
     getCatalogCategories(),
     getCatalogProductPage(filters),
-    getWishlistState(),
   ]);
   const { pageCount, products, total } = productPage;
 
@@ -68,7 +66,6 @@ export default async function CatalogPage({
     redirect(catalogPath("/catalog", { ...filters, page: 1 }));
   }
 
-  const wishlistIds = new Set(wishlist.productIds);
   const returnPath = catalogReturnPath("/catalog", filters);
 
   return (
@@ -122,7 +119,7 @@ export default async function CatalogPage({
                 key={product.id}
                 product={product}
                 returnPath={returnPath}
-                wishlisted={wishlistIds.has(product.id)}
+                wishlisted={false}
               />
             ))}
           </div>

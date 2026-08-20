@@ -235,6 +235,37 @@ export const getCatalogProducts = cache(async (
     .filter((product): product is CatalogProduct => Boolean(product));
 });
 
+export const getSitemapCatalogProducts = cache(async () => {
+  const supabase = createPublicClient();
+  const pageSize = 1_000;
+  const products: CatalogProduct[] = [];
+  let rangeStart = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("products")
+      .select(catalogProductPageSelection)
+      .eq("is_active", true)
+      .eq("category.is_active", true)
+      .order("id")
+      .range(rangeStart, rangeStart + pageSize - 1);
+
+    if (error) {
+      throw new Error("Unable to load sitemap catalog products.");
+    }
+
+    const page = ((data ?? []) as unknown as ProductRow[])
+      .map(mapProduct)
+      .filter((product): product is CatalogProduct => Boolean(product));
+    products.push(...page);
+
+    if ((data ?? []).length < pageSize) break;
+    rangeStart += pageSize;
+  }
+
+  return products;
+});
+
 export const getCatalogProductsByIds = cache(async (productIds: string[]) => {
   if (!productIds.length) {
     return [];

@@ -11,7 +11,6 @@ import {
 } from "../../../../lib/catalog";
 import { getSiteUrl } from "../../../../lib/env";
 import { publicMediaUrl } from "../../../../lib/media-url";
-import { getWishlistState } from "../../../../lib/wishlist";
 import { WishlistButton } from "../../../../components/storefront/wishlist-button";
 
 type ProductPageProps = {
@@ -72,11 +71,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const [categoryProducts, wishlist] = await Promise.all([
+  const [categoryProducts] = await Promise.all([
     getRelatedCatalogProducts(product.category.id, product.id),
-    getWishlistState(),
   ]);
-  const wishlistIds = new Set(wishlist.productIds);
   const relatedProducts = categoryProducts;
   const siteUrl = getSiteUrl();
   const productUrl = `${siteUrl}/product/${product.slug}`;
@@ -168,7 +165,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               productId={product.id}
               productName={product.name}
               returnPath={`/product/${product.slug}`}
-              wishlisted={wishlistIds.has(product.id)}
+              wishlisted={false}
             />
           </div>
 
@@ -192,7 +189,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 key={relatedProduct.id}
                 product={relatedProduct}
                 returnPath={`/product/${product.slug}`}
-                wishlisted={wishlistIds.has(relatedProduct.id)}
+                wishlisted={false}
               />
             ))}
           </div>

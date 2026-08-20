@@ -24,7 +24,6 @@ import {
 } from "../../../../lib/catalog-filters";
 import { getSiteUrl } from "../../../../lib/env";
 import { publicMediaUrl } from "../../../../lib/media-url";
-import { getWishlistState } from "../../../../lib/wishlist";
 
 type CategoryPageProps = {
   params: Promise<{ categorySlug: string }>;
@@ -82,13 +81,11 @@ export default async function CategoryPage({
     notFound();
   }
 
-  const [categories, productPage, wishlist] = await Promise.all([
+  const [categories, productPage] = await Promise.all([
     getCatalogCategories(),
     getCatalogProductPage({ ...filters, categoryId: category.id }),
-    getWishlistState(),
   ]);
   const { pageCount, products, total } = productPage;
-  const wishlistIds = new Set(wishlist.productIds);
   const categoryPath = `/catalog/${category.slug}`;
 
   if (filters.page > pageCount) {
@@ -149,7 +146,7 @@ export default async function CategoryPage({
                 key={product.id}
                 product={product}
                 returnPath={returnPath}
-                wishlisted={wishlistIds.has(product.id)}
+                wishlisted={false}
               />
             ))}
           </div>

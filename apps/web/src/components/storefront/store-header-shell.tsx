@@ -12,6 +12,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { createClient } from "../../lib/supabase/client";
 import { CartLink } from "./cart-link";
 
 type StoreHeaderShellProps = {
@@ -20,6 +21,28 @@ type StoreHeaderShellProps = {
 
 export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [currentWishlistCount, setCurrentWishlistCount] =
+    useState(wishlistCount);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let mounted = true;
+
+    void supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+
+      const { count } = await supabase
+        .from("wishlist_items")
+        .select("product_id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      if (mounted) setCurrentWishlistCount(count ?? 0);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -85,16 +108,18 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
           <div className="store-header-actions">
             <Link
               aria-label={
-                wishlistCount ? `Обране: ${wishlistCount} товарів` : "Обране"
+                currentWishlistCount
+                  ? `Обране: ${currentWishlistCount} товарів`
+                  : "Обране"
               }
               className="icon-button wishlist-link"
               href="/wishlist"
               title="Обране"
             >
               <Heart aria-hidden size={20} strokeWidth={1.8} />
-              {wishlistCount ? (
+              {currentWishlistCount ? (
                 <span aria-hidden className="wishlist-count">
-                  {wishlistCount > 99 ? "99+" : wishlistCount}
+                  {currentWishlistCount > 99 ? "99+" : currentWishlistCount}
                 </span>
               ) : null}
             </Link>
@@ -149,7 +174,7 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
         <Link href="/wishlist" onClick={closeMenu} tabIndex={menuOpen ? 0 : -1}>
           <Heart aria-hidden size={19} />
           Обране
-          {wishlistCount ? <span>{wishlistCount}</span> : null}
+          {currentWishlistCount ? <span>{currentWishlistCount}</span> : null}
         </Link>
         <Link href="/account" onClick={closeMenu} tabIndex={menuOpen ? 0 : -1}>
           <CircleUserRound aria-hidden size={19} />

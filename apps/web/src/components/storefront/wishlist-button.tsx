@@ -2,8 +2,10 @@
 
 import { Heart } from "lucide-react";
 import { useFormStatus } from "react-dom";
+import { useEffect, useState } from "react";
 
 import { toggleWishlistItem } from "../../app/(store)/wishlist/actions";
+import { createClient } from "../../lib/supabase/client";
 
 type WishlistButtonProps = {
   compact?: boolean;
@@ -51,13 +53,42 @@ export function WishlistButton({
   returnPath,
   wishlisted,
 }: WishlistButtonProps) {
-  const actionLabel = wishlisted
+  const [currentWishlisted, setCurrentWishlisted] = useState(wishlisted);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let mounted = true;
+
+    void supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("wishlist_items")
+        .select("product_id")
+        .eq("user_id", user.id)
+        .eq("product_id", productId)
+        .maybeSingle();
+
+      if (mounted) setCurrentWishlisted(Boolean(data));
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [productId]);
+
+  const actionLabel = currentWishlisted
     ? `Видалити ${productName} з обраного`
     : `Додати ${productName} до обраного`;
 
+  const updateWishlist = async (formData: FormData) => {
+    await toggleWishlistItem(formData);
+    setCurrentWishlisted((value) => !value);
+  };
+
   return (
     <form
-      action={toggleWishlistItem}
+      action={updateWishlist}
       className={compact ? "wishlist-form wishlist-form-compact" : "wishlist-form"}
     >
       <input name="productId" type="hidden" value={productId} />
@@ -65,12 +96,12 @@ export function WishlistButton({
       <input
         name="wishlisted"
         type="hidden"
-        value={wishlisted ? "true" : "false"}
+        value={currentWishlisted ? "true" : "false"}
       />
       <WishlistSubmitButton
         actionLabel={actionLabel}
         compact={compact}
-        wishlisted={wishlisted}
+        wishlisted={currentWishlisted}
       />
     </form>
   );

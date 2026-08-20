@@ -1,6 +1,9 @@
 import type { MetadataRoute } from "next";
 
-import { getCatalogCategories, getCatalogProducts } from "../lib/catalog";
+import {
+  getCatalogCategories,
+  getSitemapCatalogProducts,
+} from "../lib/catalog";
 import { getSiteUrl } from "../lib/env";
 import { isStorefrontMaintenance } from "../lib/maintenance";
 
@@ -14,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
   const [categories, products] = await Promise.all([
     getCatalogCategories(),
-    getCatalogProducts(),
+    getSitemapCatalogProducts(),
   ]);
 
   return [

@@ -47,18 +47,14 @@ export async function toggleWishlistItem(formData: FormData) {
         .delete()
         .eq("user_id", userId)
         .eq("product_id", productId)
-    : await supabase.from("wishlist_items").upsert(
-        {
-          product_id: productId,
-          user_id: userId,
-        },
-        {
-          ignoreDuplicates: true,
-          onConflict: "user_id,product_id",
-        },
-      );
+    : await supabase.from("wishlist_items").insert({
+        product_id: productId,
+        user_id: userId,
+      });
 
-  if (result.error) {
+  // An already-present row means a concurrent/stale add request reached the
+  // desired state. `upsert` would require UPDATE permission for this table.
+  if (result.error && (remove || result.error.code !== "23505")) {
     throw new Error("Unable to update the wishlist.");
   }
 

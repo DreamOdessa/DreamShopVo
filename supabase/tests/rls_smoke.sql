@@ -179,6 +179,21 @@ select 1 / case
   else 0
 end as customer_manages_own_wishlist
 from public.wishlist_items;
+do $$
+begin
+  begin
+    insert into public.wishlist_items (user_id, product_id)
+    values (
+      '00000000-0000-4000-8000-000000000001',
+      (select id from public.products where slug = 'visible')
+    );
+
+    raise exception 'Duplicate wishlist insert unexpectedly succeeded';
+  exception
+    when unique_violation then null;
+  end;
+end;
+$$;
 delete from public.wishlist_items
 where user_id = '00000000-0000-4000-8000-000000000001';
 insert into public.customer_addresses (

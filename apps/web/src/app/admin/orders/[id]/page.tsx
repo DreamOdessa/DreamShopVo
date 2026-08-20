@@ -28,42 +28,10 @@ type AdminOrderPageProps = {
   params: Promise<{ id: string }>;
 };
 
-type OrderItem = {
-  id: string;
-  product_image_object_key: string | null;
-  product_name: string;
-  quantity: number;
-  unit_price: number;
-};
-
 type HistoryItem = {
   created_at: string;
   id: number;
   status: OrderStatus;
-};
-
-type Order = {
-  contact_for_clarification: boolean;
-  created_at: string;
-  customer_first_name: string;
-  customer_last_name: string;
-  customer_note: string | null;
-  customer_phone: string;
-  delivery_city: string;
-  delivery_details: string;
-  delivery_amount: number;
-  delivery_method: string;
-  establishment_name: string | null;
-  id: string;
-  discount_amount: number;
-  is_private_person: boolean;
-  items: OrderItem[];
-  order_number: number;
-  payment_method: string;
-  status: OrderStatus;
-  subtotal: number;
-  tracking_number: string | null;
-  total: number;
 };
 
 const priceFormatter = new Intl.NumberFormat("uk-UA", {
@@ -129,7 +97,7 @@ export default async function AdminOrderPage({
     throw new Error("Unable to load order history.");
   }
 
-  const order = orderResult.data as unknown as Order;
+  const order = orderResult.data;
   const history = (historyResult.data ?? []).filter(
     (item): item is HistoryItem => isOrderStatus(item.status),
   );

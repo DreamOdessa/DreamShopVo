@@ -61,17 +61,6 @@ type CustomerAddress = {
   phone: string;
 };
 
-type CustomerOrder = {
-  created_at: string;
-  delivery_city: string;
-  discount_amount: number;
-  id: string;
-  items: Array<{ id: string }> | null;
-  order_number: number;
-  status: OrderStatus;
-  total: number;
-};
-
 type CustomerSummary = {
   delivered_order_count: number;
   delivered_total: number;
@@ -180,11 +169,11 @@ export default async function AdminCustomerPage({
     notFound();
   }
 
-  const customer = profileResult.data as unknown as Customer;
+  const customer = profileResult.data;
   const addresses = (addressesResult.data ?? []) as CustomerAddress[];
   const orders = (ordersResult.data ?? [])
     .filter((order) => isOrderStatus(order.status))
-    .map((order) => order as unknown as CustomerOrder);
+    .map((order) => order);
   const summary = (summaryResult.data?.[0] ?? {
     delivered_order_count: 0,
     delivered_total: 0,

@@ -1,5 +1,7 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 
+import { CATALOG_CACHE_TAG } from "./catalog-cache";
 import type { CatalogFilters, CatalogSort } from "./catalog-filters";
 import { createPublicClient } from "./supabase/public";
 
@@ -128,7 +130,7 @@ function mapCategory(row: CategoryRow): CatalogCategory {
   };
 }
 
-export const getCatalogCategories = cache(async () => {
+const getCachedCatalogCategories = unstable_cache(async () => {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("categories")
@@ -143,10 +145,12 @@ export const getCatalogCategories = cache(async () => {
     throw new Error("Unable to load catalog categories.");
   }
 
-  return ((data ?? []) as unknown as CategoryRow[]).map(mapCategory);
-});
+  return (data ?? []).map(mapCategory);
+}, ["catalog-categories"], { revalidate: 300, tags: [CATALOG_CACHE_TAG] });
 
-export const getCatalogCategory = cache(async (slug: string) => {
+export const getCatalogCategories = cache(getCachedCatalogCategories);
+
+const getCachedCatalogCategory = unstable_cache(async (slug: string) => {
   const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("categories")
@@ -161,8 +165,10 @@ export const getCatalogCategory = cache(async (slug: string) => {
     throw new Error("Unable to load the catalog category.");
   }
 
-  return data ? mapCategory(data as unknown as CategoryRow) : null;
-});
+  return data ? mapCategory(data) : null;
+}, ["catalog-category"], { revalidate: 300, tags: [CATALOG_CACHE_TAG] });
+
+export const getCatalogCategory = cache(getCachedCatalogCategory);
 
 function escapedSearchPattern(value: string) {
   return `%${value.replace(/[\\%_]/g, "\\$&")}%`;
@@ -200,7 +206,7 @@ function sortedProductQuery<T>(query: T, sort: CatalogSort) {
   return sortable;
 }
 
-export const getCatalogProducts = cache(async (
+const getCachedCatalogProducts = unstable_cache(async (
   categoryId?: string,
   search = "",
   sort: CatalogSort = "featured",
@@ -230,12 +236,14 @@ export const getCatalogProducts = cache(async (
     throw new Error("Unable to load catalog products.");
   }
 
-  return ((data ?? []) as unknown as ProductRow[])
+  return (data ?? [])
     .map(mapProduct)
     .filter((product): product is CatalogProduct => Boolean(product));
-});
+}, ["catalog-products"], { revalidate: 300, tags: [CATALOG_CACHE_TAG] });
 
-export const getSitemapCatalogProducts = cache(async () => {
+export const getCatalogProducts = cache(getCachedCatalogProducts);
+
+const getCachedSitemapCatalogProducts = unstable_cache(async () => {
   const supabase = createPublicClient();
   const pageSize = 1_000;
   const products: CatalogProduct[] = [];
@@ -254,7 +262,7 @@ export const getSitemapCatalogProducts = cache(async () => {
       throw new Error("Unable to load sitemap catalog products.");
     }
 
-    const page = ((data ?? []) as unknown as ProductRow[])
+    const page = (data ?? [])
       .map(mapProduct)
       .filter((product): product is CatalogProduct => Boolean(product));
     products.push(...page);
@@ -264,7 +272,9 @@ export const getSitemapCatalogProducts = cache(async () => {
   }
 
   return products;
-});
+}, ["catalog-sitemap-products"], { revalidate: 300, tags: [CATALOG_CACHE_TAG] });
+
+export const getSitemapCatalogProducts = cache(getCachedSitemapCatalogProducts);
 
 export const getCatalogProductsByIds = cache(async (productIds: string[]) => {
   if (!productIds.length) {
@@ -284,7 +294,7 @@ export const getCatalogProductsByIds = cache(async (productIds: string[]) => {
     throw new Error("Unable to load selected catalog products.");
   }
 
-  const products = ((data ?? []) as unknown as ProductRow[])
+  const products = (data ?? [])
     .map(mapProduct)
     .filter((product): product is CatalogProduct => Boolean(product));
   const productById = new Map(products.map((product) => [product.id, product]));
@@ -295,7 +305,7 @@ export const getCatalogProductsByIds = cache(async (productIds: string[]) => {
   });
 });
 
-export const getRelatedCatalogProducts = cache(
+const getCachedRelatedCatalogProducts = unstable_cache(
   async (categoryId: string, excludedProductId: string, limit = 4) => {
     const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 12);
     const supabase = createPublicClient();
@@ -316,18 +326,22 @@ export const getRelatedCatalogProducts = cache(
       throw new Error("Unable to load related catalog products.");
     }
 
-    return ((data ?? []) as unknown as ProductRow[])
+    return (data ?? [])
       .map(mapProduct)
       .filter((product): product is CatalogProduct => Boolean(product));
   },
+  ["catalog-related-products"],
+  { revalidate: 300, tags: [CATALOG_CACHE_TAG] },
 );
+
+export const getRelatedCatalogProducts = cache(getCachedRelatedCatalogProducts);
 
 type CatalogProductPageInput = CatalogFilters & {
   categoryId?: string;
   pageSize?: number;
 };
 
-export const getCatalogProductPage = cache(
+const getCachedCatalogProductPage = unstable_cache(
   async ({
     availableOnly,
     categoryId,
@@ -380,7 +394,7 @@ export const getCatalogProductPage = cache(
       throw new Error("Unable to load catalog product page.");
     }
 
-    const products = ((data ?? []) as unknown as ProductRow[])
+    const products = (data ?? [])
       .map(mapProduct)
       .filter((product): product is CatalogProduct => Boolean(product));
     const total = count ?? 0;
@@ -391,9 +405,13 @@ export const getCatalogProductPage = cache(
       total,
     };
   },
+  ["catalog-product-page"],
+  { revalidate: 300, tags: [CATALOG_CACHE_TAG] },
 );
 
-export const getCatalogProduct = cache(async (slug: string) => {
+export const getCatalogProductPage = cache(getCachedCatalogProductPage);
+
+const getCachedCatalogProduct = unstable_cache(async (slug: string) => {
     const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("products")
@@ -408,5 +426,7 @@ export const getCatalogProduct = cache(async (slug: string) => {
     throw new Error("Unable to load the catalog product.");
   }
 
-  return data ? mapProduct(data as unknown as ProductRow) : null;
-});
+  return data ? mapProduct(data) : null;
+}, ["catalog-product"], { revalidate: 300, tags: [CATALOG_CACHE_TAG] });
+
+export const getCatalogProduct = cache(getCachedCatalogProduct);

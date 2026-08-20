@@ -4,15 +4,19 @@ import { revalidatePath } from "next/cache";
 
 import type { CheckoutField, CheckoutState } from "./checkout-state";
 import { normalizePhone } from "../../../lib/phone";
+import type { Database } from "../../../lib/supabase/database.types";
 import { createClient } from "../../../lib/supabase/server";
 
-const DELIVERY_METHODS = new Set([
+type DeliveryMethod = Database["public"]["Enums"]["delivery_method"];
+type PaymentMethod = Database["public"]["Enums"]["payment_method"];
+
+const DELIVERY_METHODS = new Set<string>([
   "post_office",
   "address",
   "schedule",
   "taxi",
 ]);
-const PAYMENT_METHODS = new Set([
+const PAYMENT_METHODS = new Set<string>([
   "cash_on_delivery",
   "card_on_delivery",
   "bank_transfer",
@@ -20,7 +24,13 @@ const PAYMENT_METHODS = new Set([
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-type DeliveryMethod = "address" | "post_office" | "schedule" | "taxi";
+function isDeliveryMethod(value: string): value is DeliveryMethod {
+  return DELIVERY_METHODS.has(value);
+}
+
+function isPaymentMethod(value: string): value is PaymentMethod {
+  return PAYMENT_METHODS.has(value);
+}
 
 function valueFrom(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -132,10 +142,16 @@ export async function createOrder(
     establishmentName.length > 160 ||
     note.length > 1000 ||
     !UUID_PATTERN.test(checkoutToken) ||
-    !DELIVERY_METHODS.has(deliveryMethod) ||
-    !PAYMENT_METHODS.has(paymentMethod)
+    !isDeliveryMethod(deliveryMethod) ||
+    !isPaymentMethod(paymentMethod)
   ) {
     return errorState("Перевірте дані замовлення та повторіть спробу.");
+  }
+
+  if (!phone) {
+    return errorState("Вкажіть коректний номер телефону.", {
+      phone: "Вкажіть коректний номер телефону.",
+    });
   }
 
   const supabase = await createClient();
@@ -152,12 +168,12 @@ export async function createOrder(
     p_checkout_token: checkoutToken,
     p_customer_first_name: firstName,
     p_customer_last_name: lastName,
-    p_customer_note: note || null,
+    p_customer_note: note,
     p_customer_phone: phone,
     p_delivery_city: city,
     p_delivery_details: deliveryDetails,
     p_delivery_method: deliveryMethod,
-    p_establishment_name: establishmentName || null,
+    p_establishment_name: establishmentName,
     p_is_private_person: formData.get("isPrivatePerson") === "on",
     p_items: items,
     p_payment_method: paymentMethod,
@@ -192,8 +208,8 @@ export async function createOrder(
     await supabase.rpc("save_default_checkout_address", {
       p_city: city,
       p_delivery_details: deliveryDetails,
-      p_delivery_method: deliveryMethod as DeliveryMethod,
-      p_establishment_name: establishmentName || null,
+      p_delivery_method: deliveryMethod,
+      p_establishment_name: establishmentName,
       p_first_name: firstName,
       p_is_private_person: formData.get("isPrivatePerson") === "on",
       p_last_name: lastName,

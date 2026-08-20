@@ -28,7 +28,9 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
     const supabase = createClient();
     let mounted = true;
 
-    void supabase.auth.getUser().then(async ({ data: { user } }) => {
+    const refreshWishlistCount = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+
       if (!user) return;
 
       const { count } = await supabase
@@ -37,10 +39,17 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
         .eq("user_id", user.id);
 
       if (mounted) setCurrentWishlistCount(count ?? 0);
-    });
+    };
+    const onWishlistUpdated = () => {
+      void refreshWishlistCount();
+    };
+
+    void refreshWishlistCount();
+    window.addEventListener("dreamshop:wishlist-updated", onWishlistUpdated);
 
     return () => {
       mounted = false;
+      window.removeEventListener("dreamshop:wishlist-updated", onWishlistUpdated);
     };
   }, []);
 

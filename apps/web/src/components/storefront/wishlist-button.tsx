@@ -77,13 +77,39 @@ export function WishlistButton({
     };
   }, [productId]);
 
+  useEffect(() => {
+    const onWishlistUpdated = (event: Event) => {
+      const { detail } = event as CustomEvent<{
+        productId: string;
+        wishlisted: boolean;
+      }>;
+
+      if (detail.productId === productId) {
+        setCurrentWishlisted(detail.wishlisted);
+      }
+    };
+
+    window.addEventListener("dreamshop:wishlist-updated", onWishlistUpdated);
+
+    return () => {
+      window.removeEventListener("dreamshop:wishlist-updated", onWishlistUpdated);
+    };
+  }, [productId]);
+
   const actionLabel = currentWishlisted
     ? `Видалити ${productName} з обраного`
     : `Додати ${productName} до обраного`;
 
   const updateWishlist = async (formData: FormData) => {
     await toggleWishlistItem(formData);
-    setCurrentWishlisted((value) => !value);
+    const nextWishlisted = !currentWishlisted;
+
+    setCurrentWishlisted(nextWishlisted);
+    window.dispatchEvent(
+      new CustomEvent("dreamshop:wishlist-updated", {
+        detail: { productId, wishlisted: nextWishlisted },
+      }),
+    );
   };
 
   return (

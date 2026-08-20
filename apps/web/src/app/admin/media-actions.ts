@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { getAdminContext } from "../../lib/auth/admin";
+import { refreshCatalogCache } from "../../lib/catalog-cache";
+import type { Database } from "../../lib/supabase/database.types";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -99,7 +101,8 @@ export async function saveProductImage(
     return mediaError("Товар не знайдено.");
   }
 
-  const kind = input.slot === 0 ? "main" : "gallery";
+  const kind: Database["public"]["Enums"]["media_kind"] =
+    input.slot === 0 ? "main" : "gallery";
   const { data: current, error: currentError } = await context.supabase
     .from("product_media")
     .select("id,object_key")
@@ -137,6 +140,7 @@ export async function saveProductImage(
 
     revalidatePath("/admin");
     revalidatePath(`/admin/products/${input.productId}`);
+    refreshCatalogCache();
 
     return {
       message: "Фото замінено.",
@@ -160,6 +164,7 @@ export async function saveProductImage(
 
   revalidatePath("/admin");
   revalidatePath(`/admin/products/${input.productId}`);
+  refreshCatalogCache();
 
   return {
     message: "Фото додано.",
@@ -210,6 +215,7 @@ export async function removeProductImage(
 
   revalidatePath("/admin");
   revalidatePath(`/admin/products/${productId}`);
+  refreshCatalogCache();
 
   return {
     key: current.object_key,
@@ -257,7 +263,7 @@ export async function saveCategoryCover(
 
   const values = {
     alt_text: input.altText.trim(),
-    kind: "cover",
+    kind: "cover" as const,
     mime_type: input.mimeType,
     object_key: input.objectKey,
     sort_order: 0,
@@ -280,6 +286,7 @@ export async function saveCategoryCover(
 
     revalidatePath("/admin");
     revalidatePath(`/admin/categories/${input.categoryId}`);
+    refreshCatalogCache();
 
     return {
       message: "Обкладинку замінено.",
@@ -303,6 +310,7 @@ export async function saveCategoryCover(
 
   revalidatePath("/admin");
   revalidatePath(`/admin/categories/${input.categoryId}`);
+  refreshCatalogCache();
 
   return {
     message: "Обкладинку додано.",
@@ -352,6 +360,7 @@ export async function removeCategoryCover(
 
   revalidatePath("/admin");
   revalidatePath(`/admin/categories/${categoryId}`);
+  refreshCatalogCache();
 
   return {
     key: current.object_key,

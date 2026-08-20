@@ -6,22 +6,6 @@ import { createClient } from "../../../lib/supabase/server";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-type ProductRow = {
-  category: {
-    is_active: boolean;
-  } | null;
-  id: string;
-  in_stock: boolean;
-  media: Array<{
-    object_key: string;
-    sort_order: number;
-  }> | null;
-  name: string;
-  price: number;
-  slug: string;
-  stock_quantity: number | null;
-};
-
 export type CartRefreshResult =
   | { products: CartProduct[]; status: "success" }
   | { products: []; status: "error" };
@@ -51,7 +35,7 @@ export async function refreshCartProducts(
     return { products: [], status: "error" };
   }
 
-  const products = ((data ?? []) as unknown as ProductRow[]).map((product) => {
+  const products = (data ?? []).map((product) => {
     const mainImage = product.media?.find(
       ({ sort_order }) => sort_order === 0,
     );

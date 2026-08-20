@@ -256,7 +256,7 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   }
 
   const categories = (categoriesResult.data ?? []) as CategoryRow[];
-  const products = (productsResult.data ?? []) as unknown as ProductRow[];
+  const products = productsResult.data ?? [];
   const productMediaUrls = new Map(
     products.map((product) => {
       const media = primaryMedia(product);

@@ -16,54 +16,12 @@ import { CancelOrderForm } from "./cancel-order-form";
 import { RepeatOrderButton } from "../../../../components/storefront/repeat-order-button";
 import { CheckoutProgress } from "../../../../components/storefront/checkout-progress";
 
-type CurrentProduct = {
-  id: string;
-  in_stock: boolean;
-  is_active: boolean;
-  media: Array<{
-    object_key: string;
-    sort_order: number;
-  }> | null;
-  name: string;
-  price: number;
-  slug: string;
-  stock_quantity: number | null;
-};
-
 export const metadata: Metadata = {
   title: "Замовлення - DreamShop",
   robots: {
     follow: false,
     index: false,
   },
-};
-
-type OrderItem = {
-  id: string;
-  product_image_object_key: string | null;
-  product_name: string;
-  product_slug: string | null;
-  product: CurrentProduct | null;
-  quantity: number;
-  unit_price: number;
-};
-
-type Order = {
-  customer_first_name: string;
-  customer_last_name: string;
-  delivery_city: string;
-  delivery_details: string;
-  delivery_method: string;
-  delivery_amount: number;
-  discount_amount: number;
-  id: string;
-  items: OrderItem[];
-  order_number: number;
-  payment_method: string;
-  status: OrderStatus;
-  subtotal: number;
-  tracking_number: string | null;
-  total: number;
 };
 
 type OrderPageProps = {
@@ -119,7 +77,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
     notFound();
   }
 
-  const order = data as unknown as Order;
+  const order = data;
 
   if (!isOrderStatus(order.status)) {
     notFound();

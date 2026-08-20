@@ -53,14 +53,6 @@ type RecentOrder = {
   total: number;
 };
 
-type StockProduct = {
-  category: { name: string } | null;
-  id: string;
-  in_stock: boolean;
-  name: string;
-  stock_quantity: number | null;
-};
-
 type IntegrationSummary = {
   failed_count: number;
   oldest_pending_at: string | null;
@@ -183,7 +175,7 @@ export default async function AdminDashboardPage() {
   const recentOrders = (ordersResult.data ?? [])
     .filter((order) => isOrderStatus(order.status))
     .map((order) => order as RecentOrder);
-  const stockProducts = (stockResult.data ?? []) as unknown as StockProduct[];
+  const stockProducts = stockResult.data ?? [];
   const integrationAvailable =
     !integrationSummaryResult.error && !failedEventsResult.error;
   const integrationSummary = ((integrationAvailable

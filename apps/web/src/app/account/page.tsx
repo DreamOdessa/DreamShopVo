@@ -56,20 +56,6 @@ type Profile = {
   role: "admin" | "customer" | "tester";
 };
 
-type AccountOrder = {
-  created_at: string;
-  discount_amount: number;
-  id: string;
-  items: Array<{
-    id: string;
-    product_name: string;
-    quantity: number;
-  }> | null;
-  order_number: number;
-  status: OrderStatus;
-  total: number;
-};
-
 type AccountNotification = {
   body: string;
   created_at: string;
@@ -231,7 +217,7 @@ export default async function AccountPage() {
   const profile = profileData as Profile | null;
   const orders = (ordersResult.error ? [] : (ordersResult.data ?? []))
     .filter((order) => isOrderStatus(order.status))
-    .map((order) => order as unknown as AccountOrder);
+    .map((order) => order);
   const notifications = (notificationsResult.error
     ? []
     : (notificationsResult.data ?? [])) as AccountNotification[];

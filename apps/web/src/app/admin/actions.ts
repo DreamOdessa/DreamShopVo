@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getAdminContext } from "../../lib/auth/admin";
+import { refreshCatalogCache } from "../../lib/catalog-cache";
 import { getApiUrl } from "../../lib/env";
 
 import type { AdminActionState } from "./action-state";
@@ -285,6 +286,7 @@ export async function createCategory(
   }
 
   revalidatePath("/admin");
+  refreshCatalogCache();
 
   return {
     message: "Категорію створено.",
@@ -330,6 +332,7 @@ export async function updateCategory(
 
   revalidatePath("/admin");
   revalidatePath(`/admin/categories/${categoryId}`);
+  refreshCatalogCache();
 
   return {
     message: "Зміни категорії збережено.",
@@ -394,6 +397,7 @@ export async function deleteCategory(
   }
 
   revalidatePath("/admin");
+  refreshCatalogCache();
   redirect("/admin");
 }
 
@@ -424,6 +428,7 @@ export async function createProduct(
   }
 
   revalidatePath("/admin");
+  refreshCatalogCache();
   redirect(`/admin/products/${data.id}`);
 }
 
@@ -465,6 +470,7 @@ export async function updateProduct(
 
   revalidatePath("/admin");
   revalidatePath(`/admin/products/${productId}`);
+  refreshCatalogCache();
 
   return {
     message: "Зміни товару збережено.",
@@ -505,8 +511,8 @@ export async function updateProductStock(
   }
 
   const { data, error } = await context.supabase.rpc("set_product_stock", {
-    p_expected_stock: expectedStock,
-    p_new_stock: stockQuantity,
+    ...(expectedStock === null ? {} : { p_expected_stock: expectedStock }),
+    ...(stockQuantity === null ? {} : { p_new_stock: stockQuantity }),
     p_product_id: productId,
   });
 
@@ -524,6 +530,7 @@ export async function updateProductStock(
   revalidatePath(`/admin/products/${productId}`);
   revalidatePath("/cart");
   revalidatePath("/catalog");
+  refreshCatalogCache();
 
   return {
     message:
@@ -591,5 +598,6 @@ export async function deleteProduct(
   }
 
   revalidatePath("/admin");
+  refreshCatalogCache();
   redirect("/admin");
 }

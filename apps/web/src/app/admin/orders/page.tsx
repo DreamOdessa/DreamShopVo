@@ -48,19 +48,6 @@ type AdminOrdersPageProps = {
   }>;
 };
 
-type OrderRow = {
-  created_at: string;
-  customer_first_name: string;
-  customer_last_name: string;
-  customer_phone: string;
-  delivery_city: string;
-  id: string;
-  items: Array<{ count: number }> | null;
-  order_number: number;
-  status: OrderStatus;
-  total: number;
-};
-
 type OrderStatusCountRow = {
   order_count: number | string;
   status: string;
@@ -165,17 +152,19 @@ export default async function AdminOrdersPage({
     ordersQuery = ordersQuery.or(orderSearchFilter(searchQuery));
   }
 
+  const summaryArgs = {
+    ...(searchQuery ? { p_search: searchQuery } : {}),
+    ...(since ? { p_since: since } : {}),
+    ...(activeStatus ? { p_status: activeStatus } : {}),
+  };
+  const statusCountsArgs = {
+    ...(searchQuery ? { p_search: searchQuery } : {}),
+    ...(since ? { p_since: since } : {}),
+  };
   const [ordersResult, summaryResult, statusCountsResult] = await Promise.all([
     ordersQuery,
-    supabase.rpc("get_admin_order_summary", {
-      p_search: searchQuery || null,
-      p_since: since,
-      p_status: activeStatus,
-    }),
-    supabase.rpc("get_admin_order_status_counts", {
-      p_search: searchQuery || null,
-      p_since: since,
-    }),
+    supabase.rpc("get_admin_order_summary", summaryArgs),
+    supabase.rpc("get_admin_order_status_counts", statusCountsArgs),
   ]);
   const fallbackCountResults = statusCountsResult.error
     ? await Promise.all(
@@ -216,7 +205,7 @@ export default async function AdminOrdersPage({
     throw new Error("Unable to load orders.");
   }
 
-  const orders = (ordersResult.data ?? []) as unknown as OrderRow[];
+  const orders = ordersResult.data ?? [];
   const filteredOrderCount = ordersResult.count ?? 0;
   const pageCount = Math.max(1, Math.ceil(filteredOrderCount / PAGE_SIZE));
 

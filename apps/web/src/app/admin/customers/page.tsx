@@ -42,7 +42,7 @@ type CustomerRow = {
   id: string;
   last_name: string | null;
   phone: string | null;
-  role: "customer" | "tester";
+  role: "admin" | "customer" | "tester";
 };
 
 const PAGE_SIZE = 25;
@@ -157,7 +157,7 @@ export default async function AdminCustomersPage({
     throw new Error("Unable to load customers.");
   }
 
-  const customers = (customersResult.data ?? []) as unknown as CustomerRow[];
+  const customers = customersResult.data ?? [];
   const filteredCustomerCount = customersResult.count ?? 0;
   const pageCount = Math.max(1, Math.ceil(filteredCustomerCount / PAGE_SIZE));
 

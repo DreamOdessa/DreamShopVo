@@ -487,6 +487,22 @@ values (
   1
 );
 
+insert into public.integration_outbox (
+  id,
+  event_type,
+  payload,
+  attempts,
+  last_error
+)
+overriding system value
+values (
+  900001,
+  'rls-admin-retry-test',
+  '{"source":"rls_smoke"}'::jsonb,
+  10,
+  'Simulated delivery failure'
+);
+
 begin;
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000002';
 set local request.jwt.claims = '{"app_metadata":{"role":"admin"}}';
@@ -765,6 +781,14 @@ begin
   end;
 end;
 $$;
+select 1 / case
+  when public.retry_admin_integration_event(900001) then 1
+  else 0
+end as admin_retries_failed_integration_event;
+select 1 / case
+  when not public.retry_admin_integration_event(900001) then 1
+  else 0
+end as integration_retry_is_idempotent;
 set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
 set local request.jwt.claims =
   '{"sub":"00000000-0000-4000-8000-000000000001","app_metadata":{"role":"customer"}}';

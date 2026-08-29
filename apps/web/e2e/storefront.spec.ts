@@ -301,6 +301,10 @@ test("homepage uses showcase and popular catalog flags", async ({ page }) => {
       name: "Мангові чипси",
     }),
   ).toBeVisible();
+  const mangoCard = popularProducts.locator(".product-card").filter({
+    hasText: "Мангові чипси",
+  });
+  await expect(mangoCard.getByRole("link")).toHaveCount(1);
   await expect(
     popularProducts.getByRole("link", {
       exact: true,

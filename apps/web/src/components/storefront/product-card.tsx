@@ -1,4 +1,4 @@
-import { ArrowUpRight, PackageOpen } from "lucide-react";
+import { PackageOpen } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -38,11 +38,7 @@ export function ProductCard({
         returnPath={returnPath}
         wishlisted={wishlisted}
       />
-      <Link
-        aria-label={`Відкрити товар ${product.name}`}
-        className="product-card-media"
-        href={`/product/${product.slug}`}
-      >
+      <div className="product-card-media">
         {mainImage ? (
           <Image
             alt={mainImage.altText || product.name}
@@ -60,7 +56,7 @@ export function ProductCard({
         {product.organic ? (
           <span className="product-card-badge">Органічний</span>
         ) : null}
-      </Link>
+      </div>
 
       <div className="product-card-copy">
         <div className="product-card-meta">
@@ -68,19 +64,9 @@ export function ProductCard({
           {product.weight ? <span>{product.weight}</span> : null}
         </div>
 
-        <div className="product-card-title-row">
-          <h2>
+          <h2 className="product-card-title">
             <Link href={`/product/${product.slug}`}>{product.name}</Link>
           </h2>
-          <Link
-            className="product-card-open"
-            href={`/product/${product.slug}`}
-            title={`Відкрити ${product.name}`}
-          >
-            <ArrowUpRight aria-hidden size={18} strokeWidth={1.8} />
-            <span className="sr-only">Відкрити {product.name}</span>
-          </Link>
-        </div>
 
         <div className="product-card-price-row">
           <strong>{priceFormatter.format(product.price)}</strong>

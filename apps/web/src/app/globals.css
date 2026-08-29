@@ -4157,33 +4157,15 @@ input:focus-visible {
   font-size: 0.7rem;
 }
 
-.product-card-title-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.product-card-title-row h2 {
+.product-card-title {
   margin: 0;
   font-size: 0.96rem;
   line-height: 1.35;
 }
 
-.product-card-title-row h2 a {
+.product-card-title a {
   color: #22494f;
   text-decoration: none;
-}
-
-.product-card-open {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 auto;
-  border: 1px solid #d4dfdb;
-  border-radius: 6px;
-  place-items: center;
-  color: #32616a;
 }
 
 .product-card-price-row {

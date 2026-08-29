@@ -32,6 +32,7 @@ const products = [
     ingredients: ["манго"],
     is_active: true,
     is_popular: true,
+    legacy_id: "legacy-mango-chips",
     media: [],
     name: "Мангові чипси",
     organic: true,
@@ -58,6 +59,7 @@ const products = [
     ingredients: ["полуниця"],
     is_active: true,
     is_popular: false,
+    legacy_id: "legacy-strawberry-chips",
     media: [],
     name: "Полуничні чипси",
     organic: true,
@@ -162,6 +164,7 @@ function sendJson(response, body, total = Array.isArray(body) ? body.length : 1)
 function matchingProducts(searchParams) {
   const slug = searchParams.get("slug");
   const idFilter = searchParams.get("id");
+  const legacyId = searchParams.get("legacy_id");
   const excludedId = idFilter?.startsWith("neq.")
     ? idFilter.replace("neq.", "")
     : null;
@@ -171,6 +174,7 @@ function matchingProducts(searchParams) {
 
   return products.filter((product) => {
     if (slug && product.slug !== slug.replace("eq.", "")) return false;
+    if (legacyId && product.legacy_id !== legacyId.replace("eq.", "")) return false;
     if (exactId && product.id !== exactId) return false;
     return product.id !== excludedId;
   });

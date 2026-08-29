@@ -206,6 +206,39 @@ test("unauthenticated admin routes require sign-in", async ({ page }) => {
   ).toBeVisible();
 });
 
+test("legacy storefront routes use permanent canonical redirects", async ({ page }) => {
+  const redirects = [
+    { from: "/products", to: "/catalog" },
+    { from: "/products/legacy-mango-chips", to: "/product/mango-chips" },
+    { from: "/profile", to: "/account" },
+    { from: "/orders", to: "/account#orders" },
+  ];
+
+  for (const { from, to } of redirects) {
+    const response = await page.request.get(from, { maxRedirects: 0 });
+    const location = response.headers().location;
+
+    expect(response.status()).toBe(308);
+    expect(location).toBeDefined();
+    expect(new URL(location ?? "", "http://localhost:3012")).toHaveProperty(
+      "pathname",
+      to.split("#")[0],
+    );
+    expect(new URL(location ?? "", "http://localhost:3012")).toHaveProperty(
+      "hash",
+      to.includes("#") ? `#${to.split("#")[1]}` : "",
+    );
+  }
+});
+
+test("unknown legacy product routes remain a 404", async ({ page }) => {
+  const response = await page.request.get("/products/unknown-legacy-product", {
+    maxRedirects: 0,
+  });
+
+  expect(response.status()).toBe(404);
+});
+
 test("mobile menu is keyboard-accessible and respects reduced motion", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "reduce" });

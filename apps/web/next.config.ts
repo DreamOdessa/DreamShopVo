@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
+import { getApiUrl, validateProductionEnv } from "./src/lib/env";
+
+validateProductionEnv();
+
+const apiUrl = new URL(getApiUrl());
+const apiProtocol = apiUrl.protocol === "https:" ? "https" : "http";
 const maintenanceEnabled = process.env.STOREFRONT_MAINTENANCE === "true";
 const securityHeaders = [
   ...(maintenanceEnabled
@@ -40,15 +46,10 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        hostname: "dreamshop-api.dreamshop-vo.workers.dev",
+        hostname: apiUrl.hostname,
         pathname: "/media/**",
-        protocol: "https",
-      },
-      {
-        hostname: "localhost",
-        pathname: "/media/**",
-        port: "8787",
-        protocol: "http",
+        port: apiUrl.port,
+        protocol: apiProtocol,
       },
     ],
   },

@@ -294,7 +294,8 @@ let stopping = false;
 const appEnvironment = {
   ...process.env,
   NEXT_PUBLIC_API_URL: `http://${host}:${mockPort}`,
-  NEXT_PUBLIC_SITE_URL: `http://localhost:${webPort}`,
+  NEXT_PUBLIC_E2E_MOCK: "1",
+  NEXT_PUBLIC_SITE_URL: "https://dream-odessa.shop",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "playwright-public-key",
   NEXT_PUBLIC_SUPABASE_URL: `http://${host}:${mockPort}`,
   STOREFRONT_MAINTENANCE: "false",

@@ -398,6 +398,34 @@ test("mobile menu is keyboard-accessible and respects reduced motion", async ({ 
   )).toBe(false);
 });
 
+test("mobile admin navigation shows every primary section without horizontal scrolling", async ({
+  context,
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await authenticateAsFixtureAdmin(context);
+  await openPublicPage(page, "/admin/dashboard");
+
+  const navigation = page.getByRole("navigation", {
+    name: "Адміністративна навігація",
+  });
+  const links = navigation.getByRole("link");
+
+  await expect(links).toHaveCount(4);
+  for (const link of await links.all()) {
+    await expect(link).toBeVisible();
+    const box = await link.boundingBox();
+    expect(box?.height).toBeGreaterThanOrEqual(44);
+  }
+
+  const dimensions = await navigation.evaluate((element) => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
+  await expectNoHorizontalOverflow(page, "/admin/dashboard");
+});
+
 test("mobile checkout keeps recipient fields before the order summary", async ({
   context,
   page,

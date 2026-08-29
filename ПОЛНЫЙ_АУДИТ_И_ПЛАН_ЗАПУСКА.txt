@@ -212,8 +212,9 @@ CI и мониторинг:
 - [НЕ ГОТОВО] Описать retention, export и deletion персональных данных.
 - [НЕ ГОТОВО] Сохранять Nova Poshta city/warehouse refs вместе с display names
   либо официально принять ручную обработку оператором.
-- [НЕ ГОТОВО] Стандартизировать роли: сейчас документация говорит staff, а
-  схема содержит tester. Принять один словарь.
+- [ГОТОВО] Роли стандартизированы как customer/tester/admin: это enum schema,
+  RLS, Worker, Next types и ADMIN_ARCHITECTURE.md. Новые granular roles —
+  отдельная post-launch задача с требованиями и UAT.
 
 Витрина и админка:
 - [ГОТОВО] Витрина использует showInShowcase и isPopular; «Популярні» не

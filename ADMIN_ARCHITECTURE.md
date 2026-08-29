@@ -2,7 +2,7 @@
 
 ## Roles and server enforcement
 
-Roles are customer, staff and admin. UI visibility is never an authorization control: server actions and Worker operations must use Supabase claims/RLS (`apps/web/src/lib/auth/admin.ts`, `apps/worker/src/supabase-auth.ts`). All admin mutations should record actor, target, outcome and request correlation once audit history is introduced.
+Roles are customer, tester and admin. UI visibility is never an authorization control: server actions and Worker operations must use Supabase claims/RLS (`apps/web/src/lib/auth/admin.ts`, `apps/worker/src/supabase-auth.ts`). All admin mutations should record actor, target, outcome and request correlation once audit history is introduced.
 
 | Module | Launch-critical operations | Enforcement |
 | --- | --- | --- |
@@ -14,7 +14,7 @@ Roles are customer, staff and admin. UI visibility is never an authorization con
 
 ## Explicitly post-launch
 
-Variants, promo codes, bulk edits/imports, CMS/site settings expansion, advanced analytics, full audit history and granular staff permissions are post-launch until requirements, authorization and UAT are written.
+Variants, promo codes, bulk edits/imports, CMS/site settings expansion, advanced analytics, full audit history and granular role permissions are post-launch until requirements, authorization and UAT are written.
 
 ## Acceptance
 

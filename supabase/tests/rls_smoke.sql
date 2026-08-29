@@ -336,6 +336,19 @@ from public.create_order(
   '40000000-0000-4000-8000-000000000001'
 );
 select 1 / case
+  when count(*) = 1
+    and min(type) = 'new_order'
+    and min(title) = 'Замовлення прийнято'
+    and min(data ->> 'status') = 'pending' then 1
+  else 0
+end as created_order_notifies_customer_in_app
+from public.notifications
+where order_id = (
+  select id
+  from public.orders
+  where checkout_token = '40000000-0000-4000-8000-000000000001'
+);
+select 1 / case
   when count(*) = 1 and min(total) = 20 then 1
   else 0
 end as customer_reads_own_order
@@ -798,7 +811,7 @@ select 1 / case
   else 0
 end as admin_can_delete_catalog_records;
 select 1 / case
-  when count(*) = 3 then 1
+  when count(*) = 4 then 1
   else 0
 end as status_changes_notify_customer
 from public.notifications
@@ -828,14 +841,14 @@ set local request.jwt.claim.sub = '00000000-0000-4000-8000-000000000001';
 set local request.jwt.claims =
   '{"sub":"00000000-0000-4000-8000-000000000001","app_metadata":{"role":"customer"}}';
 select 1 / case
-  when count(*) = 4 then 1
+  when count(*) = 6 then 1
   else 0
 end as customer_reads_own_notifications
 from public.notifications;
 update public.notifications
 set read_at = now();
 select 1 / case
-  when count(*) = 4 and bool_and(read_at is not null) then 1
+  when count(*) = 6 and bool_and(read_at is not null) then 1
   else 0
 end as customer_marks_own_notifications_read
 from public.notifications;

@@ -10,6 +10,29 @@
 [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] — требуется доступ, решение или фактические бизнес-данные.
 [ОТЛОЖЕНО ПОСЛЕ ЗАПУСКА] — не блокирует первый запуск при принятых ниже ограничениях.
 
+АКТУАЛИЗАЦИЯ 29.08.2026 — DECOMMISSION И PRODUCTION DOMAIN
+
+[ГОТОВО] Commit 7f83b61 `chore: remove decommissioned legacy application`
+удалил из репозитория корневые CRA/Firebase/Prisma/Vercel API/Functions,
+старые данные, legacy-документацию, старые design captures, переходные
+скрипты, root dependencies и старые маршруты/кэши в новом приложении.
+Сохранены только `apps/web`, `apps/worker`, `supabase`, актуальные документы и
+материалы дизайна владельца. Удаление основано на подтверждении владельца, что
+каталог перенесён в Supabase.
+
+[ГОТОВО] Commit 7f83b61 отправлен в `origin/main` и
+`origin/codex/phase4-legacy-preview`. На момент проверки
+`https://dreamshop-next.vercel.app` отвечает Next.js deployment с текущими
+security headers и идентификатором Vercel от 29.08.2026.
+
+[НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] Основной домен `https://dream-odessa.shop` пока
+отдаёт старый статический сайт: HTTP 200, `content-disposition: index.html`,
+`last-modified: 29.08.2026 17:45 UTC`. Его нужно отвязать от Vercel-проекта
+`dream-shop-vo` и закрепить за `dreamshop-next` в Vercel/DNS. В текущей среде
+нет `VERCEL_TOKEN`, а `npx vercel whoami` возвращает `Logged out`; этот шаг
+невозможно выполнить изменением репозитория. До переключения домена реальным
+клиентам нельзя считать запуск завершённым.
+
 1. ПРАВИЛО ЭТОГО ЭТАПА
 
 Исходная редакция этого документа была единственным результатом этапа аудита:

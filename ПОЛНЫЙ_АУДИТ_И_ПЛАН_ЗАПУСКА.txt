@@ -1,0 +1,684 @@
+ПОЛНЫЙ АУДИТ DREAMSHOPVO И ПЛАН ЗАПУСКА
+Дата среза: 29.08.2026 (UTC)
+Проверенный commit: 015e95e — update
+Ветка: codex/phase4-legacy-preview
+
+СТАТУСЫ
+[ГОТОВО] — подтверждено кодом, тестами, документацией или commit.
+[НЕ ГОТОВО] — необходимо выполнить до соответствующего этапа.
+[НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] — требуется доступ, решение или фактические бизнес-данные.
+[ОТЛОЖЕНО ПОСЛЕ ЗАПУСКА] — не блокирует первый запуск при принятых ниже ограничениях.
+
+1. ПРАВИЛО ЭТОГО ЭТАПА
+
+Этот документ — единственный результат текущего этапа. Код, зависимости, базы,
+Firebase, Supabase, Cloudflare, Vercel, DNS, production-конфигурации, старые
+файлы и размещение архивов этим этапом не менялись. Старый сайт не перемещался
+и не удалялся.
+
+После проверки документа допустим только отдельный документационный commit:
+docs: add complete project audit and launch plan
+После успешной проверки этого commit он должен быть отправлен в удалённый
+репозиторий. Никакие другие изменения в этом commit не допускаются.
+
+2. АРХИТЕКТУРА И ТЕКУЩАЯ ГОТОВНОСТЬ
+
+Новый production-стек:
+- apps/web — Next.js 16, React 19, Supabase;
+- apps/worker — Cloudflare Worker, R2, Telegram, Nova Poshta;
+- supabase — SQL-схема, миграции, RLS и серверные операции.
+
+Legacy-стек:
+- корневой CRA/Firebase-магазин;
+- корневые Vercel API, Better Auth и Prisma/PostgreSQL;
+- Firebase Functions;
+- старые Firebase/import-скрипты и документация.
+
+Состояние master rebuild:
+- [ГОТОВО] RB001–RB009;
+- [НЕ ГОТОВО] RB010 — удалённая репетиция cutover;
+- [НЕ ГОТОВО] RB011 — 14 дней наблюдения после production cutover;
+- [НЕ ГОТОВО] RB012 — архивирование legacy;
+- [ОТЛОЖЕНО ПОСЛЕ ЗАПУСКА] RB013 — расширение админ-панели.
+
+ВЕРДИКТ: новый проект функционально подготовлен, но production-запуск реальных
+клиентов пока НЕ РАЗРЕШЁН. Блокеры: неподтверждённый удалённый cutover/rollback,
+нерабочий репозиторный rollback, отсутствие legacy-редиректов, ложноположительная
+production-сборка без обязательных env, неполные условия продажи и контент товара,
+неопределённая доставка/банковская оплата, отсутствие полного мониторинга,
+клиентских подтверждений заказов и SEO-ввода.
+
+3. УЖЕ ВЫПОЛНЕННЫЕ РАБОТЫ
+
+[ГОТОВО] fdcf18b — feat: complete phase 4 parity evidence
+- подготовлены авторизованные fixture-состояния;
+- расширены Playwright-проверки;
+- добавлены desktop/tablet/mobile снимки;
+- подготовлено 42 fixture-снимка, 27 legacy-снимков и 27 SVG-wireframes;
+- проверены overflow, серьёзные axe-ошибки и визуальное соответствие;
+- исправлены найденные проблемы контраста и переполнения.
+
+[ГОТОВО] a2f9cab — docs: complete phase 5 admin UAT
+- задокументированы CRUD каталога, медиа, остатки и конфликты изменений;
+- проверены заказы, статусы, tracking и экспорт;
+- подтверждены клиенты, скидки, повтор интеграций, checkout и отмена.
+
+[ГОТОВО] d03ad35 — chore: prepare phase 6 cutover rehearsal
+- подготовлены cutover runbook и локальный readiness preflight;
+- обновлены аудит и основной план;
+- удалённая репетиция при этом не проводилась.
+
+[ГОТОВО] На дату среза:
+- старый React-проект: 4 набора, 8 тестов — успешно;
+- apps/web: 9 файлов, 31 тест — успешно;
+- Worker: 1 файл, 23 теста — успешно;
+- старый CRA build — успешно;
+- web typecheck и migration boundary — успешно;
+- Worker typecheck и Wrangler dry-run — успешно;
+- Prisma validate, API typecheck и server tests ранее успешно проходили;
+- рабочее дерево перед созданием данного документа было чистым.
+
+[НЕ ГОТОВО] Повтор E2E не завершён из-за lock от другого next build. Это не
+считать ошибкой приложения; требуется чистый повтор перед выпуском UI-изменений.
+
+[НЕ ГОТОВО] apps/web build возвращает код 0 даже без Supabase env: ошибки
+получения данных превращаются в пустую витрину. Такой production build gate
+считать ложноположительным.
+
+4. P0 — ОБЯЗАТЕЛЬНО ДО ЗАПУСКА
+
+4.1. Удалённый cutover и rollback
+- [НЕ ГОТОВО] Vercel CLI не авторизован.
+- [НЕ ГОТОВО] Cloudflare-доступ не подтверждён.
+- [НЕ ГОТОВО] Не подтверждены production env, R2, DNS, aliases, backup и alerting.
+- [НЕ ГОТОВО] Не проводилась полноценная staging-репетиция.
+- [НЕ ГОТОВО] Локальный preflight проверяет маркеры в репозитории, а не реальные
+  удалённые ресурсы.
+- [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] Доступы или выполнение действий владельцем в Vercel,
+  Cloudflare, Supabase, Firebase, DNS и кабинетах поисковиков.
+
+4.2. Старый rollback
+- [НЕ ГОТОВО] firebase.json ссылается на отсутствующий storage.rules.
+- [НЕ ГОТОВО] Firestore rules позволяют публичное чтение каталога, но запрещают
+  любые записи, включая заказы.
+- [НЕ ГОТОВО] src/App.tsx принудительно включает maintenance.
+- [НЕ ГОТОВО] Скрытый путь и sessionStorage не являются авторизацией.
+- [НЕ ГОТОВО] Не восстановлены точные production Firebase rules/functions.
+- [НЕ ГОТОВО] Не получена отдельная копия legacy PostgreSQL и не доказано
+  восстановление.
+- [НЕ ГОТОВО] Не зафиксирован известный рабочий immutable legacy deployment.
+
+До выполнения этих пунктов запрещено обещать rollback продаж через исходники.
+storage.rules нельзя придумывать: нужно получить точную развернутую версию.
+
+4.3. Старые URL и домены
+- [НЕ ГОТОВО] Нет переходов /products → /catalog, /products/:id → новый товар,
+  /profile → /account и /orders → утверждённый маршрут истории заказов.
+- [НЕ ГОТОВО] legacy_id уже есть в Supabase, но не используется для lookup
+  legacy-id → product slug.
+- [НЕ ГОТОВО] dream-odessa.com, старые Vercel aliases и legacy-домены не сведены
+  одним постоянным редиректом.
+- [НЕ ГОТОВО] Нет журнала старых URL и 404 после переключения.
+
+Принятое значение по умолчанию: основной домен — https://dream-odessa.shop.
+Нужны прямые 301/308 без redirect-chain; вторичные домены не должны индексироваться.
+
+4.4. Production env и достоверность витрины
+- [НЕ ГОТОВО] NEXT_PUBLIC_SITE_URL может принять localhost или preview URL.
+- [НЕ ГОТОВО] Сборка должна завершаться ошибкой при пустом, localhost, preview
+  или не-HTTPS SITE_URL.
+- [НЕ ГОТОВО] Проверить Supabase URL/key, Worker API URL и remotePatterns
+  изображений для окончательного Worker hostname.
+- [НЕ ГОТОВО] CI обязан собирать fixture-env и утверждать непустой SSR-каталог;
+  ошибка Supabase не может означать «пустая, но успешная главная».
+
+4.5. Условия продажи и checkout
+- [НЕ ГОТОВО] Нет страниц продавца, контактов, доставки, оплаты, возврата,
+  конфиденциальности, пользовательских условий и публичной оферты.
+- [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] Официальное имя продавца, ФОП/компания, реквизиты,
+  контакты, часы поддержки, география и сроки доставки.
+- [НЕ ГОТОВО] Для банковского перевода нет опубликованных реквизитов или
+  проверенной инструкции.
+- [НЕ ГОТОВО] Checkout показывает доставку «по тарифам перевозчика», но
+  delivery_amount = 0, а итог выглядит как полная окончательная сумма.
+- [НЕ ГОТОВО] До решения нельзя называть стоимость корзины полной суммой к оплате.
+
+Первый запуск: online-card payment не включать. Оставить только подтвержденные
+ручные способы оплаты. Если доставка неизвестна заранее, явно показывать:
+«оплачивается отдельно перевозчику» и не включать её в ложный общий итог.
+Auth-required checkout оставить на v1; guest checkout — post-launch.
+
+4.6. Данные товаров
+- [НЕ ГОТОВО] Проверить каждый активный товар: уникальные name/slug,
+  описание, цена, sale price, наличие, категория, изображение, alt, MIME,
+  доступность R2, вес/объём, состав, аллергены, хранение и срок годности.
+- [НЕ ГОТОВО] Сверить те же значения между карточкой, корзиной, checkout,
+  JSON-LD, Supabase и будущим Merchant Center.
+- [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] Финальные фотографии, составы, аллергены, вес,
+  хранение, сроки и визуальное утверждение каталога.
+
+5. P1 — ОБЯЗАТЕЛЬНО ДО ДОПУСКА РЕАЛЬНЫХ КЛИЕНТОВ
+
+Безопасность и зависимости:
+- [НЕ ГОТОВО] Корневой legacy npm audit: 63 уязвимости: 12 low, 14 moderate,
+  34 high, 3 critical.
+- [НЕ ГОТОВО] Публичные домены всё ещё могут вести на legacy.
+- [НЕ ГОТОВО] Не использовать npm audit fix --force.
+- [НЕ ГОТОВО] Если legacy остаётся публичным — изолировать deployment либо
+  сделать контролируемые patch-обновления, включая react-router-dom 6.30.6.
+- [НЕ ГОТОВО] apps/web имеет 3 moderate через Next/PostCSS/Vite; нужен
+  контролируемый patch до Next 16.3.3 и связанных зависимостей.
+- [ГОТОВО] Worker npm audit: 0 уязвимостей.
+- [НЕ ГОТОВО] Добавить rate limit/Turnstile/WAF для phone login и Telegram completion.
+- [НЕ ГОТОВО] Оставить в публичном /health только грубый статус; подробный health
+  сделать защищённым.
+- [НЕ ГОТОВО] Расширить CSP только через report-only инвентаризацию и затем
+  enforcement.
+
+CI и мониторинг:
+- [НЕ ГОТОВО] CI должен запускать web unit, E2E, legacy unit/server tests,
+  Prisma validate, API typecheck и npm audit.
+- [НЕ ГОТОВО] Добавить обязательный production-like fixture env и проверку
+  непустого SSR-каталога.
+- [НЕ ГОТОВО] Нет production error tracking, uptime alerts, RUM/Web Vitals,
+  владельца инцидента, правил хранения и маскирования наблюдаемых данных.
+- [ГОТОВО] Worker observability включён, но alerting/retention/redaction/cost
+  должны быть настроены отдельно.
+
+Клиенты и данные:
+- [НЕ ГОТОВО] Добавить надёжное подтверждение заказа: email для email-пользователя,
+  Telegram для Telegram-пользователя, in-app как резерв.
+- [НЕ ГОТОВО] Уведомление должно иметь idempotency, retry и статус доставки.
+- [НЕ ГОТОВО] Описать retention, export и deletion персональных данных.
+- [НЕ ГОТОВО] Сохранять Nova Poshta city/warehouse refs вместе с display names
+  либо официально принять ручную обработку оператором.
+- [НЕ ГОТОВО] Стандартизировать роли: сейчас документация говорит staff, а
+  схема содержит tester. Принять один словарь.
+
+Витрина и админка:
+- [НЕ ГОТОВО] Admin пишет showInShowcase и isPopular, но публичная витрина
+  их не использует.
+- [НЕ ГОТОВО] Нельзя называть первые восемь товаров «Популярні».
+- [НЕ ГОТОВО] Главная запрашивает до 120 товаров, затем отображает лишь малую
+  часть и повторяет товары. Нужен отдельный ограниченный homepage query.
+- [НЕ ГОТОВО] Не удалять пока product_views, site_settings, bug_reports,
+  categories.parent_id и products.subcategory_id: это review-required/post-launch.
+
+6. P2 — UX, ДИЗАЙН, SEO И ПРОИЗВОДИТЕЛЬНОСТЬ
+
+Дизайн:
+- [ГОТОВО] Сохранить aqua/cream-айдентику, логотип, округлые controls и спокойный
+  характер витрины; полный редизайн не нужен.
+- [НЕ ГОТОВО] Усилить контраст hero-фона и текста.
+- [НЕ ГОТОВО] Осмысленно использовать логотип в мобильном hero.
+- [НЕ ГОТОВО] Добавить trust strip, идеи использования сиропов, честный FAQ,
+  доставку/оплату, историю бренда и полноценный footer.
+- [НЕ ГОТОВО] Отзывы и рейтинги добавлять только при реальных проверяемых данных.
+- [НЕ ГОТОВО] Карточка товара: состав, аллергены, вес, хранение, срок,
+  доставка, оплата, возврат и поддержка.
+
+Доступность и мобильные сценарии:
+- [НЕ ГОТОВО] Увеличить touch targets 32–40 px до минимум 44 px.
+- [НЕ ГОТОВО] Добавить skip-link.
+- [НЕ ГОТОВО] Оставить одну семантическую ссылку товара вместо трёх дублей.
+- [НЕ ГОТОВО] Исправить focus trap, inert, возврат фокуса и закрытую кнопку
+  мобильного меню.
+- [НЕ ГОТОВО] Исправить mobile checkout: DOM/tab-порядок должен совпадать
+  с визуальным порядком.
+- [НЕ ГОТОВО] Добавить root not-found.tsx на украинском и полноценные
+  loading-состояния.
+- [НЕ ГОТОВО] Улучшить мобильную навигацию админки.
+
+Производительность:
+- [НЕ ГОТОВО] Разделить 6018 строк globals.css на токены, базовые слои и
+  route-компоненты после P0/P1.
+- [НЕ ГОТОВО] Подключить локально поставляемый шрифт через next/font с
+  украинским набором.
+- [НЕ ГОТОВО] Оптимизировать дублированные logo assets около 575 KB и 411 KB.
+- [НЕ ГОТОВО] Сначала измерить, затем ограничить eager/high-priority изображения.
+- [НЕ ГОТОВО] После production-измерений оптимизировать запрос user/wishlist
+  в header.
+- Цели p75: LCP ≤ 2,5 s, INP ≤ 200 ms, CLS ≤ 0,1.
+
+7. LEGACY-ФАЙЛЫ: ТОЧНАЯ КЛАССИФИКАЦИЯ
+
+7.1. Новый production — ОСТАВИТЬ
+- apps/web/**
+- apps/worker/**
+- supabase/**
+- их конфигурации, тесты и production-assets.
+
+7.2. Общие файлы — ОСТАВИТЬ
+- .github/workflows/quality.yml
+- .nvmrc
+- .agents/**
+- AGENTS.md (позже обновить устаревшее описание архитектуры)
+- ARCHITECTURE.md
+- MASTER_REBUILD_PLAN.md
+- PROJECT_AUDIT.md
+- PROJECT_STATUS.md
+- DESIGN_SYSTEM.md
+- ADMIN_ARCHITECTURE.md
+- актуальные cutover/UAT/design-reference документы
+- scripts/check-cutover-readiness.mjs
+- scripts/check-deployment-boundaries.mjs
+- scripts/migrate-live-catalog-to-supabase.mjs
+- scripts/generate-product-covers.mjs
+
+Последние два скрипта в будущем перенести в tools/migration, но не считать мусором.
+
+7.3. Активный CRA rollback — ПОКА НЕ ПЕРЕМЕЩАТЬ
+src/App.tsx
+src/MaintenancePage.tsx
+src/index.tsx
+src/legacy-local-preview.ts
+src/assets/images/logo.png
+src/assets/images/small-icon.png
+src/components/BugReportTool/BugMarker.tsx
+src/components/BugReportTool/BugReportTool.tsx
+src/components/BugReportTool/index.tsx
+src/components/admin/AdminDashboard.tsx
+src/components/admin/AdminNavbar.tsx
+src/components/admin/AdminSidebar.tsx
+src/components/admin/BugReportsPanel.tsx
+src/components/admin/DiagnosticPanel.tsx
+src/components/admin/UserProfileModal.tsx
+src/components/CategoryManager.tsx
+src/components/CategoryShowcase.tsx
+src/components/CategoryShowcaseManager.tsx
+src/components/CategorySidebar.tsx
+src/components/Footer.tsx
+src/components/GoogleLogin.tsx
+src/components/Header.tsx
+src/components/Header.tsx.patch.tmp
+src/components/LoadingSpinner.tsx
+src/components/MoveProductsModal.tsx
+src/components/NotificationBell.tsx
+src/components/NotificationsDrawer.tsx
+src/components/OrderDetails.tsx
+src/components/ProductCard.tsx
+src/components/RequireAdmin.tsx
+src/components/ScrollToTop.tsx
+src/components/ScrollToTopButton.tsx
+src/components/SideCartDrawer.tsx
+src/contexts/AdminContext.tsx
+src/contexts/AuthContext.tsx
+src/contexts/CartContext.tsx
+src/contexts/CategorySidebarContext.tsx
+src/contexts/NotificationContext.tsx
+src/contexts/WishlistContext.tsx
+src/firebase/auth.ts
+src/firebase/config.ts
+src/firebase/messaging.ts
+src/firebase/services.ts
+src/pages/AdminPanel.tsx
+src/pages/Cart.tsx
+src/pages/Checkout.tsx
+src/pages/Home.tsx
+src/pages/Orders.tsx
+src/pages/ProductDetail.tsx
+src/pages/Products.tsx
+src/pages/Profile.tsx
+src/pages/Wishlist.tsx
+src/pages/admin/AdminCategoriesPage.tsx
+src/pages/admin/AdminOrdersPage.tsx
+src/pages/admin/AdminProductsPage.tsx
+src/pages/admin/AdminSettingsPage.tsx
+src/pages/admin/AdminUsersPage.tsx
+src/services/geocodingApi.ts
+src/services/mediaStorage.test.ts
+src/services/mediaStorage.ts
+src/services/novaPoshtaApi.test.ts
+src/services/novaPoshtaApi.ts
+src/styles/GlobalStyles.ts
+src/types/bugReport.ts
+src/types/index.ts
+src/utils/cart.test.ts
+src/utils/cart.ts
+src/utils/imageOptimization.ts
+src/utils/notificationUtils.ts
+src/utils/security.test.ts
+src/utils/security.ts
+
+7.4. Старый CRA public — ПОКА НЕ ПЕРЕМЕЩАТЬ
+public/_headers
+public/apple-touch-icon.png
+public/background-first.PNG
+public/background-second.jpg
+public/data/basic-products.json
+public/favicon-16x16.png
+public/favicon-32x32.png
+public/favicon-48x48.png
+public/favicon.ico
+public/firebase-messaging-sw.js
+public/generated_covers/syrup_cream_soda_cover.webp
+public/generated_covers/syrup_echinacea_cover.webp
+public/generated_covers/syrup_rose_cover.webp
+public/generated_covers/syrup_strawberry_full_cover.webp
+public/generated_covers/syrup_tarragon_cover.webp
+public/index.html
+public/logo-name.PNG
+public/logo.png
+public/logo192.png
+public/logo512.png
+public/manifest.json
+public/robots.txt
+public/service-worker.js
+public/small-icon.png
+public/фон альбома лево.png
+public/фон альбома право .png
+
+7.5. Старые корневые конфигурации — ПОКА НЕ ПЕРЕМЕЩАТЬ
+.firebaserc
+env.example
+firebase.json
+firestore.indexes.json
+firestore.rules
+package.json
+package-lock.json
+tsconfig.json
+vercel.json
+
+Игнорируемый build/** не архивировать и не коммитить: это воспроизводимый build.
+
+7.6. Старый Node/Vercel/Prisma rollback — ПОКА НЕ ПЕРЕМЕЩАТЬ
+api/auth.ts
+api/nova-poshta.ts
+api/telegram-start.ts
+api/telegram-webhook.ts
+api/tsconfig.json
+server/auth.ts
+server/env.ts
+server/prisma.ts
+server/telegramApi.ts
+server/telegramRegistration.ts
+server/telegramTokens.ts
+server/telegramUpdate.ts
+server/telegramTokens.test.js
+server/telegramUpdate.test.js
+prisma/schema.prisma
+prisma/migrations/migration_lock.toml
+prisma/migrations/20260723194500_init/migration.sql
+
+Перед архивом: backup legacy PostgreSQL и проверка восстановления.
+
+7.7. Старые Firebase Functions — ПОКА НЕ ПЕРЕМЕЩАТЬ
+functions/.env.example
+functions/package.json
+functions/package-lock.json
+functions/tsconfig.json
+functions/src/index.ts
+.firebaserc
+firebase.json
+firestore.rules
+firestore.indexes.json
+
+7.8. Старые данные — СВЕРИТЬ ПЕРЕД АРХИВОМ
+data/basic-products.json
+data/firebase-categories.json
+data/firebase-products.json
+public/data/basic-products.json
+
+public/data/basic-products.json использует старая админка. data/basic-products.json
+не имеет найденных ссылок, но должен быть сравнен с Firebase и Supabase.
+
+7.9. Сломанный исторический import-набор — АРХИВИРОВАТЬ ПОСЛЕ ROLLBACK-ОКНА
+scripts/IMPORT_INSTRUCTIONS.md
+scripts/README.md
+scripts/convert-to-firebase.js
+scripts/firebase-console-import-v2.js
+scripts/firebase-console-import.js
+scripts/generate-import-code.js
+scripts/import-firebase-products.js
+scripts/import-now.js
+scripts/package.json
+scripts/package-lock.json
+
+Причины: отсутствуют spicer-parser.js, spicer-parser-fast.js,
+import-spicer-to-firebase.js и data/spicer-products.json. Инструкции содержат
+опасные советы временно открыть Firestore на allow read, write: if true и
+массово удалять Spicer-товары. После переноса пометить:
+HISTORICAL — DO NOT RUN AGAINST PRODUCTION.
+
+7.10. Старая документация — АРХИВИРОВАТЬ ПОСЛЕ ПРОВЕРКИ ССЫЛОК
+README.md
+BUG_REPORT_TOOL_SUMMARY.md
+BUG_TOOL_README.md
+FULL_PROJECT_ANALYSIS.md
+OPTIMIZATION_PLAN.md
+PUSH_FIX.md
+QUICK_TEST.md
+TELEGRAM_NOTIFICATIONS.md
+deploy-bug-tool.sh
+docs/ADMIN_PANEL_UPDATE.md
+docs/BUG_REPORT_TOOL.md
+docs/BUG_REPORT_TOOL_SETUP.md
+docs/DEPLOYMENT_GUIDE.md
+docs/FIREBASE_RULES_SETUP.md
+docs/FIREBASE_SETUP.md
+docs/FIREBASE_STORAGE_SETUP.md
+docs/FIRESTORE_RULES_DEPLOY.md
+docs/IMAGE_OPTIMIZATION_GUIDE.md
+docs/PERFORMANCE_OPTIMIZATION.md
+docs/PUSH_NOTIFICATIONS_BACKEND.md
+docs/PUSH_NOTIFICATIONS_DEBUG.md
+docs/PUSH_NOTIFICATIONS_SETUP.md
+docs/PUSH_NOTIFICATIONS_TEST.md
+docs/QUICK_FIREBASE_SETUP.md
+docs/ИНСТРУКЦИЯ_VERCEL.md
+docs/ИНСТРУКЦИЯ_БЫСТРЫЕ_КНОПКИ.md
+docs/ИНСТРУКЦИЯ_ЗАГРУЗКА_МЕДИА.md
+docs/ИНСТРУКЦИЯ_КАТЕГОРИИ.md
+docs/ИНСТРУКЦИЯ_НОВЫЕ_ФУНКЦИИ.md
+
+7.11. Дизайн-исходники владельца — НЕ УДАЛЯТЬ
+Асортимент Сиропов.txt
+логотипы фоны сайта/**
+docs/Без названия.png
+docs/Без названия 2.png
+docs/категории анимированый спайсер
+docs/карта с фото продукта .md
+
+Файлы «план работы.txt» и «промт по созданию плана.txt» — пользовательские
+требования, а не инструкции кода и не legacy-мусор.
+
+7.12. Подтвержденные кандидаты на удаление ПОСЛЕ rollback-окна
+src/components/Header.tsx.patch.tmp
+src/utils/imageOptimization.ts
+src/utils/notificationUtils.ts
+src/assets/images/logo.png
+src/assets/images/small-icon.png
+
+Дополнительно доказать неиспользование:
+data/basic-products.json
+public/generated_covers/*.webp
+public/фон альбома лево.png
+public/фон альбома право .png
+public/service-worker.js
+public/_headers
+
+Кандидаты на удаление из root dependencies после поиска import/script refs:
+@google-cloud/local-auth
+gsap
+uuid
+@types/uuid
+web-vitals
+
+7.13. Будущая структура после доказанного cutover
+apps/legacy-web/
+apps/legacy-api/
+apps/legacy-functions/
+infra/legacy-firebase/
+tools/migration/
+archive/legacy-import-spicer/
+archive/legacy-docs/
+archive/source-assets/
+
+Не использовать безымянную папку «1». Перенос допустим только после:
+1) удалённой репетиции cutover и rollback;
+2) backup Firestore, legacy PostgreSQL и медиа;
+3) фиксации immutable deployment IDs;
+4) проверки aliases, DNS и Worker rollback;
+5) успешного production cutover;
+6) 14 дней стабильного наблюдения;
+7) отдельных обратимых commit для каждой группы.
+
+8. БУДУЩИЕ ИЗМЕНЕНИЯ ПУБЛИЧНЫХ КОНТРАКТОВ
+
+На этапе этого документа API, schema и types не менялись. При реализации нужны:
+- строгий production env-контракт для HTTPS SITE_URL, Supabase и Worker URL;
+- server lookup legacy_id → product slug;
+- CatalogProduct: состав, аллергены, вес/объём, хранение, срок годности;
+- публичное использование is_popular и show_in_showcase;
+- checkout-контракт с Nova Poshta refs, отображаемой доставкой, оплатой и
+  честным итогом;
+- явное состояние «доставка оплачивается отдельно»;
+- клиентские уведомления с idempotency, retry и delivery status;
+- единый словарь ролей customer/tester/admin или утверждённая миграция;
+- сокращенный public health и защищенный detailed health;
+- retention/export/delete контракт персональных данных.
+
+9. SEO И ПОИСКОВИКИ
+
+До cutover:
+1. Утвердить https://dream-odessa.shop как primary domain.
+2. Постоянно редиректить dream-odessa.com, Vercel aliases и legacy-домены.
+3. Поставить noindex на maintenance, preview и доступные legacy-копии.
+4. Добавить route/product legacy redirects и журнал 404.
+5. Добавить canonical на главную и включить её в sitemap.
+6. В sitemap оставить только абсолютные canonical HTTPS URL.
+7. Исправить pagination canonical.
+8. Поиск/filter/sort закрыть noindex,follow или утвердить отдельную
+   индексируемую стратегию.
+9. Не закрывать robots.txt URL, на которых crawler должен увидеть noindex.
+10. Добавить украинскую 404.
+11. Добавить OG/Twitter image и URL.
+12. Добавить правдивые JSON-LD: OnlineStore/Organization, WebSite,
+    BreadcrumbList и Product/Offer. Доставка/возврат — после утверждения правил.
+13. Никогда не добавлять вымышленные rating, reviews, addresses или prices.
+14. Проверить HTTP 200/301/308/404, canonical, robots, sitemap и JSON-LD.
+15. Проверить Rich Results Test и URL Inspection.
+16. Подтвердить Google Search Console, отправить sitemap и наблюдать indexing.
+17. Подтвердить Bing Webmaster Tools, отправить sitemap и проверить URL Inspection.
+18. Добавить IndexNow только после стабильных sitemap и canonical.
+19. Merchant Center подключать только при совпадении цены, наличия, доставки,
+    возврата и checkout.
+
+Google: https://developers.google.com/search/docs/specialty/ecommerce/how-to-launch-an-ecommerce-website
+Canonical: https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls
+Merchant Center: https://support.google.com/merchants/answer/7052112?hl=en
+Bing Sitemap: https://www.bing.com/webmasters/help/sitemaps-3b5cf6ed
+Bing URL Inspection: https://www.bing.com/webmasters/help/URL-Inspection-55a30305
+
+10. ГОТОВНОСТЬ К РАБОТЕ С КЛИЕНТАМИ
+
+До первого реального заказа подтвердить:
+- имя продавца, ФОП/компанию и реквизиты;
+- телефон, email, Telegram и часы поддержки;
+- регионы, сроки, стоимость и ограничения доставки;
+- способы оплаты и банковские инструкции;
+- отмену, возврат, спорные случаи, возврат денег, повреждение/утрату посылки;
+- правила для пищевой продукции;
+- составы, аллергены, сроки и хранение;
+- privacy, cookies/analytics policy, terms и публичную оферту;
+- сроки хранения заказов/контактов, export/delete procedure;
+- SOP оператора, сверку остатков, order reconciliation;
+- backup Supabase/R2 и тестовое восстановление;
+- retry неудавшихся интеграций;
+- подтверждения заказа и смены статуса;
+- error log, alerting и ответственного за инциденты;
+- real order from cart to delivery;
+- отмену, нет товара и недоступность Nova Poshta;
+- отсутствие тестовых заказов в production-отчётности.
+
+Юридические тексты и операции должен подтвердить украинский юрист или владелец
+бизнеса. Официальные источники: Закон «Про електронну комерцію»
+https://zakon.rada.gov.ua/go/675-19, Закон «Про захист персональних даних»
+https://zakon.rada.gov.ua/go/2297-17 и действующий на дату запуска Закон
+«Про захист прав споживачів» https://zakon.rada.gov.ua/go/1023-12.
+Новый закон №3153-IX имеет статус «набирає чинності»; перед публикацией
+текстов требуется повторная юридическая сверка.
+
+11. ПОРЯДОК БУДУЩИХ COMMIT/PUSH
+
+Каждый шаг — отдельный небольшой commit, проверка и только затем push:
+1. docs: add complete project audit and launch plan
+2. chore: harden production environment validation
+3. test: enforce complete production build in ci
+4. feat: add legacy domain and route redirects
+5. fix: restore storefront showcase and popular flags
+6. fix: make checkout delivery and payment totals explicit
+7. feat: add legal and customer information pages
+8. feat: complete product information and structured data
+9. fix: improve mobile accessibility and checkout order
+10. chore: harden auth rate limits and security headers
+11. feat: add customer order confirmations and monitoring
+12. chore: complete staging cutover rehearsal
+13. chore: switch production domains
+14. docs: record fourteen-day production observation
+15. chore: archive verified legacy applications
+16. chore: remove verified dead legacy files and dependencies
+
+После каждого шага:
+- проверить git diff и отсутствие секретов;
+- выполнить узкие tests, затем соответствующий build;
+- выполнить security/boundary проверки;
+- для UI пройти desktop/mobile E2E;
+- для checkout пройти положительные и отрицательные сценарии;
+- push делать только при полном успехе;
+- независимую проблему записать в аудит и продолжить следующий независимый шаг.
+
+12. ФИНАЛЬНЫЕ КРИТЕРИИ ПРИЁМКИ
+
+Запуск разрешён только когда одновременно:
+- production env не допускают localhost/preview;
+- SSR показывает реальный непустой каталог;
+- старые URL имеют корректный redirect или осознанный 404;
+- primary domain, canonical, sitemap и robots согласованы;
+- preview/legacy не создают индексируемые дубликаты;
+- каждый товар прошел контентную и медиа-проверку;
+- доставка, оплата и итог объяснены до подтверждения заказа;
+- клиент получает подтверждение, админ обрабатывает заказ;
+- rate limit, RLS, CORS, CSP и secrets проверены;
+- backup восстановлен тестово;
+- rollback проведён в репетиции;
+- desktop/mobile/tablet проходят keyboard, focus, axe и visual checks;
+- p75 Web Vitals соответствуют целям либо имеют утвержденное исключение;
+- Search Console и Bing подтверждены, sitemap принят без критических ошибок;
+- error tracking, uptime alert и ответственный за инциденты существуют;
+- юридические и продуктовые тексты утверждены;
+- после cutover прошло 14 дней стабильного наблюдения;
+- только после этого legacy переносится в архив.
+
+13. ПУНКТЫ, ГДЕ НУЖЕН ВЛАДЕЛЕЦ
+
+[НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА]
+- доступы к Vercel, Cloudflare, Supabase, Firebase, DNS и поисковым кабинетам;
+- подтверждение основного домена;
+- официальные данные продавца;
+- правила оплаты, доставки, возврата и отмены;
+- реквизиты для перевода или решение отключить этот способ;
+- составы, аллергены, вес, хранение, сроки и финальные фото;
+- визуальное утверждение каталога;
+- точные ID тестовых пользователей, заказов и адресов для безопасной очистки;
+- ответственный за production-инциденты;
+- юридическая проверка текстов.
+
+Если данные не предоставлены, соответствующий launch-пункт остаётся
+[НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА]. Никакие реквизиты, условия, отзывы, рейтинги,
+сроки и гарантии не выдумываются.
+
+14. ПРИНЯТЫЕ ЗНАЧЕНИЯ ПО УМОЛЧАНИЮ
+
+- Primary domain: dream-odessa.shop.
+- Основной язык: uk-UA.
+- Первый запуск — обязательная авторизация.
+- Online card payment — после основного запуска.
+- Неизвестная доставка оплачивается отдельно перевозчику.
+- Нет вымышленных отзывов, ratings, реквизитов или гарантий.
+- Legacy не перемещается до RB010, RB011 и доказанного backup/rollback.
+- Prisma относится только к legacy; Supabase — основная база нового сайта.
+- Новые дизайн-плагины и UI-библиотеки не нужны.
+- Проектные screenshots/wireframes — основная дизайн-база, а не сторонние шаблоны.
+- Новый внешний сервис добавляется только при подтвержденной необходимости,
+  оценке стоимости, приватности и владения аккаунтом.

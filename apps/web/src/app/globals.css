@@ -3456,7 +3456,7 @@ input:focus-visible {
   overflow: hidden;
   place-items: center;
   isolation: isolate;
-  background-image: url("/background-first.PNG");
+  background-image: url("/background-first.jpg");
   background-position: center;
   background-size: cover;
   background-attachment: fixed;

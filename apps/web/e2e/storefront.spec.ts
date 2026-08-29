@@ -17,6 +17,23 @@ async function openPublicPage(page: Page, path = "/") {
   expect(response?.ok()).toBe(true);
 }
 
+const fixtureCartItem = {
+  id: "22222222-2222-4222-8222-222222222222",
+  imageObjectKey: null,
+  inStock: true,
+  name: "Мангові чипси",
+  price: 180,
+  quantity: 2,
+  slug: "mango-chips",
+  stockQuantity: 9,
+};
+
+async function seedFixtureCart(page: Page) {
+  await page.addInitScript((item) => {
+    localStorage.setItem("dreamshop_cart_v1", JSON.stringify([item]));
+  }, fixtureCartItem);
+}
+
 async function expectNoHorizontalOverflow(page: Page, path: string) {
   const overflow = await page.evaluate(() => ({
     documentWidth: document.documentElement.scrollWidth,
@@ -88,19 +105,8 @@ for (const viewport of viewports) {
   }) => {
     await page.setViewportSize(viewport);
     await authenticateAsFixtureAdmin(context);
+    await seedFixtureCart(page);
     await page.goto("/");
-    await page.evaluate((item) => {
-      localStorage.setItem("dreamshop_cart_v1", JSON.stringify([item]));
-    }, {
-      id: "22222222-2222-4222-8222-222222222222",
-      imageObjectKey: null,
-      inStock: true,
-      name: "Мангові чипси",
-      price: 180,
-      quantity: 2,
-      slug: "mango-chips",
-      stockQuantity: 9,
-    });
 
     const screens = [
       { heading: "Оформлення замовлення", path: "/checkout" },
@@ -158,19 +164,8 @@ test("authenticated and admin references have no serious or critical axe violati
   page,
 }) => {
   await authenticateAsFixtureAdmin(context);
+  await seedFixtureCart(page);
   await page.goto("/");
-  await page.evaluate((item) => {
-    localStorage.setItem("dreamshop_cart_v1", JSON.stringify([item]));
-  }, {
-    id: "22222222-2222-4222-8222-222222222222",
-    imageObjectKey: null,
-    inStock: true,
-    name: "Мангові чипси",
-    price: 180,
-    quantity: 2,
-    slug: "mango-chips",
-    stockQuantity: 9,
-  });
 
   const authenticatedPaths = [
     "/checkout",
@@ -355,19 +350,8 @@ test("mobile checkout keeps recipient fields before the order summary", async ({
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await authenticateAsFixtureAdmin(context);
+  await seedFixtureCart(page);
   await page.goto("/");
-  await page.evaluate((item) => {
-    localStorage.setItem("dreamshop_cart_v1", JSON.stringify([item]));
-  }, {
-    id: "22222222-2222-4222-8222-222222222222",
-    imageObjectKey: null,
-    inStock: true,
-    name: "Мангові чипси",
-    price: 180,
-    quantity: 2,
-    slug: "mango-chips",
-    stockQuantity: 9,
-  });
 
   await openPublicPage(page, "/checkout");
 

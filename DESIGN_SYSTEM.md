@@ -1,6 +1,8 @@
 # DreamShop design-system and parity brief
 
-This is a versioned implementation reference, not an AI-generated redesign. The old site is the visual source until product approval.
+This is a versioned implementation reference, not an AI-generated redesign.
+The aqua-and-cream design language is retained as the starting point for future
+product-owner-approved refinements.
 
 ## Tokens and rules
 
@@ -10,7 +12,15 @@ Grid: 1440px desktop content max-width with 24px gutters; 768px tablet with 20px
 
 ## Required reference artifacts
 
-Create and commit captures under `docs/design-reference/` before visual parity sign-off. Each screen needs old/new screenshots and annotated wireframes at 1440×900, 768×1024 and 390×844: home, catalog, product, cart, checkout, account, admin dashboard, product editor and orders. Include loading, empty, error, disabled and success states. The [legacy visual source audit](docs/design-reference/legacy-source-audit.md) documents the preserved visual DNA and the read-only capture constraints. The complete technical artifact set is indexed in [the capture README](docs/design-reference/README.md), with decisions in [annotated comparisons](docs/design-reference/comparisons.md) and state coverage in the [interaction-state matrix](docs/design-reference/state-matrix.md). Product-owner approval remains part of UAT rather than being inferred from automated evidence.
+Create and commit captures under `docs/design-reference/` before visual
+approval. Each screen needs current screenshots and annotated wireframes at
+1440×900, 768×1024 and 390×844: home, catalog, product, cart, checkout,
+account, admin dashboard, product editor and orders. Include loading, empty,
+error, disabled and success states. The complete technical artifact set is
+indexed in [the capture README](docs/design-reference/README.md), with state
+coverage in the [interaction-state matrix](docs/design-reference/state-matrix.md).
+Product-owner approval remains part of UAT rather than being inferred from
+automated evidence.
 
 ## Parity checklist
 
@@ -21,4 +31,13 @@ Create and commit captures under `docs/design-reference/` before visual parity s
 | Accessibility | keyboard path, focus return/trap, contrast, headings, alt text, reduced motion |
 | SEO | per-route titles/descriptions/canonical; product JSON-LD; no indexable private routes |
 
-The current implementation has responsive image `sizes`, loading and fallback handling in `product-card.tsx`. On 2026-08-29, the production build was reviewed with an isolated local fixture in Chromium, Firefox and WebKit. Public storefront, checkout, authenticated account and required admin screens were checked at all three target viewports without root horizontal overflow or serious/critical axe violations. The reproducible Chromium fixture set contains 42 captures; the read-only legacy set contains 27 captures; 27 annotated SVG wireframes cover the nine required screens. Keyboard access to the mobile menu, reduced-motion handling, guest redirects and the sign-in return URL are also covered. This is technical responsive/accessibility evidence, not product-owner visual approval.
+The current implementation has responsive image `sizes`, loading and fallback
+handling in `product-card.tsx`. On 2026-08-29, the production build was
+reviewed with an isolated local fixture in Chromium, Firefox and WebKit.
+Public storefront, checkout, authenticated account and required admin screens
+were checked at all three target viewports without root horizontal overflow or
+serious/critical axe violations. The reproducible Chromium fixture set contains
+42 captures and 27 annotated SVG wireframes cover the nine required screens.
+Keyboard access to the mobile menu, reduced-motion handling, guest redirects
+and the sign-in return URL are also covered. This is technical
+responsive/accessibility evidence, not product-owner visual approval.

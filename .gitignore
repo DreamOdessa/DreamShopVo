@@ -10,7 +10,6 @@ apps/web/test-results/
 
 # Production
 /build
-/functions/lib/
 **/.next/
 **/.wrangler/
 **/.dev.vars
@@ -23,11 +22,6 @@ apps/web/test-results/
 .env.development.local
 .env.test.local
 .env.production.local
-/functions/.env
-/functions/.env.*
-!/functions/.env.example
-/firebase-service-account.json
-/.runtimeconfig.json
 
 # Logs
 npm-debug.log*

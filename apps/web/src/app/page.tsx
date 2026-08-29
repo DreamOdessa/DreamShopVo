@@ -5,14 +5,12 @@ import { StoreFooter } from "../components/storefront/store-footer";
 import { StoreHeader } from "../components/storefront/store-header";
 import { StoreHome } from "../components/storefront/store-home";
 import { isStorefrontMaintenance } from "../lib/maintenance";
-import { ResetLegacyCaches } from "./reset-legacy-caches";
 
 export default function MaintenancePage() {
   if (!isStorefrontMaintenance()) {
     return (
       <CartProvider>
         <div className="store-page">
-          <ResetLegacyCaches />
           <StoreHeader />
           <div id="main-content" tabIndex={-1}>
             <StoreHome />
@@ -25,7 +23,6 @@ export default function MaintenancePage() {
 
   return (
     <main className="maintenance-page">
-      <ResetLegacyCaches />
       <section className="maintenance-content" aria-labelledby="maintenance-title">
         <Image
           className="brand-logo"

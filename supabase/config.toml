@@ -163,7 +163,6 @@ site_url = "http://127.0.0.1:3000"
 additional_redirect_urls = [
   "http://127.0.0.1:3000/auth/callback",
   "http://localhost:3000/auth/callback",
-  "https://dream-shop-vo.vercel.app/auth/callback",
   "https://dreamshop-next.vercel.app/auth/callback",
   "https://dream-odessa.shop/auth/callback"
 ]
@@ -344,11 +343,6 @@ email_optional = false
 # You can configure "web3" rate limit in the [auth.rate_limit] section and set up [auth.captcha] if self-hosting.
 [auth.web3.solana]
 enabled = false
-
-# Use Firebase Auth as a third-party provider alongside Supabase Auth.
-[auth.third_party.firebase]
-enabled = false
-# project_id = "my-firebase-project"
 
 # Use Auth0 as a third-party provider alongside Supabase Auth.
 [auth.third_party.auth0]

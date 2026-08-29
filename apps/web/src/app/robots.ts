@@ -26,7 +26,6 @@ export default function robots(): MetadataRoute.Robots {
         "/auth",
         "/cart",
         "/checkout",
-        "/orders",
         "/wishlist",
       ],
       userAgent: "*",

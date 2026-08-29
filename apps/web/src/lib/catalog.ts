@@ -512,25 +512,3 @@ const getCachedCatalogProduct = unstable_cache(async (slug: string) => {
 }, ["catalog-product"], { revalidate: 300, tags: [CATALOG_CACHE_TAG] });
 
 export const getCatalogProduct = cache(getCachedCatalogProduct);
-
-const getCachedCatalogProductByLegacyId = unstable_cache(async (legacyId: string) => {
-  const supabase = createPublicClient();
-  const { data, error } = await supabase
-    .from("products")
-    .select(catalogProductPageSelection)
-    .eq("legacy_id", legacyId)
-    .eq("is_active", true)
-    .eq("category.is_active", true)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error("Unable to load the legacy catalog product.");
-  }
-
-  return data ? mapProduct(data) : null;
-}, ["catalog-product-by-legacy-id"], {
-  revalidate: 300,
-  tags: [CATALOG_CACHE_TAG],
-});
-
-export const getCatalogProductByLegacyId = cache(getCachedCatalogProductByLegacyId);

@@ -332,6 +332,47 @@ test("catalog query variants are noindexed and use clean canonicals", async ({ p
   }
 });
 
+test("category and product pages expose truthful JSON-LD breadcrumbs", async ({ page }) => {
+  for (const [path, expectedItems] of [
+    [
+      "/catalog/fruit-chips",
+      [
+        ["Каталог", "https://dream-odessa.shop/catalog"],
+        ["Фруктові чипси", "https://dream-odessa.shop/catalog/fruit-chips"],
+      ],
+    ],
+    [
+      "/product/mango-chips",
+      [
+        ["Каталог", "https://dream-odessa.shop/catalog"],
+        ["Фруктові чипси", "https://dream-odessa.shop/catalog/fruit-chips"],
+        ["Мангові чипси", "https://dream-odessa.shop/product/mango-chips"],
+      ],
+    ],
+  ] as const) {
+    await openPublicPage(page, path);
+    const structuredData = await page
+      .locator('script[type="application/ld+json"]')
+      .evaluateAll((elements) =>
+        elements.map((element) => JSON.parse(element.textContent ?? "{}")),
+      );
+    const breadcrumbs = structuredData.find(
+      (schema) => schema["@type"] === "BreadcrumbList",
+    );
+
+    expect(breadcrumbs).toMatchObject({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: expectedItems.map(([name, item], index) => ({
+        "@type": "ListItem",
+        item,
+        name,
+        position: index + 1,
+      })),
+    });
+  }
+});
+
 test("homepage uses showcase and popular catalog flags", async ({ page }) => {
   await openPublicPage(page);
 

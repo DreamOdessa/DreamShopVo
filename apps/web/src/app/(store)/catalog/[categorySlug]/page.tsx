@@ -86,6 +86,26 @@ export default async function CategoryPage({
   ]);
   const { pageCount, products, total } = productPage;
   const categoryPath = `/catalog/${category.slug}`;
+  const siteUrl = getSiteUrl();
+  const categoryUrl = `${siteUrl}${categoryPath}`;
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        item: `${siteUrl}/catalog`,
+        name: "Каталог",
+        position: 1,
+      },
+      {
+        "@type": "ListItem",
+        item: categoryUrl,
+        name: category.name,
+        position: 2,
+      },
+    ],
+  };
 
   if (filters.page > pageCount) {
     redirect(catalogPath(categoryPath, { ...filters, page: 1 }));
@@ -165,6 +185,12 @@ export default async function CategoryPage({
           pathname={categoryPath}
         />
       </section>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c"),
+        }}
+        type="application/ld+json"
+      />
     </main>
   );
 }

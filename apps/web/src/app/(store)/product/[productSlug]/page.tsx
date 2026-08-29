@@ -77,6 +77,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const relatedProducts = categoryProducts;
   const siteUrl = getSiteUrl();
   const productUrl = `${siteUrl}/product/${product.slug}`;
+  const categoryUrl = `${siteUrl}/catalog/${product.category.slug}`;
   const schema = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -94,6 +95,30 @@ export default async function ProductPage({ params }: ProductPageProps) {
       url: productUrl,
     },
     url: productUrl,
+  };
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        item: `${siteUrl}/catalog`,
+        name: "Каталог",
+        position: 1,
+      },
+      {
+        "@type": "ListItem",
+        item: categoryUrl,
+        name: product.category.name,
+        position: 2,
+      },
+      {
+        "@type": "ListItem",
+        item: productUrl,
+        name: product.name,
+        position: 3,
+      },
+    ],
   };
 
   return (
@@ -199,6 +224,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <script
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(schema).replace(/</g, "\\u003c"),
+        }}
+        type="application/ld+json"
+      />
+      <script
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbSchema).replace(/</g, "\\u003c"),
         }}
         type="application/ld+json"
       />

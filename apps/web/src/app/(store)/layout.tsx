@@ -9,7 +9,9 @@ export default function StoreLayout({ children }: { children: ReactNode }) {
     <CartProvider>
       <div className="store-page">
         <StoreHeader />
-        {children}
+        <div id="main-content" tabIndex={-1}>
+          {children}
+        </div>
         <StoreFooter />
       </div>
     </CartProvider>

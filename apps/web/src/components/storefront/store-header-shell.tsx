@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createClient } from "../../lib/supabase/client";
 import { CartLink } from "./cart-link";
@@ -23,6 +23,9 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentWishlistCount, setCurrentWishlistCount] =
     useState(wishlistCount);
+  const menuToggleRef = useRef<HTMLButtonElement>(null);
+  const mobileNavigationRef = useRef<HTMLElement>(null);
+  const menuOverlayRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -57,21 +60,82 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
     if (!menuOpen) return;
 
     const previousOverflow = document.body.style.overflow;
+    const page = mobileNavigationRef.current?.parentElement;
+    const backgroundElements = page
+      ? Array.from(page.children).filter(
+          (element) =>
+            element !== mobileNavigationRef.current &&
+            element !== menuOverlayRef.current,
+        )
+      : [];
+    const existingInertState = backgroundElements.map((element) => ({
+      element,
+      wasInert: element.hasAttribute("inert"),
+    }));
+
     document.body.style.overflow = "hidden";
+    backgroundElements.forEach((element) => element.setAttribute("inert", ""));
+
+    const focusableMenuElements = () =>
+      Array.from(
+        mobileNavigationRef.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) ?? [],
+      );
 
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMenuOpen(false);
+        window.requestAnimationFrame(() => menuToggleRef.current?.focus());
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const focusableElements = focusableMenuElements();
+      const firstElement = focusableElements.at(0);
+      const lastElement = focusableElements.at(-1);
+
+      if (!firstElement || !lastElement) return;
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
     };
 
     window.addEventListener("keydown", closeOnEscape);
+    const focusFrame = window.requestAnimationFrame(() => {
+      focusableMenuElements().at(0)?.focus();
+    });
 
     return () => {
       document.body.style.overflow = previousOverflow;
+      existingInertState.forEach(({ element, wasInert }) => {
+        if (!wasInert) element.removeAttribute("inert");
+      });
       window.removeEventListener("keydown", closeOnEscape);
+      window.cancelAnimationFrame(focusFrame);
     };
   }, [menuOpen]);
 
-  const closeMenu = () => setMenuOpen(false);
+  const closeMenu = useCallback(() => {
+    setMenuOpen(false);
+    window.requestAnimationFrame(() => menuToggleRef.current?.focus());
+  }, []);
+
+  const toggleMenu = useCallback(() => {
+    if (menuOpen) {
+      closeMenu();
+      return;
+    }
+
+    setMenuOpen(true);
+  }, [closeMenu, menuOpen]);
 
   return (
     <>
@@ -82,7 +146,8 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
             aria-expanded={menuOpen}
             aria-label={menuOpen ? "Закрити меню" : "Відкрити меню"}
             className="store-menu-toggle"
-            onClick={() => setMenuOpen((open) => !open)}
+            onClick={toggleMenu}
+            ref={menuToggleRef}
             type="button"
           >
             {menuOpen ? (
@@ -145,18 +210,26 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
         </div>
       </header>
 
+      <a className="skip-link" href="#main-content">
+        Перейти до основного вмісту
+      </a>
+
       <button
         aria-label="Закрити меню"
         className={`store-menu-overlay${menuOpen ? " is-open" : ""}`}
         onClick={closeMenu}
+        ref={menuOverlayRef}
         tabIndex={menuOpen ? 0 : -1}
         type="button"
       />
-      <nav
-        aria-label="Мобільна навігація"
+      <aside
         aria-hidden={!menuOpen}
+        aria-labelledby="store-mobile-navigation-title"
+        aria-modal="true"
         className={`store-mobile-nav${menuOpen ? " is-open" : ""}`}
         id="store-mobile-navigation"
+        ref={mobileNavigationRef}
+        role="dialog"
       >
         <div className="store-mobile-nav-brand">
           <Image
@@ -167,8 +240,13 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
             height={40}
             loading="eager"
           />
-          <strong>DreamShop</strong>
-          <button aria-label="Закрити меню" onClick={closeMenu} type="button">
+          <strong id="store-mobile-navigation-title">DreamShop</strong>
+          <button
+            aria-label="Закрити меню"
+            onClick={closeMenu}
+            tabIndex={menuOpen ? 0 : -1}
+            type="button"
+          >
             <X aria-hidden size={22} />
           </button>
         </div>
@@ -189,7 +267,7 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
           <CircleUserRound aria-hidden size={19} />
           Мій акаунт
         </Link>
-      </nav>
+      </aside>
     </>
   );
 }

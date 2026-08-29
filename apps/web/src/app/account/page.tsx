@@ -239,7 +239,7 @@ export default async function AccountPage() {
     <CartProvider>
       <div className="store-page">
         <StoreHeader />
-        <main className="account-page">
+        <main className="account-page" id="main-content" tabIndex={-1}>
           <section className="account-content" aria-labelledby="account-title">
         <div className="account-title-row">
           <div>

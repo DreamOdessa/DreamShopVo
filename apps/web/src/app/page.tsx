@@ -14,7 +14,9 @@ export default function MaintenancePage() {
         <div className="store-page">
           <ResetLegacyCaches />
           <StoreHeader />
-          <StoreHome />
+          <div id="main-content" tabIndex={-1}>
+            <StoreHome />
+          </div>
           <StoreFooter />
         </div>
       </CartProvider>

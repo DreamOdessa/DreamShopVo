@@ -252,6 +252,18 @@ test("unknown legacy product routes remain a 404", async ({ page }) => {
   expect(response.status()).toBe(404);
 });
 
+test("unknown routes show the Ukrainian root 404 page", async ({ page }) => {
+  const response = await page.goto("/this-route-does-not-exist", {
+    waitUntil: "domcontentloaded",
+  });
+
+  expect(response?.status()).toBe(404);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Сторінку не знайдено" }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Перейти до каталогу" })).toBeVisible();
+});
+
 test("homepage uses showcase and popular catalog flags", async ({ page }) => {
   await openPublicPage(page);
 
@@ -284,6 +296,11 @@ test("mobile menu is keyboard-accessible and respects reduced motion", async ({ 
   await page.emulateMedia({ reducedMotion: "reduce" });
   await openPublicPage(page);
 
+  const skipLink = page.getByRole("link", { name: "Перейти до основного вмісту" });
+  await skipLink.focus();
+  await skipLink.press("Enter");
+  await expect(page.locator("#main-content")).toBeFocused();
+
   const menuToggle = page.locator(".store-menu-toggle");
   await menuToggle.focus();
   await expect(menuToggle).toBeFocused();
@@ -291,6 +308,54 @@ test("mobile menu is keyboard-accessible and respects reduced motion", async ({ 
 
   await expect(menuToggle).toHaveAttribute("aria-expanded", "true");
   await expect(page.locator("#store-mobile-navigation")).toHaveClass(/is-open/);
+  await expect(page.getByRole("button", { name: "Закрити меню" }).last()).toBeFocused();
+  await expect.poll(() => page.evaluate(
+    () => document.querySelector("#main-content")?.hasAttribute("inert") ?? false,
+  )).toBe(true);
+
+  await page.keyboard.press("Shift+Tab");
+  await expect(page.getByRole("link", { name: "Мій акаунт" }).last()).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Закрити меню" }).last()).toBeFocused();
+
   await page.keyboard.press("Escape");
   await expect(menuToggle).toHaveAttribute("aria-expanded", "false");
+  await expect(menuToggle).toBeFocused();
+  await expect.poll(() => page.evaluate(
+    () => document.querySelector("#main-content")?.hasAttribute("inert") ?? false,
+  )).toBe(false);
+});
+
+test("mobile checkout keeps recipient fields before the order summary", async ({
+  context,
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await authenticateAsFixtureAdmin(context);
+  await page.goto("/");
+  await page.evaluate((item) => {
+    localStorage.setItem("dreamshop_cart_v1", JSON.stringify([item]));
+  }, {
+    id: "22222222-2222-4222-8222-222222222222",
+    imageObjectKey: null,
+    inStock: true,
+    name: "Мангові чипси",
+    price: 180,
+    quantity: 2,
+    slug: "mango-chips",
+    stockQuantity: 9,
+  });
+
+  await openPublicPage(page, "/checkout");
+
+  const fields = page.locator(".checkout-fields");
+  const summary = page.locator(".checkout-summary");
+  const [fieldsBox, summaryBox] = await Promise.all([
+    fields.boundingBox(),
+    summary.boundingBox(),
+  ]);
+
+  expect(fieldsBox?.y).toBeLessThan(summaryBox?.y ?? 0);
+  await expect(page.getByLabel("Ім’я")).toBeVisible();
+  await expectNoHorizontalOverflow(page, "/checkout");
 });

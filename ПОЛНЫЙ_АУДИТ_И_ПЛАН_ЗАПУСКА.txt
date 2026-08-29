@@ -1,7 +1,7 @@
 ПОЛНЫЙ АУДИТ DREAMSHOPVO И ПЛАН ЗАПУСКА
 Дата среза: 29.08.2026 (UTC)
 Проверенный baseline commit: 015e95e — update
-Последний проверенный рабочий commit: 29db11f — chore: patch legacy router dependency
+Последний проверенный рабочий commit: b56cb2c — fix: reduce duplicate product card links
 Ветка: codex/phase4-legacy-preview
 
 СТАТУСЫ
@@ -77,6 +77,8 @@ Legacy-стек:
 - b1437f6 — стабильная E2E-фикстура корзины до React hydration;
 - cfeca32 — Next 16.3.3 и PostCSS 8.5.26, web production audit без уязвимостей.
 - 29db11f — react-router-dom/react-router/@remix-run/router обновлены до 6.30.6/6.30.6/1.23.4.
+- b56cb2c — в product card оставлена одна семантическая ссылка на товар;
+  desktop/mobile production-fixture screenshots и Chromium E2E проверены.
 
 [ГОТОВО] Текущие локальные проверки:
 - старый React-проект: 4 набора, 8 тестов — успешно;
@@ -235,7 +237,8 @@ CI и мониторинг:
 Доступность и мобильные сценарии:
 - [НЕ ГОТОВО] Увеличить touch targets 32–40 px до минимум 44 px.
 - [ГОТОВО] Добавлен keyboard skip-link к #main-content.
-- [НЕ ГОТОВО] Оставить одну семантическую ссылку товара вместо трёх дублей.
+- [ГОТОВО] Карточка товара содержит одну семантическую ссылку в заголовке;
+  изображение, wishlist и add-to-cart остаются отдельными действиями.
 - [ГОТОВО] Мобильное меню имеет focus trap, inert-фон, Escape и возврат фокуса;
   close-button недоступна для tab, когда меню закрыто.
 - [ГОТОВО] Mobile checkout сохраняет порядок полей получателя перед summary в
@@ -642,7 +645,8 @@ https://zakon.rada.gov.ua/go/2297-17 и действующий на дату з�
 
 Выполнены дополнительно: 77ec32f (cutover preflight), f9b2bda (homepage
 canonical/sitemap), b1437f6 (стабильная checkout E2E-фикстура) и cfeca32
-(контролируемые security patches Next/PostCSS), 29db11f (legacy router v6 patch).
+(контролируемые security patches Next/PostCSS), 29db11f (legacy router v6 patch),
+b56cb2c (одна product link на карточку).
 
 После каждого шага:
 - проверить git diff и отсутствие секретов;

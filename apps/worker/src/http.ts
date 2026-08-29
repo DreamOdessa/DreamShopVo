@@ -22,7 +22,9 @@ export class HttpError extends Error {
 }
 
 export function applySecurityHeaders(headers: Headers) {
+  headers.set("Permissions-Policy", "camera=(), geolocation=(), microphone=()");
   headers.set("Referrer-Policy", "no-referrer");
+  headers.set("X-Frame-Options", "DENY");
   headers.set("X-Content-Type-Options", "nosniff");
 }
 
@@ -70,14 +72,14 @@ export function handleOptions(request: Request, env: WorkerEnv) {
     throw new HttpError(403, "invalid_origin", "Origin is not allowed.");
   }
 
-  return new Response(null, {
-    status: 204,
-    headers: {
-      "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Media-Scope",
-      "Access-Control-Allow-Methods": "DELETE, GET, HEAD, OPTIONS, POST",
-      "Access-Control-Allow-Origin": origin,
-      "Access-Control-Max-Age": "86400",
-      Vary: "Origin",
-    },
+  const headers = new Headers({
+    "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Media-Scope",
+    "Access-Control-Allow-Methods": "DELETE, GET, HEAD, OPTIONS, POST",
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Max-Age": "86400",
+    Vary: "Origin",
   });
+  applySecurityHeaders(headers);
+
+  return new Response(null, { status: 204, headers });
 }

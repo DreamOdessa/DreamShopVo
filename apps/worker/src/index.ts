@@ -16,6 +16,7 @@ import {
   getNovaPoshtaWarehouses,
   searchNovaPoshtaCities,
 } from "./nova-poshta";
+import { requireAdmin } from "./supabase-auth";
 import type { WorkerEnv } from "./types";
 
 export type { WorkerEnv } from "./types";
@@ -28,6 +29,12 @@ async function handleRequest(request: Request, env: WorkerEnv) {
   const { pathname } = new URL(request.url);
 
   if (pathname === "/health" && request.method === "GET") {
+    return json(request, env, { status: "ok" });
+  }
+
+  if (pathname === "/admin/health" && request.method === "GET") {
+    await requireAdmin(request, env);
+
     return json(request, env, {
       status: "ok",
       services: {
@@ -100,6 +107,7 @@ async function handleRequest(request: Request, env: WorkerEnv) {
   }
 
   if (
+    pathname === "/admin/health" ||
     pathname === "/admin/media" ||
     pathname.startsWith("/media/") ||
     pathname.startsWith("/admin/media/") ||

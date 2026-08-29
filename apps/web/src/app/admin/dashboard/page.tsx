@@ -103,12 +103,9 @@ async function workerIsHealthy() {
       return false;
     }
 
-    const body = (await response.json()) as {
-      services?: { telegramOrders?: boolean };
-      status?: string;
-    };
+    const body = (await response.json()) as { status?: string };
 
-    return body.status === "ok" && body.services?.telegramOrders === true;
+    return body.status === "ok";
   } catch {
     return false;
   }

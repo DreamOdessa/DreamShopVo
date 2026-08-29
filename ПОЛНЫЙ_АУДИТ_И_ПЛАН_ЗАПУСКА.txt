@@ -169,9 +169,14 @@ Auth-required checkout оставить на v1; guest checkout — post-launch.
 - [НЕ ГОТОВО] apps/web имеет 3 moderate через Next/PostCSS/Vite; нужен
   контролируемый patch до Next 16.3.3 и связанных зависимостей.
 - [ГОТОВО] Worker npm audit: 0 уязвимостей.
-- [НЕ ГОТОВО] Добавить rate limit/Turnstile/WAF для phone login и Telegram completion.
-- [НЕ ГОТОВО] Оставить в публичном /health только грубый статус; подробный health
-  сделать защищённым.
+- [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] Добавить распределённый Cloudflare rate limit и
+  Turnstile/WAF для phone login и Telegram completion. В wrangler-конфигурации
+  нет Rate Limiting binding, а доступ к Cloudflare не подтверждён. Локальный
+  memory-limit намеренно не внедряется: он не защитит production между
+  изолятами Worker. Нужны созданный binding/WAF rule, настройки Turnstile и
+  production secrets владельца.
+- [ГОТОВО] Публичный /health возвращает только грубый status; подробный
+  /admin/health требует Bearer-сессию с ролью admin.
 - [НЕ ГОТОВО] Расширить CSP только через report-only инвентаризацию и затем
   enforcement.
 

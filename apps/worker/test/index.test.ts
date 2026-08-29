@@ -40,7 +40,7 @@ afterEach(() => {
 });
 
 describe("DreamShop Worker", () => {
-  it("reports configured services without exposing credentials", async () => {
+  it("reports only a coarse public health status", async () => {
     const response = await fetchRequest(
       new Request("https://api.example.test/health"),
       createEnv({
@@ -51,16 +51,57 @@ describe("DreamShop Worker", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
+    expect(await response.json()).toEqual({ status: "ok" });
+    expect(response.headers.get("Permissions-Policy")).toBe(
+      "camera=(), geolocation=(), microphone=()",
+    );
+    expect(response.headers.get("X-Frame-Options")).toBe("DENY");
+  });
+
+  it("does not expose detailed health information without administrator authentication", async () => {
+    const response = await fetchRequest(
+      new Request("https://api.example.test/admin/health"),
+      createEnv(),
+    );
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ error: "unauthorized" });
+  });
+
+  it("exposes detailed health information only after an administrator check", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      Response.json({
+        app_metadata: { role: "admin" },
+        id: "00000000-0000-4000-8000-000000000001",
+      }),
+    );
+    const response = await fetchRequest(
+      new Request("https://api.example.test/admin/health", {
+        headers: { Authorization: "Bearer fixture-access-token" },
+      }),
+      createEnv({
+        SUPABASE_PUBLISHABLE_KEY: "publishable",
+        SUPABASE_SECRET_KEY: "secret",
+        SUPABASE_URL: "https://project.supabase.co",
+        TELEGRAM_BOT_TOKEN: "token",
+        TELEGRAM_ORDER_CHAT_ID: "-100123456789",
+        TELEGRAM_WEBHOOK_SECRET: "webhook-secret",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      services: { telegramOrders: true },
       status: "ok",
-      services: {
-        media: true,
-        novaPoshta: false,
-        supabase: true,
-        telegram: false,
-        telegramOrders: false,
-      },
     });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://project.supabase.co/auth/v1/user",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer fixture-access-token",
+        }),
+      }),
+    );
   });
 
   it("does not claim order events until the notification chat is configured", async () => {
@@ -271,6 +312,7 @@ describe("DreamShop Worker", () => {
     expect(allowed.headers.get("Access-Control-Allow-Headers")).toContain(
       "X-Media-Scope",
     );
+    expect(allowed.headers.get("X-Frame-Options")).toBe("DENY");
     expect(denied.status).toBe(403);
   });
 

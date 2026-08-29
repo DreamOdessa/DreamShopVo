@@ -63,6 +63,17 @@ describe("checkout order action", () => {
     });
   });
 
+  it("rejects an unconfigured bank transfer before opening a session", async () => {
+    const formData = validFormData();
+    formData.set("paymentMethod", "bank_transfer");
+
+    await expect(createOrder(initialState, formData)).resolves.toEqual({
+      message: "Обраний спосіб оплати тимчасово недоступний.",
+      status: "error",
+    });
+    expect(mocks.createClient).not.toHaveBeenCalled();
+  });
+
   it("creates one order through the checkout-token RPC", async () => {
     const rpc = vi.fn().mockResolvedValue({
       data: [

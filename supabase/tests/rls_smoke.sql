@@ -248,6 +248,41 @@ where user_id = '00000000-0000-4000-8000-000000000001'
   and is_default;
 delete from public.customer_addresses
 where id = '30000000-0000-4000-8000-000000000001';
+do $$
+begin
+  begin
+    perform *
+    from public.create_order(
+      jsonb_build_array(
+        jsonb_build_object(
+          'productId',
+          (select id from public.products where slug = 'visible'),
+          'quantity',
+          1
+        )
+      ),
+      'Customer',
+      'Example',
+      '+380671234567',
+      'Odesa',
+      'post_office',
+      'Відділення 1',
+      null,
+      true,
+      'bank_transfer',
+      false,
+      null,
+      '40000000-0000-4000-8000-000000000009'
+    );
+
+    raise exception using
+      errcode = 'XX000',
+      message = 'Checkout accepted an unconfigured payment method';
+  exception
+    when feature_not_supported then null;
+  end;
+end;
+$$;
 select 1 / case
   when count(*) = 1 then 1
   else 0

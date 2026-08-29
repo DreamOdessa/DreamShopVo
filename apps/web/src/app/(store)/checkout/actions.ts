@@ -19,7 +19,6 @@ const DELIVERY_METHODS = new Set<string>([
 const PAYMENT_METHODS = new Set<string>([
   "cash_on_delivery",
   "card_on_delivery",
-  "bank_transfer",
 ]);
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -142,10 +141,13 @@ export async function createOrder(
     establishmentName.length > 160 ||
     note.length > 1000 ||
     !UUID_PATTERN.test(checkoutToken) ||
-    !isDeliveryMethod(deliveryMethod) ||
-    !isPaymentMethod(paymentMethod)
+    !isDeliveryMethod(deliveryMethod)
   ) {
     return errorState("Перевірте дані замовлення та повторіть спробу.");
+  }
+
+  if (!isPaymentMethod(paymentMethod)) {
+    return errorState("Обраний спосіб оплати тимчасово недоступний.");
   }
 
   if (!phone) {
@@ -196,11 +198,12 @@ export async function createOrder(
           ? "Сесія завершилася. Увійдіть знову та повторіть замовлення."
           : error?.code === "22023"
             ? "Дані замовлення не пройшли перевірку. Перевірте форму."
-        : errorMessage.includes("Online card payments")
-          ? "Онлайн-оплата карткою поки недоступна."
-          : errorMessage.includes("unavailable")
-            ? "Один із товарів уже недоступний. Оновіть кошик."
-            : "Не вдалося створити замовлення. Спробуйте ще раз.",
+            : errorMessage.includes("payment method") ||
+                errorMessage.includes("Online card payments")
+              ? "Обраний спосіб оплати тимчасово недоступний."
+              : errorMessage.includes("unavailable")
+                ? "Один із товарів уже недоступний. Оновіть кошик."
+                : "Не вдалося створити замовлення. Спробуйте ще раз.",
     );
   }
 

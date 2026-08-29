@@ -240,9 +240,14 @@ export default async function OrderPage({ params }: OrderPageProps) {
                 <dt>Доставка</dt>
                 <dd>{priceFormatter.format(order.delivery_amount)}</dd>
               </div>
-            ) : null}
+            ) : (
+              <div>
+                <dt>Доставка</dt>
+                <dd>Оплачується окремо перевізнику</dd>
+              </div>
+            )}
             <div>
-              <dt>Разом</dt>
+              <dt>{order.delivery_amount > 0 ? "Разом" : "Разом за товари"}</dt>
               <dd>
                 <strong>{priceFormatter.format(order.total)}</strong>
               </dd>

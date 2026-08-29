@@ -65,6 +65,19 @@ for (const viewport of viewports) {
       await expect(
         page.getByRole("heading", { level: 1, name: screen.heading }),
       ).toBeVisible();
+      if (screen.path === "/checkout") {
+        const checkoutSummary = page.locator(".checkout-summary");
+
+        await expect(
+          page.getByRole("option", { name: "Переказ на рахунок" }),
+        ).toHaveCount(0);
+        await expect(
+          checkoutSummary.getByText("Оплачується окремо перевізнику"),
+        ).toBeVisible();
+        await expect(
+          checkoutSummary.getByText("Разом за товари"),
+        ).toBeVisible();
+      }
       await expectNoHorizontalOverflow(page, screen.path);
     }
   });

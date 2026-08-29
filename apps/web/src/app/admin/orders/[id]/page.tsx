@@ -196,9 +196,16 @@ export default async function AdminOrderPage({
                           <dt>Доставка</dt>
                           <dd>{priceFormatter.format(order.delivery_amount)}</dd>
                         </div>
-                      ) : null}
+                      ) : (
+                        <div>
+                          <dt>Доставка</dt>
+                          <dd>Оплачується окремо перевізнику</dd>
+                        </div>
+                      )}
                     </dl>
-                    <span>Разом</span>
+                    <span>
+                      {order.delivery_amount > 0 ? "Разом" : "Разом за товари"}
+                    </span>
                     <strong>{priceFormatter.format(order.total)}</strong>
                   </div>
                 </div>

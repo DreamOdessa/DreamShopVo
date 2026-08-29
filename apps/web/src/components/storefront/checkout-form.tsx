@@ -268,11 +268,14 @@ export function CheckoutForm({
               <select defaultValue="cash_on_delivery" name="paymentMethod">
                 <option value="cash_on_delivery">Післяплата</option>
                 <option value="card_on_delivery">Карткою при отриманні</option>
-                <option value="bank_transfer">Переказ на рахунок</option>
                 <option disabled value="card_online">
                   Онлайн карткою (скоро)
                 </option>
               </select>
+              <small>
+                Переказ на рахунок тимчасово недоступний: реквізити ще
+                уточнюються.
+              </small>
             </label>
             <label className="checkout-field checkout-field-wide">
               <span>Коментар (необов’язково)</span>
@@ -318,13 +321,16 @@ export function CheckoutForm({
           ) : null}
           <div>
             <dt>Доставка</dt>
-            <dd>За тарифами перевізника</dd>
+            <dd>Оплачується окремо перевізнику</dd>
           </div>
         </dl>
         <div className="cart-summary-total">
-          <span>До сплати</span>
+          <span>Разом за товари</span>
           <strong>{priceFormatter.format(total)}</strong>
         </div>
+        <p>
+          Фінальну вартість доставки визначає перевізник після оформлення.
+        </p>
 
         <div
           aria-live="polite"

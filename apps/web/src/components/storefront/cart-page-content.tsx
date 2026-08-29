@@ -201,11 +201,11 @@ export function CartPageContent() {
             </div>
             <div>
               <dt>Доставка</dt>
-              <dd>За тарифами перевізника</dd>
+              <dd>Оплачується окремо перевізнику</dd>
             </div>
           </dl>
           <div className="cart-summary-total">
-            <span>До сплати</span>
+            <span>Разом за товари</span>
             <strong>{priceFormatter.format(subtotal)}</strong>
           </div>
           {hasUnavailableItems ? (

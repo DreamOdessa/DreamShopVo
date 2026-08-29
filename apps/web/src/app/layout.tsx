@@ -45,16 +45,32 @@ export const metadata: Metadata = maintenanceEnabled
       openGraph: {
         description:
           "Натуральні фруктові чипси та смаколики DreamShop в Одесі.",
+        images: [
+          {
+            alt: "DreamShop — натуральні фруктові чипси та смаколики",
+            height: 630,
+            url: "/opengraph-image",
+            width: 1200,
+          },
+        ],
         locale: "uk_UA",
         siteName: "DreamShop",
         title: "DreamShop",
         type: "website",
+        url: "/",
       },
       robots: {
         follow: true,
         index: true,
       },
       title: "DreamShop",
+      twitter: {
+        card: "summary_large_image",
+        description:
+          "Натуральні фруктові чипси та смаколики DreamShop в Одесі.",
+        images: ["/opengraph-image"],
+        title: "DreamShop",
+      },
     };
 
 export const viewport: Viewport = {

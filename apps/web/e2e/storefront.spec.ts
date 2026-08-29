@@ -270,6 +270,22 @@ test("homepage canonical and sitemap use the production site URL", async ({ page
     "href",
     "https://dream-odessa.shop",
   );
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+    "content",
+    "https://dream-odessa.shop",
+  );
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    "content",
+    /^https:\/\/dream-odessa\.shop\/opengraph-image(?:\?.+)?$/,
+  );
+  await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    "content",
+    "summary_large_image",
+  );
+
+  const openGraphImage = await page.request.get("/opengraph-image");
+  expect(openGraphImage.ok()).toBe(true);
+  expect(openGraphImage.headers()["content-type"]).toContain("image/png");
 
   const sitemap = await page.request.get("/sitemap.xml");
 

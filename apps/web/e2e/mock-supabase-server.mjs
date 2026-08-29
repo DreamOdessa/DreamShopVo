@@ -11,9 +11,23 @@ const category = {
   is_active: true,
   media: [],
   name: "Фруктові чипси",
+  show_in_showcase: true,
   slug: "fruit-chips",
   sort_order: 1,
 };
+
+const hiddenCategory = {
+  description: "Ця категорія не повинна з'являтися на головній.",
+  id: "99999999-9999-4999-8999-999999999999",
+  is_active: true,
+  media: [],
+  name: "Прихована категорія",
+  show_in_showcase: false,
+  slug: "hidden-category",
+  sort_order: 2,
+};
+
+const categories = [category, hiddenCategory];
 
 const products = [
   {
@@ -164,6 +178,8 @@ function sendJson(response, body, total = Array.isArray(body) ? body.length : 1)
 function matchingProducts(searchParams) {
   const slug = searchParams.get("slug");
   const idFilter = searchParams.get("id");
+  const categoryId = searchParams.get("category_id");
+  const isPopular = searchParams.get("is_popular");
   const legacyId = searchParams.get("legacy_id");
   const excludedId = idFilter?.startsWith("neq.")
     ? idFilter.replace("neq.", "")
@@ -173,6 +189,8 @@ function matchingProducts(searchParams) {
     : null;
 
   return products.filter((product) => {
+    if (categoryId && product.category_id !== categoryId.replace("eq.", "")) return false;
+    if (isPopular && product.is_popular !== (isPopular === "eq.true")) return false;
     if (slug && product.slug !== slug.replace("eq.", "")) return false;
     if (legacyId && product.legacy_id !== legacyId.replace("eq.", "")) return false;
     if (exactId && product.id !== exactId) return false;
@@ -189,7 +207,21 @@ const mockSupabase = createServer((request, response) => {
   const url = new URL(request.url ?? "/", `http://${host}:${mockPort}`);
 
   if (url.pathname === "/rest/v1/categories") {
-    sendJson(response, [category]);
+    const showInShowcase = url.searchParams.get("show_in_showcase");
+    const slug = url.searchParams.get("slug");
+    const categoryId = url.searchParams.get("id");
+    const isActive = url.searchParams.get("is_active");
+    const rows = categories.filter((item) => {
+      if (showInShowcase && item.show_in_showcase !== (showInShowcase === "eq.true")) {
+        return false;
+      }
+      if (slug && item.slug !== slug.replace("eq.", "")) return false;
+      if (categoryId && item.id !== categoryId.replace("eq.", "")) return false;
+      if (isActive && item.is_active !== (isActive === "eq.true")) return false;
+
+      return true;
+    });
+    sendJson(response, rows);
     return;
   }
 

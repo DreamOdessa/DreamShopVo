@@ -206,6 +206,88 @@ function sortedProductQuery<T>(query: T, sort: CatalogSort) {
   return sortable;
 }
 
+export type StorefrontHomeCatalog = {
+  popularProducts: CatalogProduct[];
+  showcaseCategories: Array<{
+    category: CatalogCategory;
+    products: CatalogProduct[];
+  }>;
+};
+
+const getCachedStorefrontHomeCatalog = unstable_cache(async () => {
+  const supabase = createPublicClient();
+  const { data: categoryData, error: categoryError } = await supabase
+    .from("categories")
+    .select(
+      "id,name,slug,description,media:category_media(object_key,alt_text,kind)",
+    )
+    .eq("is_active", true)
+    .eq("show_in_showcase", true)
+    .order("sort_order")
+    .order("name")
+    .limit(6);
+
+  if (categoryError) {
+    throw new Error("Unable to load storefront showcase categories.");
+  }
+
+  const categories = (categoryData ?? []).map(mapCategory);
+  const categoryProductResults = await Promise.all(
+    categories.map(async (category) => {
+      let query = supabase
+        .from("products")
+        .select(catalogProductPageSelection)
+        .eq("category_id", category.id)
+        .eq("is_active", true)
+        .eq("category.is_active", true)
+        .limit(4);
+
+      query = sortedProductQuery(query, "featured");
+      const { data, error } = await query;
+
+      if (error) {
+        throw new Error("Unable to load storefront showcase products.");
+      }
+
+      return {
+        category,
+        products: (data ?? [])
+          .map(mapProduct)
+          .filter((product): product is CatalogProduct => Boolean(product)),
+      };
+    }),
+  );
+
+  let popularQuery = supabase
+    .from("products")
+    .select(catalogProductPageSelection)
+    .eq("is_active", true)
+    .eq("is_popular", true)
+    .eq("category.is_active", true)
+    .limit(8);
+
+  popularQuery = sortedProductQuery(popularQuery, "featured");
+  const { data: popularData, error: popularError } = await popularQuery;
+
+  if (popularError) {
+    throw new Error("Unable to load popular storefront products.");
+  }
+
+  return {
+    popularProducts: (popularData ?? [])
+      .map(mapProduct)
+      .filter((product): product is CatalogProduct => Boolean(product)),
+    showcaseCategories: categoryProductResults.filter(
+      ({ products }) => products.length > 0,
+    ),
+  } satisfies StorefrontHomeCatalog;
+}, ["storefront-home-catalog"], {
+  revalidate: 300,
+  tags: [CATALOG_CACHE_TAG],
+});
+
+export const getStorefrontHomeCatalog = cache(getCachedStorefrontHomeCatalog);
+
 const getCachedCatalogProducts = unstable_cache(async (
   categoryId?: string,
   search = "",

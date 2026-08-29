@@ -2,30 +2,18 @@ import { ArrowDown, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { getCatalogCategories, getCatalogProducts } from "../../lib/catalog";
+import { getStorefrontHomeCatalog } from "../../lib/catalog";
 
 import { CategoryCard } from "./category-card";
 import { ProductCard } from "./product-card";
 
 export async function StoreHome() {
-  const [categoriesResult, productsResult] =
-    await Promise.allSettled([
-    getCatalogCategories(),
-    getCatalogProducts(undefined, "", "featured"),
-  ]);
-  const categories =
-    categoriesResult.status === "fulfilled" ? categoriesResult.value : [];
-  const products =
-    productsResult.status === "fulfilled" ? productsResult.value : [];
-  const featuredProducts = products.slice(0, 8);
-  const showcaseCategories = categories
-    .map((category) => ({
-      ...category,
-      products: products
-        .filter((product) => product.category.id === category.id)
-        .slice(0, 4),
-    }))
-    .filter((category) => category.products.length > 0);
+  const homeCatalogResult = await Promise.allSettled([getStorefrontHomeCatalog()]);
+  const homeCatalog =
+    homeCatalogResult[0].status === "fulfilled"
+      ? homeCatalogResult[0].value
+      : { popularProducts: [], showcaseCategories: [] };
+  const { popularProducts, showcaseCategories } = homeCatalog;
 
   return (
     <main className="store-home">
@@ -57,7 +45,7 @@ export async function StoreHome() {
 
       <section className="store-home-showcase" id="home-categories">
         {showcaseCategories.length ? (
-          showcaseCategories.map((category, categoryIndex) => (
+          showcaseCategories.map(({ category, products }, categoryIndex) => (
             <section
               className={`home-category-row${categoryIndex % 2 ? " is-reversed" : ""}`}
               key={category.id}
@@ -70,7 +58,7 @@ export async function StoreHome() {
                   </h2>
                 </div>
                 <div className="home-category-product-grid">
-                  {category.products.map((product, productIndex) => (
+                  {products.map((product, productIndex) => (
                     <ProductCard
                       eager={categoryIndex === 0 && productIndex < 3}
                       key={product.id}
@@ -102,9 +90,9 @@ export async function StoreHome() {
               <ArrowRight aria-hidden size={17} />
             </Link>
           </div>
-          {featuredProducts.length ? (
+          {popularProducts.length ? (
             <div className="product-card-grid">
-              {featuredProducts.map((product, index) => (
+              {popularProducts.map((product, index) => (
                 <ProductCard
                   eager={index < 4}
                   key={product.id}

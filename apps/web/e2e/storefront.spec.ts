@@ -239,6 +239,33 @@ test("unknown legacy product routes remain a 404", async ({ page }) => {
   expect(response.status()).toBe(404);
 });
 
+test("homepage uses showcase and popular catalog flags", async ({ page }) => {
+  await openPublicPage(page);
+
+  const showcase = page.locator("#home-categories");
+  const popularProducts = page.locator(".store-home-products");
+
+  await expect(
+    showcase.getByRole("heading", { name: "Фруктові чипси" }),
+  ).toBeVisible();
+  await expect(showcase.getByText("Прихована категорія")).toHaveCount(0);
+  await expect(
+    popularProducts.getByRole("heading", { name: "Популярні товари" }),
+  ).toBeVisible();
+  await expect(
+    popularProducts.getByRole("link", {
+      exact: true,
+      name: "Мангові чипси",
+    }),
+  ).toBeVisible();
+  await expect(
+    popularProducts.getByRole("link", {
+      exact: true,
+      name: "Полуничні чипси",
+    }),
+  ).toHaveCount(0);
+});
+
 test("mobile menu is keyboard-accessible and respects reduced motion", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: "reduce" });

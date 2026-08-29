@@ -62,13 +62,27 @@ for (const name of [
 const migrations = (await readdir(resolve(root, "supabase/migrations")))
   .filter((name) => name.endsWith(".sql"))
   .sort();
+const requiredMigrations = [
+  "20260723210000_initial_marketplace_schema.sql",
+  "20260820110000_enforce_product_media_slot_limit.sql",
+  "20260829140000_disable_unconfigured_payment_methods.sql",
+  "20260829160000_notify_customer_when_order_is_created.sql",
+];
 
 if (migrations.length < 1) {
   failures.push("No Supabase migrations were found.");
 }
 
-if (migrations.at(-1) !== "20260820110000_enforce_product_media_slot_limit.sql") {
-  failures.push(`Unexpected latest Supabase migration: ${migrations.at(-1) ?? "none"}`);
+for (const migration of requiredMigrations) {
+  if (!migrations.includes(migration)) {
+    failures.push(`Required Supabase migration is missing: ${migration}`);
+  }
+}
+
+for (const migration of migrations) {
+  if (!/^\d{14}_[a-z0-9_]+\.sql$/.test(migration)) {
+    failures.push(`Supabase migration name is not sortable: ${migration}`);
+  }
 }
 
 if (failures.length) {

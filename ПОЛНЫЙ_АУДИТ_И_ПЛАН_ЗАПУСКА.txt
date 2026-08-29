@@ -1,7 +1,7 @@
 ПОЛНЫЙ АУДИТ DREAMSHOPVO И ПЛАН ЗАПУСКА
 Дата среза: 29.08.2026 (UTC)
 Проверенный baseline commit: 015e95e — update
-Последний проверенный рабочий commit: b56cb2c — fix: reduce duplicate product card links
+Последний проверенный рабочий commit: 2c032bc — fix: noindex catalog query variants
 Ветка: codex/phase4-legacy-preview
 
 СТАТУСЫ
@@ -79,12 +79,13 @@ Legacy-стек:
 - 29db11f — react-router-dom/react-router/@remix-run/router обновлены до 6.30.6/6.30.6/1.23.4.
 - b56cb2c — в product card оставлена одна семантическая ссылка на товар;
   desktop/mobile production-fixture screenshots и Chromium E2E проверены.
+- 2c032bc — query-варианты catalog/category получили noindex,follow и clean canonical.
 
 [ГОТОВО] Текущие локальные проверки:
 - старый React-проект: 4 набора, 8 тестов — успешно;
 - legacy server tests: 6 тестов — успешно;
 - apps/web: 10 файлов, 39 unit-тестов — успешно;
-- apps/web production-fixture Chromium E2E: 17/17 — успешно;
+- apps/web production-fixture Chromium E2E: 18/18 — успешно;
 - apps/web npm audit --omit=dev: 0 уязвимостей;
 - Worker: 1 файл, 25 тестов — успешно;
 - старый CRA build — успешно;
@@ -569,9 +570,10 @@ archive/source-assets/
    production-like HTML/E2E.
 6. [ГОТОВО] Sitemap использует абсолютные canonical HTTPS URL для главной,
    каталога, активных категорий и товаров.
-7. Исправить pagination canonical.
-8. Поиск/filter/sort закрыть noindex,follow или утвердить отдельную
-   индексируемую стратегию.
+7. [ГОТОВО] Любой catalog/category query, включая pagination, имеет clean
+   canonical базовой страницы и noindex,follow.
+8. [ГОТОВО] Поиск/filter/sort закрыты noindex,follow; базовые catalog/category
+   страницы остаются индексируемыми.
 9. Не закрывать robots.txt URL, на которых crawler должен увидеть noindex.
 10. [ГОТОВО] Украинская 404 возвращает HTTP 404 и получает встроенный Next
     robots noindex.
@@ -647,7 +649,7 @@ https://zakon.rada.gov.ua/go/2297-17 и действующий на дату з�
 Выполнены дополнительно: 77ec32f (cutover preflight), f9b2bda (homepage
 canonical/sitemap), b1437f6 (стабильная checkout E2E-фикстура) и cfeca32
 (контролируемые security patches Next/PostCSS), 29db11f (legacy router v6 patch),
-b56cb2c (одна product link на карточку).
+b56cb2c (одна product link на карточку), 2c032bc (noindex catalog query variants).
 
 После каждого шага:
 - проверить git diff и отсутствие секретов;

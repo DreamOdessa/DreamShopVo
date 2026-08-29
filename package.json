@@ -32,6 +32,7 @@
     "start": "react-scripts start",
     "start:legacy-preview": "PORT=3004 BROWSER=none REACT_APP_LEGACY_LOCAL_PREVIEW=true react-scripts start",
     "build": "react-scripts build",
+    "check:cutover-readiness": "node scripts/check-cutover-readiness.mjs",
     "test": "react-scripts test",
     "check:deployment-boundaries": "node scripts/check-deployment-boundaries.mjs",
     "test:server": "node --test server/*.test.js",

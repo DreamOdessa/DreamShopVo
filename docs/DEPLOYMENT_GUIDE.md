@@ -1,5 +1,7 @@
 # 🚀 Инструкция по деплою DreamShop на Vercel
 
+> **Legacy-only guide.** This document describes the preserved CRA/Firebase rollback deployment and must not be used to cut over the Next/Supabase/Worker application. Use [`CUTOVER_RUNBOOK.md`](CUTOVER_RUNBOOK.md) for RB-010.
+
 ## ✅ Статус проекта
 
 **Проект полностью готов к деплою!**

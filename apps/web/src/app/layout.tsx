@@ -35,6 +35,9 @@ export const metadata: Metadata = maintenanceEnabled
       title: "DreamShop - Технічні роботи",
     }
   : {
+      alternates: {
+        canonical: "/",
+      },
       description:
         "Натуральні фруктові чипси та смаколики DreamShop в Одесі.",
       icons,

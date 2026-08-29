@@ -262,6 +262,29 @@ test("unknown routes show the Ukrainian root 404 page", async ({ page }) => {
     page.getByRole("heading", { level: 1, name: "Сторінку не знайдено" }),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "Перейти до каталогу" })).toBeVisible();
+  const robotsDirectives = await page.locator('meta[name="robots"]').evaluateAll(
+    (elements) => elements.map((element) => element.getAttribute("content")),
+  );
+  expect(robotsDirectives).toContain("noindex");
+});
+
+test("homepage canonical and sitemap use the production site URL", async ({ page }) => {
+  await openPublicPage(page);
+
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "https://dream-odessa.shop",
+  );
+
+  const sitemap = await page.request.get("/sitemap.xml");
+
+  expect(sitemap.ok()).toBe(true);
+  const sitemapXml = await sitemap.text();
+  expect(sitemapXml).toContain("https://dream-odessa.shop</loc>");
+  expect(sitemapXml).toContain("https://dream-odessa.shop/catalog</loc>");
+  expect(sitemapXml).toContain(
+    "https://dream-odessa.shop/product/mango-chips</loc>",
+  );
 });
 
 test("homepage uses showcase and popular catalog flags", async ({ page }) => {

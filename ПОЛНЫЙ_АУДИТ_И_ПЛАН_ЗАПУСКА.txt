@@ -557,13 +557,16 @@ archive/source-assets/
 2. Постоянно редиректить dream-odessa.com, Vercel aliases и legacy-домены.
 3. Поставить noindex на maintenance, preview и доступные legacy-копии.
 4. Добавить route/product legacy redirects и журнал 404.
-5. Добавить canonical на главную и включить её в sitemap.
-6. В sitemap оставить только абсолютные canonical HTTPS URL.
+5. [ГОТОВО] Canonical главной страницы и её inclusion в sitemap проверены
+   production-like HTML/E2E.
+6. [ГОТОВО] Sitemap использует абсолютные canonical HTTPS URL для главной,
+   каталога, активных категорий и товаров.
 7. Исправить pagination canonical.
 8. Поиск/filter/sort закрыть noindex,follow или утвердить отдельную
    индексируемую стратегию.
 9. Не закрывать robots.txt URL, на которых crawler должен увидеть noindex.
-10. Добавить украинскую 404.
+10. [ГОТОВО] Украинская 404 возвращает HTTP 404 и получает встроенный Next
+    robots noindex.
 11. Добавить OG/Twitter image и URL.
 12. Добавить правдивые JSON-LD: OnlineStore/Organization, WebSite,
     BreadcrumbList и Product/Offer. Доставка/возврат — после утверждения правил.

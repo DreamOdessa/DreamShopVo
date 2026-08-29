@@ -1,7 +1,7 @@
 ПОЛНЫЙ АУДИТ DREAMSHOPVO И ПЛАН ЗАПУСКА
 Дата среза: 29.08.2026 (UTC)
 Проверенный baseline commit: 015e95e — update
-Последний проверенный рабочий commit: cfeca32 — chore: update Next security patches
+Последний проверенный рабочий commit: 29db11f — chore: patch legacy router dependency
 Ветка: codex/phase4-legacy-preview
 
 СТАТУСЫ
@@ -76,9 +76,11 @@ Legacy-стек:
 - f9b2bda — canonical главной и sitemap entry;
 - b1437f6 — стабильная E2E-фикстура корзины до React hydration;
 - cfeca32 — Next 16.3.3 и PostCSS 8.5.26, web production audit без уязвимостей.
+- 29db11f — react-router-dom/react-router/@remix-run/router обновлены до 6.30.6/6.30.6/1.23.4.
 
 [ГОТОВО] Текущие локальные проверки:
 - старый React-проект: 4 набора, 8 тестов — успешно;
+- legacy server tests: 6 тестов — успешно;
 - apps/web: 10 файлов, 39 unit-тестов — успешно;
 - apps/web production-fixture Chromium E2E: 17/17 — успешно;
 - apps/web npm audit --omit=dev: 0 уязвимостей;
@@ -164,12 +166,16 @@ Auth-required checkout оставить на v1; guest checkout — post-launch.
 5. P1 — ОБЯЗАТЕЛЬНО ДО ДОПУСКА РЕАЛЬНЫХ КЛИЕНТОВ
 
 Безопасность и зависимости:
-- [НЕ ГОТОВО] Корневой legacy npm audit: 63 уязвимости: 12 low, 14 moderate,
-  34 high, 3 critical.
+- [НЕ ГОТОВО] Корневой legacy npm audit: 62 уязвимости: 12 low, 16 moderate,
+  31 high, 3 critical.
 - [НЕ ГОТОВО] Публичные домены всё ещё могут вести на legacy.
 - [НЕ ГОТОВО] Не использовать npm audit fix --force.
-- [НЕ ГОТОВО] Если legacy остаётся публичным — изолировать deployment либо
-  сделать контролируемые patch-обновления, включая react-router-dom 6.30.6.
+- [ГОТОВО] react-router-dom обновлён до безопаснейшего поддерживаемого v6 patch
+  6.30.6 (react-router 6.30.6, @remix-run/router 1.23.4); legacy tests, API
+  typecheck, Prisma validate и CRA build прошли.
+- [НЕ ГОТОВО] Свежие advisory всё ещё отмечают два moderate в React Router v6;
+  исправление требует v7.18.3 major migration. До отдельной миграции legacy
+  deployment нужно изолировать и не использовать как публичный магазин.
 - [ГОТОВО] apps/web обновлён до Next 16.3.3 и PostCSS 8.5.26; контролируемый
   npm audit --omit=dev показал 0 уязвимостей.
 - [ГОТОВО] Worker npm audit: 0 уязвимостей.
@@ -636,7 +642,7 @@ https://zakon.rada.gov.ua/go/2297-17 и действующий на дату з�
 
 Выполнены дополнительно: 77ec32f (cutover preflight), f9b2bda (homepage
 canonical/sitemap), b1437f6 (стабильная checkout E2E-фикстура) и cfeca32
-(контролируемые security patches Next/PostCSS).
+(контролируемые security patches Next/PostCSS), 29db11f (legacy router v6 patch).
 
 После каждого шага:
 - проверить git diff и отсутствие секретов;

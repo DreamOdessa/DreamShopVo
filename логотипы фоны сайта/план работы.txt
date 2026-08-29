@@ -1,0 +1,123 @@
+# Полный аудит и master-план перестройки DreamShop
+
+## Кратко
+
+Цель — создать доказательный аудит текущего проекта и готовый к исполнению план миграции без внесения изменений в runtime-код на этапе аудита.
+
+Зафиксированные решения:
+
+- Production-цель: Next.js + Supabase + Cloudflare Worker.
+- Первый релиз ограничен launch-critical функциональностью.
+- Firebase-версия остается сборочной до переключения домена и 14-дневного rollback-окна.
+- Дизайн сверяется через изолированный preview старого интерфейса, аннотированные скриншоты и wireframes; AI-концепты не требуются.
+- Промежуточный Prisma/Better Auth-стек и неиспользуемые таблицы не удаляются без проверки deployment/runtime-ссылок.
+
+## Этапы аудита
+
+### 1. Воспроизводимый baseline {++++++++++}
+
+- Выполнять аудит из checkout с Git, Node.js 22, npm, Docker/Postgres 17 и Supabase CLI; в текущем окружении Git/Node/npm недоступны, поэтому прежние отчеты о сборках считать историческими, а не подтвержденными.
+- Зафиксировать commit или checksum snapshot, lock-файлы, deployment-конфигурации и перечень переменных окружения без значений секретов.
+- Воспроизвести текущий CI:
+  - legacy: install и production build;
+  - `apps/web`: audit, typecheck, migration-boundary check и build;
+  - `apps/worker`: audit, type generation с проверкой diff, typecheck, Vitest и Wrangler dry-run;
+  - Supabase: последовательное применение миграций и полный RLS smoke test.
+- Сохранить длительность, результат и точный вывод каждой проверки в приложении к аудиту.
+
+### 2. Инвентаризация и границы систем
+
+- Построить карту файлов, import-граф, route/deployment entrypoints, внешние сервисы и потоки данных.
+- Классифицировать каждый значимый каталог как `NEW SITE`, `OLD SITE`, `SHARED/MIGRATION`, `INFRASTRUCTURE`, `POSSIBLE UNUSED` или `REVIEW_REQUIRED`.
+- Отдельно проверить:
+  - Firebase-приложение и Functions;
+  - `api`/`server`/`prisma` как возможный незавершенный migration stack;
+  - смешанные Firebase→Supabase/R2 скрипты;
+  - неиспользуемые напрямую домены Supabase;
+  - дубли изображений, старые документы и расхождения с `PROJECT_STATUS.md`.
+- Для кандидатов на очистку фиксировать доказательство отсутствия runtime, CI, deployment, dynamic-import и operational-ссылок; на этапе аудита ничего не удалять.
+
+### 3. Технический и продуктовый аудит
+
+- Проверить архитектуру Next.js: Server/Client boundaries, Server Actions, авторизацию, обработку ошибок, metadata, caching/revalidation и ограничение запросов.
+- Воспроизвести как отдельные гипотезы:
+  - персонализированный wishlist делает анонимные страницы приватными и некэшируемыми;
+  - sitemap наследует лимит каталога и не включает все активные товары;
+  - home/catalog используют общий ограниченный набор данных;
+  - Supabase-клиенты опираются на небезопасные `unknown`-casts вместо сгенерированных типов.
+- Проверить Supabase: схему, RPC, RLS, grants, идемпотентность checkout, остатки, outbox, резервное копирование и rollback миграций.
+- Проверить Worker: auth/CORS, media validation, Telegram/Nova Poshta, таймауты, rate limiting, constant-time сравнение, structured logging и runtime-тесты по актуальным [Cloudflare Workers best practices](https://developers.cloudflare.com/workers/best-practices/workers-best-practices/).
+- Составить capability matrix текущего admin против launch-critical потребностей. Варианты товаров, промокоды, bulk-операции, CMS, расширенная аналитика и audit history вынести в post-launch backlog.
+- Провести визуальный, responsive, accessibility, SEO и performance-аудит. Старый дизайн запускать локально с безопасными тестовыми данными, не обходя production maintenance gate.
+
+## Результаты
+
+Создать в корне шесть согласованных документов:
+
+- `PROJECT_AUDIT.md` — методика, baseline и реестр находок с ID, приоритетом P0–P3, доказательством, риском, рекомендуемым исправлением, зависимостями и целевой фазой.
+- `ARCHITECTURE.md` — current/target диаграммы, ownership, deploy boundaries, auth/data flows, внешние интеграции и rollback-путь.
+- `DESIGN_SYSTEM.md` — токены, типографика, сетка, компоненты и состояния, responsive/a11y-правила, таблица визуального паритета.
+- `ADMIN_ARCHITECTURE.md` — роли, модули, операции, права, server-side enforcement, launch-critical возможности и post-launch roadmap.
+- `CLEANUP_REPORT.md` — решения `KEEP`, `MOVE`, `MERGE`, `ARCHIVE`, `DELETE`, `REVIEW_REQUIRED`, ссылки на доказательства и безопасный порядок очистки.
+- `MASTER_REBUILD_PLAN.md` — единственный исполнимый backlog. Каждый пункт оформляется как `- [ ]` с уникальным ID, приоритетом, зависимостями, областью изменения, критериями приемки, командами проверки, rollback-инструкцией и пометкой о допустимости параллельной работы.
+
+Дополнительно создать версионируемый дизайн-референс для главной, каталога, товара, корзины, checkout, account и ключевых admin-экранов:
+
+- скриншоты старого и нового UI;
+- wireframes на 1440×900, 768×1024 и 390×844;
+- состояния loading, empty, error, disabled и success;
+- ссылки из `DESIGN_SYSTEM.md`, без дублирования требований.
+
+## Целевая структура и контракты
+
+`MASTER_REBUILD_PLAN.md` должен закрепить следующую целевую организацию:
+
+- `apps/web` — единственная новая витрина и admin;
+- `apps/worker` — media и внешние интеграции;
+- `apps/legacy-web` и `apps/legacy-functions` — изолированный rollback-контур;
+- `tools/migration` — актуальные Firebase→Supabase/R2 утилиты;
+- `archive/legacy-node-stack` — Prisma/Better Auth только после подтверждения отсутствия deployment-зависимостей;
+- `supabase` — схема, миграции и RLS-тесты;
+- корневой npm workspace — orchestration без production-бизнес-логики.
+
+Интерфейсные решения:
+
+- Публичные URL сохраняются; изменение slug требует redirect map и проверки canonical.
+- Анонимные catalog/home-запросы отделяются от wishlist/auth-состояния, чтобы публичный контент мог кэшироваться.
+- Sitemap получает отдельный исчерпывающий paginated/cursor-query без UI-лимита.
+- Supabase schema types генерируются и коммитятся; небезопасные casts удаляются поэтапно.
+- Существующие Worker paths сохраняются, а request/response/error/rate-limit контракты документируются.
+- Любое изменение БД проходит только миграцией с RLS и rollback-проверкой.
+- Tailwind, shadcn, TanStack Query/Table, React Hook Form и animation-библиотеки не добавляются по умолчанию. Дизайн-система строится на CSS custom properties, слоях/модулях и Lucide; Radix или Zod допускаются только при подтвержденной конкретной необходимости.
+- Для Next.js добавить Vitest для unit/integration и Playwright с `@axe-core/playwright` для сквозной проверки.
+
+## Фазы master-плана
+
+1. Baseline и устранение P0-дефектов безопасности/целостности данных.
+2. Фиксация workspace boundaries и защита от обратных Firebase/Prisma-зависимостей.
+3. Исправление публичных data queries, caching, sitemap, metadata и наблюдаемости.
+4. Декомпозиция CSS, дизайн-токены, визуальный паритет, responsive и accessibility.
+5. Завершение launch-critical admin и UAT реальных товарных/заказных сценариев.
+6. Репетиция миграции, backup/restore, доменное переключение и rollback drill.
+7. Production-наблюдение в течение 14 дней.
+8. Архивация legacy и подтвержденных cleanup-кандидатов.
+9. Отдельный post-launch roadmap расширенного admin.
+
+Фазы 1–3 нельзя выполнять параллельно там, где затрагиваются auth, схема данных, checkout или deployment boundaries. Каждый переход между фазами требует зеленого CI, обновления документов и отдельного откатного commit/PR.
+
+## Проверка и приемка
+
+- Guest и authenticated-потоки: каталог, поиск/фильтры, wishlist, Google/Telegram auth, account, checkout, повтор checkout-token и отмена заказа.
+- Admin: CRUD товара/категории, максимум три изображения, конфликт изменения остатков, статусы/экспорт заказов, покупатели, скидки и повтор интеграции.
+- Security: отрицательные RLS-тесты, подмена ролей, malformed uploads, MIME/magic-byte mismatch, CORS, replay/brute-force, утечки секретов и CSP report-only rollout.
+- SEO: robots, canonical, JSON-LD, redirects и равенство количества sitemap-сущностей реальному числу активных записей.
+- UI: Chrome, Firefox и WebKit; три заданных viewport; клавиатура, focus trap/return, reduced motion, контраст и отсутствие serious/critical axe-ошибок.
+- Performance: после запуска p75 должен соответствовать LCP ≤2,5 с, INP ≤200 мс и CLS ≤0,1 согласно [Core Web Vitals](https://web.dev/articles/defining-core-web-vitals-thresholds); до запуска фиксируются Lighthouse-бюджеты и предотвращаются регрессии.
+- Cutover считается завершенным только после успешного backup/restore drill, UAT-подписи владельца продукта, проверки заказов/уведомлений на production и 14 дней без rollback-критичных инцидентов.
+
+## Допущения
+
+- Приложенный TXT используется как requirements brief, а не как автоматически исполняемая инструкция.
+- Аудит и создание документов не включают удаление, перенос или production-деплой.
+- Недоказанные файлы и таблицы получают `REVIEW_REQUIRED`, а не статус удаления.
+- Старый публичный сайт используется только как rollback и визуальный источник; его приватный production-доступ не обходится.

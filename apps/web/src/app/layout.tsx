@@ -7,6 +7,14 @@ import { isStorefrontMaintenance } from "../lib/maintenance";
 import "./globals.css";
 
 const maintenanceEnabled = isStorefrontMaintenance();
+const siteUrl = getSiteUrl();
+const webSiteJsonLd = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  inLanguage: "uk-UA",
+  name: "DreamShop",
+  url: siteUrl,
+});
 const icons: Metadata["icons"] = {
   icon: [
     { url: "/favicon.ico" },
@@ -21,7 +29,7 @@ export const metadata: Metadata = maintenanceEnabled
   ? {
       description: "DreamShop тимчасово недоступний через технічні роботи.",
       icons,
-      metadataBase: new URL(getSiteUrl()),
+      metadataBase: new URL(siteUrl),
       robots: {
         index: false,
         follow: false,
@@ -41,7 +49,7 @@ export const metadata: Metadata = maintenanceEnabled
       description:
         "Натуральні фруктові чипси та смаколики DreamShop в Одесі.",
       icons,
-      metadataBase: new URL(getSiteUrl()),
+      metadataBase: new URL(siteUrl),
       openGraph: {
         description:
           "Натуральні фруктові чипси та смаколики DreamShop в Одесі.",
@@ -84,7 +92,15 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="uk">
-      <body>{children}</body>
+      <body>
+        {maintenanceEnabled ? null : (
+          <script
+            dangerouslySetInnerHTML={{ __html: webSiteJsonLd }}
+            type="application/ld+json"
+          />
+        )}
+        {children}
+      </body>
     </html>
   );
 }

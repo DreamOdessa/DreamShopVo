@@ -287,6 +287,19 @@ test("homepage canonical and sitemap use the production site URL", async ({ page
   expect(openGraphImage.ok()).toBe(true);
   expect(openGraphImage.headers()["content-type"]).toContain("image/png");
 
+  const structuredData = await page
+    .locator('script[type="application/ld+json"]')
+    .evaluateAll((elements) =>
+      elements.map((element) => JSON.parse(element.textContent ?? "{}")),
+    );
+  expect(structuredData).toContainEqual({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    inLanguage: "uk-UA",
+    name: "DreamShop",
+    url: "https://dream-odessa.shop",
+  });
+
   const sitemap = await page.request.get("/sitemap.xml");
 
   expect(sitemap.ok()).toBe(true);

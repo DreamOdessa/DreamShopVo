@@ -20,28 +20,32 @@ import {
   normalizeCatalogSearch,
   normalizeCatalogSort,
   type CatalogFilters,
+  type CatalogSearchParams,
+  hasCatalogQueryParameters,
 } from "../../../lib/catalog-filters";
 import { getSiteUrl } from "../../../lib/env";
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: `${getSiteUrl()}/catalog`,
-  },
-  title: "Каталог - DreamShop",
-  description:
-    "Натуральні фруктові чипси та смаколики DreamShop в Одесі.",
+type CatalogPageProps = {
+  searchParams: Promise<CatalogSearchParams>;
 };
 
-type CatalogPageProps = {
-  searchParams: Promise<{
-    available?: string | string[];
-    max?: string | string[];
-    min?: string | string[];
-    page?: string | string[];
-    q?: string | string[];
-    sort?: string | string[];
-  }>;
-};
+export async function generateMetadata({
+  searchParams,
+}: CatalogPageProps): Promise<Metadata> {
+  const params = await searchParams;
+
+  return {
+    alternates: {
+      canonical: `${getSiteUrl()}/catalog`,
+    },
+    description:
+      "Натуральні фруктові чипси та смаколики DreamShop в Одесі.",
+    robots: hasCatalogQueryParameters(params)
+      ? { follow: true, index: false }
+      : undefined,
+    title: "Каталог - DreamShop",
+  };
+}
 
 export default async function CatalogPage({
   searchParams,

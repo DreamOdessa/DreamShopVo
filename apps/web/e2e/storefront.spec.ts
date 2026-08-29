@@ -282,6 +282,27 @@ test("homepage canonical and sitemap use the production site URL", async ({ page
   );
 });
 
+test("catalog query variants are noindexed and use clean canonicals", async ({ page }) => {
+  for (const [path, canonical] of [
+    ["/catalog?q=манго&sort=price-asc&page=1", "https://dream-odessa.shop/catalog"],
+    [
+      "/catalog/fruit-chips?available=1",
+      "https://dream-odessa.shop/catalog/fruit-chips",
+    ],
+  ]) {
+    await openPublicPage(page, path);
+
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      /noindex/,
+    );
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+      "href",
+      canonical,
+    );
+  }
+});
+
 test("homepage uses showcase and popular catalog flags", async ({ page }) => {
   await openPublicPage(page);
 

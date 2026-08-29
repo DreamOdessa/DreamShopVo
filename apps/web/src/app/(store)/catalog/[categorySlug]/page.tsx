@@ -21,26 +21,22 @@ import {
   normalizeCatalogSearch,
   normalizeCatalogSort,
   type CatalogFilters,
+  type CatalogSearchParams,
+  hasCatalogQueryParameters,
 } from "../../../../lib/catalog-filters";
 import { getSiteUrl } from "../../../../lib/env";
 import { publicMediaUrl } from "../../../../lib/media-url";
 
 type CategoryPageProps = {
   params: Promise<{ categorySlug: string }>;
-  searchParams: Promise<{
-    available?: string | string[];
-    max?: string | string[];
-    min?: string | string[];
-    page?: string | string[];
-    q?: string | string[];
-    sort?: string | string[];
-  }>;
+  searchParams: Promise<CatalogSearchParams>;
 };
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: CategoryPageProps): Promise<Metadata> {
-  const { categorySlug } = await params;
+  const [{ categorySlug }, queryParams] = await Promise.all([params, searchParams]);
   const category = await getCatalogCategory(categorySlug);
 
   if (!category) {
@@ -53,6 +49,9 @@ export async function generateMetadata({
     },
     description:
       category.description || `${category.name} у каталозі DreamShop.`,
+    robots: hasCatalogQueryParameters(queryParams)
+      ? { follow: true, index: false }
+      : undefined,
     title: `${category.name} - DreamShop`,
   };
 }

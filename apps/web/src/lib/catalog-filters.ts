@@ -17,6 +17,12 @@ export type CatalogFilters = {
 
 type SearchParam = string | string[] | undefined;
 
+export type CatalogSearchParams = Record<string, SearchParam>;
+
+export function hasCatalogQueryParameters(searchParams: CatalogSearchParams) {
+  return Object.keys(searchParams).length > 0;
+}
+
 function firstParam(value: SearchParam) {
   return Array.isArray(value) ? value[0] : value;
 }

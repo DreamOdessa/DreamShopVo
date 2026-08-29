@@ -1,6 +1,7 @@
 ПОЛНЫЙ АУДИТ DREAMSHOPVO И ПЛАН ЗАПУСКА
 Дата среза: 29.08.2026 (UTC)
-Проверенный commit: 015e95e — update
+Проверенный baseline commit: 015e95e — update
+Последний проверенный рабочий commit: cfeca32 — chore: update Next security patches
 Ветка: codex/phase4-legacy-preview
 
 СТАТУСЫ
@@ -11,15 +12,10 @@
 
 1. ПРАВИЛО ЭТОГО ЭТАПА
 
-Этот документ — единственный результат текущего этапа. Код, зависимости, базы,
-Firebase, Supabase, Cloudflare, Vercel, DNS, production-конфигурации, старые
-файлы и размещение архивов этим этапом не менялись. Старый сайт не перемещался
-и не удалялся.
-
-После проверки документа допустим только отдельный документационный commit:
-docs: add complete project audit and launch plan
-После успешной проверки этого commit он должен быть отправлен в удалённый
-репозиторий. Никакие другие изменения в этом commit не допускаются.
+Исходная редакция этого документа была единственным результатом этапа аудита:
+код, зависимости, базы, внешняя production-конфигурация и legacy-файлы тогда
+не менялись. Последующие независимые шаги из плана перечислены в разделе 3.
+Старый сайт по-прежнему не перемещался и не удалялся.
 
 2. АРХИТЕКТУРА И ТЕКУЩАЯ ГОТОВНОСТЬ
 
@@ -43,10 +39,9 @@ Legacy-стек:
 
 ВЕРДИКТ: новый проект функционально подготовлен, но production-запуск реальных
 клиентов пока НЕ РАЗРЕШЁН. Блокеры: неподтверждённый удалённый cutover/rollback,
-нерабочий репозиторный rollback, отсутствие legacy-редиректов, ложноположительная
-production-сборка без обязательных env, неполные условия продажи и контент товара,
-неопределённая доставка/банковская оплата, отсутствие полного мониторинга,
-клиентских подтверждений заказов и SEO-ввода.
+нерабочий репозиторный rollback, неполные условия продажи и данные товаров,
+неподтверждённые операционные правила доставки, отсутствие полного мониторинга,
+доставляемых подтверждений заказов и подключения поисковых кабинетов.
 
 3. УЖЕ ВЫПОЛНЕННЫЕ РАБОТЫ
 
@@ -68,22 +63,31 @@ production-сборка без обязательных env, неполные у
 - обновлены аудит и основной план;
 - удалённая репетиция при этом не проводилась.
 
-[ГОТОВО] На дату среза:
+[ГОТОВО] После baseline выполнены, перепроверены и отправлены отдельные шаги:
+- 7f8d24a — строгий production env-контракт, запрещающий localhost/preview;
+- 2356f96 — CI с production-fixture build, SSR-каталогом и E2E;
+- ee11f48 — 308 legacy route/product redirects с lookup legacy_id → slug;
+- 0a5e149 — использование show_in_showcase и is_popular без лишней выборки;
+- ef8fd05 — явные доставка/оплата/итог checkout, неподтверждённый перевод отключён;
+- 2b58877 — skip-link, мобильный focus management, порядок checkout и украинская 404;
+- aa84be2 — сокращённый public health и hardened Worker headers;
+- 5123cc7 — транзакционное in-app подтверждение нового заказа;
+- 77ec32f — актуальная проверка границ миграций cutover preflight;
+- f9b2bda — canonical главной и sitemap entry;
+- b1437f6 — стабильная E2E-фикстура корзины до React hydration;
+- cfeca32 — Next 16.3.3 и PostCSS 8.5.26, web production audit без уязвимостей.
+
+[ГОТОВО] Текущие локальные проверки:
 - старый React-проект: 4 набора, 8 тестов — успешно;
-- apps/web: 9 файлов, 31 тест — успешно;
-- Worker: 1 файл, 23 теста — успешно;
+- apps/web: 10 файлов, 39 unit-тестов — успешно;
+- apps/web production-fixture Chromium E2E: 17/17 — успешно;
+- apps/web npm audit --omit=dev: 0 уязвимостей;
+- Worker: 1 файл, 25 тестов — успешно;
 - старый CRA build — успешно;
-- web typecheck и migration boundary — успешно;
+- web typecheck, migration boundary и production fixture build — успешно;
 - Worker typecheck и Wrangler dry-run — успешно;
 - Prisma validate, API typecheck и server tests ранее успешно проходили;
-- рабочее дерево перед созданием данного документа было чистым.
-
-[НЕ ГОТОВО] Повтор E2E не завершён из-за lock от другого next build. Это не
-считать ошибкой приложения; требуется чистый повтор перед выпуском UI-изменений.
-
-[НЕ ГОТОВО] apps/web build возвращает код 0 даже без Supabase env: ошибки
-получения данных превращаются в пустую витрину. Такой production build gate
-считать ложноположительным.
+- после каждого приведённого шага рабочее дерево проверялось перед push.
 
 4. P0 — ОБЯЗАТЕЛЬНО ДО ЗАПУСКА
 
@@ -114,10 +118,10 @@ production-сборка без обязательных env, неполные у
 storage.rules нельзя придумывать: нужно получить точную развернутую версию.
 
 4.3. Старые URL и домены
-- [НЕ ГОТОВО] Нет переходов /products → /catalog, /products/:id → новый товар,
-  /profile → /account и /orders → утверждённый маршрут истории заказов.
-- [НЕ ГОТОВО] legacy_id уже есть в Supabase, но не используется для lookup
-  legacy-id → product slug.
+- [ГОТОВО] 308-переходы /products → /catalog, /products/:id → новый товар,
+  /profile → /account и /orders → /account/orders проверены Chromium E2E.
+- [ГОТОВО] legacy_id используется server lookup для legacy-id → product slug;
+  неизвестный legacy product возвращает осмысленную 404.
 - [НЕ ГОТОВО] dream-odessa.com, старые Vercel aliases и legacy-домены не сведены
   одним постоянным редиректом.
 - [НЕ ГОТОВО] Нет журнала старых URL и 404 после переключения.
@@ -126,24 +130,22 @@ storage.rules нельзя придумывать: нужно получить �
 Нужны прямые 301/308 без redirect-chain; вторичные домены не должны индексироваться.
 
 4.4. Production env и достоверность витрины
-- [НЕ ГОТОВО] NEXT_PUBLIC_SITE_URL может принять localhost или preview URL.
-- [НЕ ГОТОВО] Сборка должна завершаться ошибкой при пустом, localhost, preview
-  или не-HTTPS SITE_URL.
-- [НЕ ГОТОВО] Проверить Supabase URL/key, Worker API URL и remotePatterns
-  изображений для окончательного Worker hostname.
-- [НЕ ГОТОВО] CI обязан собирать fixture-env и утверждать непустой SSR-каталог;
-  ошибка Supabase не может означать «пустая, но успешная главная».
+- [ГОТОВО] Production env не допускает localhost, preview, пустые или не-HTTPS
+  canonical/Supabase/Worker URL; проверено unit и production-fixture build.
+- [ГОТОВО] CI собирает обязательный fixture-env и проверяет непустой SSR-каталог;
+  ошибка Supabase больше не считается пустой, но успешной витриной.
+- [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] Сверить эти проверки с окончательными production
+  Supabase, Worker hostname и image remotePatterns после предоставления доступов.
 
 4.5. Условия продажи и checkout
 - [НЕ ГОТОВО] Нет страниц продавца, контактов, доставки, оплаты, возврата,
   конфиденциальности, пользовательских условий и публичной оферты.
 - [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] Официальное имя продавца, ФОП/компания, реквизиты,
   контакты, часы поддержки, география и сроки доставки.
-- [НЕ ГОТОВО] Для банковского перевода нет опубликованных реквизитов или
-  проверенной инструкции.
-- [НЕ ГОТОВО] Checkout показывает доставку «по тарифам перевозчика», но
-  delivery_amount = 0, а итог выглядит как полная окончательная сумма.
-- [НЕ ГОТОВО] До решения нельзя называть стоимость корзины полной суммой к оплате.
+- [ГОТОВО] Банковский перевод отключён до предоставления реквизитов; checkout
+  разделяет сумму товаров и отдельную оплату доставки перевозчику.
+- [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] До включения любого нового способа оплаты нужны
+  опубликованные реквизиты и проверенная инструкция.
 
 Первый запуск: online-card payment не включать. Оставить только подтвержденные
 ручные способы оплаты. Если доставка неизвестна заранее, явно показывать:
@@ -168,8 +170,8 @@ Auth-required checkout оставить на v1; guest checkout — post-launch.
 - [НЕ ГОТОВО] Не использовать npm audit fix --force.
 - [НЕ ГОТОВО] Если legacy остаётся публичным — изолировать deployment либо
   сделать контролируемые patch-обновления, включая react-router-dom 6.30.6.
-- [НЕ ГОТОВО] apps/web имеет 3 moderate через Next/PostCSS/Vite; нужен
-  контролируемый patch до Next 16.3.3 и связанных зависимостей.
+- [ГОТОВО] apps/web обновлён до Next 16.3.3 и PostCSS 8.5.26; контролируемый
+  npm audit --omit=dev показал 0 уязвимостей.
 - [ГОТОВО] Worker npm audit: 0 уязвимостей.
 - [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] Добавить распределённый Cloudflare rate limit и
   Turnstile/WAF для phone login и Telegram completion. В wrangler-конфигурации
@@ -183,10 +185,8 @@ Auth-required checkout оставить на v1; guest checkout — post-launch.
   enforcement.
 
 CI и мониторинг:
-- [НЕ ГОТОВО] CI должен запускать web unit, E2E, legacy unit/server tests,
-  Prisma validate, API typecheck и npm audit.
-- [НЕ ГОТОВО] Добавить обязательный production-like fixture env и проверку
-  непустого SSR-каталога.
+- [ГОТОВО] CI запускает web unit/E2E, legacy unit/server tests, Prisma validate,
+  API typecheck, audits и production-like fixture env с непустым SSR-каталогом.
 - [НЕ ГОТОВО] Нет production error tracking, uptime alerts, RUM/Web Vitals,
   владельца инцидента, правил хранения и маскирования наблюдаемых данных.
 - [ГОТОВО] Worker observability включён, но alerting/retention/redaction/cost
@@ -208,11 +208,8 @@ CI и мониторинг:
   схема содержит tester. Принять один словарь.
 
 Витрина и админка:
-- [НЕ ГОТОВО] Admin пишет showInShowcase и isPopular, но публичная витрина
-  их не использует.
-- [НЕ ГОТОВО] Нельзя называть первые восемь товаров «Популярні».
-- [НЕ ГОТОВО] Главная запрашивает до 120 товаров, затем отображает лишь малую
-  часть и повторяет товары. Нужен отдельный ограниченный homepage query.
+- [ГОТОВО] Витрина использует showInShowcase и isPopular; «Популярні» не
+  формируются из первых случайных товаров, а homepage query ограничен по задаче.
 - [НЕ ГОТОВО] Не удалять пока product_views, site_settings, bug_reports,
   categories.parent_id и products.subcategory_id: это review-required/post-launch.
 
@@ -231,14 +228,14 @@ CI и мониторинг:
 
 Доступность и мобильные сценарии:
 - [НЕ ГОТОВО] Увеличить touch targets 32–40 px до минимум 44 px.
-- [НЕ ГОТОВО] Добавить skip-link.
+- [ГОТОВО] Добавлен keyboard skip-link к #main-content.
 - [НЕ ГОТОВО] Оставить одну семантическую ссылку товара вместо трёх дублей.
-- [НЕ ГОТОВО] Исправить focus trap, inert, возврат фокуса и закрытую кнопку
-  мобильного меню.
-- [НЕ ГОТОВО] Исправить mobile checkout: DOM/tab-порядок должен совпадать
-  с визуальным порядком.
-- [НЕ ГОТОВО] Добавить root not-found.tsx на украинском и полноценные
-  loading-состояния.
+- [ГОТОВО] Мобильное меню имеет focus trap, inert-фон, Escape и возврат фокуса;
+  close-button недоступна для tab, когда меню закрыто.
+- [ГОТОВО] Mobile checkout сохраняет порядок полей получателя перед summary в
+  DOM, tab-order и визуальном layout; это проверяют Chromium E2E.
+- [НЕ ГОТОВО] Root not-found.tsx на украинском добавлен и проверен; остаётся
+  добавить полноценные loading-состояния.
 - [НЕ ГОТОВО] Улучшить мобильную навигацию админки.
 
 Производительность:
@@ -537,11 +534,11 @@ archive/source-assets/
 
 8. БУДУЩИЕ ИЗМЕНЕНИЯ ПУБЛИЧНЫХ КОНТРАКТОВ
 
-На этапе этого документа API, schema и types не менялись. При реализации нужны:
-- строгий production env-контракт для HTTPS SITE_URL, Supabase и Worker URL;
-- server lookup legacy_id → product slug;
-- CatalogProduct: состав, аллергены, вес/объём, хранение, срок годности;
-- публичное использование is_popular и show_in_showcase;
+На исходном этапе API, schema и types не менялись. Статус дальнейших контрактов:
+- [ГОТОВО] строгий production env-контракт для HTTPS SITE_URL, Supabase и Worker URL;
+- [ГОТОВО] server lookup legacy_id → product slug;
+- [НЕ ГОТОВО] CatalogProduct: состав, аллергены, вес/объём, хранение, срок годности;
+- [ГОТОВО] публичное использование is_popular и show_in_showcase;
 - checkout-контракт с Nova Poshta refs, отображаемой доставкой, оплатой и
   честным итогом;
 - явное состояние «доставка оплачивается отдельно»;
@@ -556,7 +553,8 @@ archive/source-assets/
 1. Утвердить https://dream-odessa.shop как primary domain.
 2. Постоянно редиректить dream-odessa.com, Vercel aliases и legacy-домены.
 3. Поставить noindex на maintenance, preview и доступные legacy-копии.
-4. Добавить route/product legacy redirects и журнал 404.
+4. [ГОТОВО] Добавлены route/product legacy redirects; журнал 404 требуется после
+   фактического переключения доменов.
 5. [ГОТОВО] Canonical главной страницы и её inclusion в sitemap проверены
    production-like HTML/E2E.
 6. [ГОТОВО] Sitemap использует абсолютные canonical HTTPS URL для главной,
@@ -617,22 +615,28 @@ https://zakon.rada.gov.ua/go/2297-17 и действующий на дату з�
 11. ПОРЯДОК БУДУЩИХ COMMIT/PUSH
 
 Каждый шаг — отдельный небольшой commit, проверка и только затем push:
-1. docs: add complete project audit and launch plan
-2. chore: harden production environment validation
-3. test: enforce complete production build in ci
-4. feat: add legacy domain and route redirects
-5. fix: restore storefront showcase and popular flags
-6. fix: make checkout delivery and payment totals explicit
-7. feat: add legal and customer information pages
-8. feat: complete product information and structured data
-9. fix: improve mobile accessibility and checkout order
-10. chore: harden auth rate limits and security headers
-11. feat: add customer order confirmations and monitoring
-12. chore: complete staging cutover rehearsal
-13. chore: switch production domains
-14. docs: record fourteen-day production observation
-15. chore: archive verified legacy applications
-16. chore: remove verified dead legacy files and dependencies
+1. [ГОТОВО] 8c5ee0e — docs: add complete project audit and launch plan
+2. [ГОТОВО] 7f8d24a — chore: harden production environment validation
+3. [ГОТОВО] 2356f96 — test: enforce complete production build in ci
+4. [ГОТОВО] ee11f48 — feat: add legacy route redirects
+5. [ГОТОВО] 0a5e149 — fix: restore storefront showcase and popular flags
+6. [ГОТОВО] ef8fd05 — fix: make checkout delivery and payment totals explicit
+7. [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] feat: add legal and customer information pages
+8. [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] feat: complete product information and structured data
+9. [ГОТОВО] 2b58877 — fix: improve mobile accessibility and checkout order
+10. [НЕ ГОТОВО] chore: harden auth rate limits and security headers; public health
+    and Worker headers готовы (aa84be2), rate limit/Turnstile требуют Cloudflare.
+11. [НЕ ГОТОВО] feat: add customer order confirmations and monitoring; in-app
+    confirmation готово (5123cc7), но доставляемые каналы и monitoring не готовы.
+12. [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] chore: complete staging cutover rehearsal
+13. [НУЖНЫ ДАННЫЕ ВЛАДЕЛЬЦА] chore: switch production domains
+14. [НЕ ГОТОВО] docs: record fourteen-day production observation
+15. [НЕ ГОТОВО] chore: archive verified legacy applications
+16. [НЕ ГОТОВО] chore: remove verified dead legacy files and dependencies
+
+Выполнены дополнительно: 77ec32f (cutover preflight), f9b2bda (homepage
+canonical/sitemap), b1437f6 (стабильная checkout E2E-фикстура) и cfeca32
+(контролируемые security patches Next/PostCSS).
 
 После каждого шага:
 - проверить git diff и отсутствие секретов;

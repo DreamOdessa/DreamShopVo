@@ -21,6 +21,7 @@ import BugReportToolWrapper from './components/BugReportTool';
 import BugMarker from './components/BugReportTool/BugMarker';
 import RequireAdmin from './components/RequireAdmin';
 import MaintenancePage from './MaintenancePage';
+import { isLegacyLocalPreview } from './legacy-local-preview';
 
 // Старый сайт временно закрыт для посетителей. Оставьте true, пока идёт перенос.
 const MAINTENANCE_MODE = true;
@@ -68,7 +69,7 @@ const App: React.FC = () => {
 
   // Логирование уникального посетителя (guest или auth)
   React.useEffect(() => {
-    if (MAINTENANCE_MODE && pathname !== PRIVATE_ACCESS_PATH) {
+    if (isLegacyLocalPreview || (MAINTENANCE_MODE && pathname !== PRIVATE_ACCESS_PATH)) {
       return;
     }
 

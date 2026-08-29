@@ -2,6 +2,7 @@ import { getMessaging, getToken, onMessage, MessagePayload } from 'firebase/mess
 import app, { FIREBASE_VAPID_KEY } from './config';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from './config';
+import { isLegacyLocalPreview } from '../legacy-local-preview';
 
 // Ключ для FCM (импортируется из config.ts)
 const VAPID_KEY = FIREBASE_VAPID_KEY;
@@ -10,7 +11,7 @@ let messaging: ReturnType<typeof getMessaging> | null = null;
 
 // Инициализация Firebase Cloud Messaging
 try {
-  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  if (!isLegacyLocalPreview && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     messaging = getMessaging(app);
     console.log('✅ Firebase Messaging инициализирован');
   } else {

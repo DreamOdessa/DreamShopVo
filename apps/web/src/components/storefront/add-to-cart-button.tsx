@@ -111,7 +111,11 @@ export function AddToCartButton({
 
   return (
     <div className="product-purchase-controls">
-      <div className="product-quantity" aria-label="Кількість товару">
+      <div
+        aria-label="Кількість товару"
+        className="product-quantity"
+        role="group"
+      >
         <button
           aria-label="Зменшити кількість"
           disabled={!product.inStock || quantity <= 1}

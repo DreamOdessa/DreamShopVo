@@ -108,7 +108,7 @@ export default async function AccountPage() {
   const userId = claimsData?.claims?.sub;
 
   if (claimsError || !userId) {
-    redirect("/auth");
+    redirect("/auth?next=/account");
   }
 
   const [

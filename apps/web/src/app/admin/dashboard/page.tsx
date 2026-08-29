@@ -257,12 +257,16 @@ export default async function AdminDashboardPage() {
             </div>
           </header>
 
-          <dl className="admin-dashboard-metrics">
+          <div className="admin-dashboard-metrics">
             {metrics.map((metric) => {
               const content = (
                 <>
-                  <dt>{metric.label}</dt>
-                  <dd>{metric.value}</dd>
+                  <span className="admin-dashboard-metric-label">
+                    {metric.label}
+                  </span>
+                  <strong className="admin-dashboard-metric-value">
+                    {metric.value}
+                  </strong>
                 </>
               );
 
@@ -274,7 +278,7 @@ export default async function AdminDashboardPage() {
                 <div key={metric.label}>{content}</div>
               );
             })}
-          </dl>
+          </div>
 
           <div className="admin-dashboard-grid">
             <section aria-labelledby="recent-orders-title">

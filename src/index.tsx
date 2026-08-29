@@ -8,6 +8,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { AdminProvider } from './contexts/AdminContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { isLegacyLocalPreview } from './legacy-local-preview';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -40,7 +41,7 @@ root.render(
   </React.StrictMode>
 );
 
-if ('serviceWorker' in navigator) {
+if (!isLegacyLocalPreview && 'serviceWorker' in navigator) {
   navigator.serviceWorker.register('/firebase-messaging-sw.js')
     .then((registration) => {
       console.log('Firebase Messaging SW registered:', registration.scope);

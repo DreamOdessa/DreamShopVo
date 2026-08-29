@@ -1,3 +1,5 @@
+import { blockLegacyPreviewWrite, isLegacyLocalPreview } from '../legacy-local-preview';
+
 type UploadProgressCallback = (progress: number) => void;
 
 const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || '';
@@ -138,6 +140,7 @@ export const storageService = {
     path: string,
     onProgress?: UploadProgressCallback
   ): Promise<string> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     return uploadToCloudinary(file, path, onProgress);
   },
 
@@ -146,6 +149,7 @@ export const storageService = {
     path: string,
     onProgress?: (fileIndex: number, progress: number) => void
   ): Promise<string[]> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     files.forEach(validateMediaFile);
 
     return Promise.all(

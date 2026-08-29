@@ -4,6 +4,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence, inMemoryPersistence } from 'firebase/auth';
 import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getPerformance } from 'firebase/performance';
+import { isLegacyLocalPreview } from '../legacy-local-preview';
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -41,11 +42,13 @@ export const db = getFirestore(app);
 
 // Инициализация Performance Monitoring для отслеживания производительности
 let perf;
-try {
-  perf = getPerformance(app);
-  console.log('✅ Firebase Performance Monitoring enabled');
-} catch (error) {
-  console.warn('⚠️ Performance Monitoring не удалось инициализировать:', error);
+if (!isLegacyLocalPreview) {
+  try {
+    perf = getPerformance(app);
+    console.log('✅ Firebase Performance Monitoring enabled');
+  } catch (error) {
+    console.warn('⚠️ Performance Monitoring не удалось инициализировать:', error);
+  }
 }
 export const performance = perf;
 
@@ -59,7 +62,7 @@ setPersistence(auth, browserLocalPersistence).catch(() => setPersistence(auth, i
 // Включаем офлайн-персистентність (кэш запросов) для ускорения повторных посещений
 // ВАЖЛИВО: Офлайн кеш може конфліктувати з операціями запису в деяких браузерах
 // Якщо виникають помилки типу "INTERNAL ASSERTION FAILED", розгляньте вимкнення persistence
-const ENABLE_OFFLINE_PERSISTENCE = true; // Встановіть false для відладки помилок транзакцій
+const ENABLE_OFFLINE_PERSISTENCE = !isLegacyLocalPreview; // Встановіть false для відладки помилок транзакцій
 
 if (ENABLE_OFFLINE_PERSISTENCE) {
   try {

@@ -5,6 +5,10 @@ const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${port}`;
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore:
+    process.env.CAPTURE_DESIGN_REFERENCE === "1"
+      ? undefined
+      : "**/design-reference.capture.spec.ts",
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
@@ -21,10 +25,7 @@ export default defineConfig({
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined
     : {
-        command: `npm run dev -- --port ${port}`,
-        env: {
-          STOREFRONT_MAINTENANCE: "false",
-        },
+        command: "node e2e/mock-supabase-server.mjs",
         reuseExistingServer: !process.env.CI,
         url: baseURL,
       },

@@ -10,7 +10,7 @@ Grid: 1440px desktop content max-width with 24px gutters; 768px tablet with 20px
 
 ## Required reference artifacts
 
-Create and commit approved captures under `docs/design-reference/` before visual parity sign-off. Each screen needs old/new screenshots and annotated wireframes at 1440×900, 768×1024 and 390×844: home, catalog, product, cart, checkout, account, admin dashboard, product editor and orders. Include loading, empty, error, disabled and success states. Current public home, catalog, product and empty-cart captures exist at all three viewports and are indexed in `docs/design-reference/README.md`; legacy comparison assets and the remaining screen/state matrix are still required before parity sign-off.
+Create and commit approved captures under `docs/design-reference/` before visual parity sign-off. Each screen needs old/new screenshots and annotated wireframes at 1440×900, 768×1024 and 390×844: home, catalog, product, cart, checkout, account, admin dashboard, product editor and orders. Include loading, empty, error, disabled and success states. The [legacy visual source audit](docs/design-reference/legacy-source-audit.md) documents the preserved visual DNA and the owner-authorized, read-only capture constraints. Legacy and current public home, catalog, product and empty-cart captures exist at all three viewports and are indexed in `docs/design-reference/README.md`; annotated comparisons, the remaining authenticated/admin/checkout routes and the state matrix are still required before parity sign-off.
 
 ## Parity checklist
 
@@ -21,4 +21,4 @@ Create and commit approved captures under `docs/design-reference/` before visual
 | Accessibility | keyboard path, focus return/trap, contrast, headings, alt text, reduced motion |
 | SEO | per-route titles/descriptions/canonical; product JSON-LD; no indexable private routes |
 
-The current implementation has responsive image `sizes`, loading and fallback handling in `product-card.tsx`; visual/browser validation remains pending.
+The current implementation has responsive image `sizes`, loading and fallback handling in `product-card.tsx`. On 2026-08-29, the production build was reviewed with an isolated local public-data fixture in Chromium, Firefox and WebKit: the public home, catalog, available and unavailable product, empty cart and sign-in screens were checked at all three target viewports, without horizontal overflow or serious/critical axe violations. A reproducible set of 27 Chromium fixture captures records these screens together with populated-cart and sign-in error/success states. Keyboard access to the mobile menu, reduced-motion handling, guest redirects and the sign-in return URL are also covered. This is technical responsive/accessibility evidence, not visual-parity approval: the reference artifact set above is still required.

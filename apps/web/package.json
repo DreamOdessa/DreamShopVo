@@ -9,6 +9,7 @@
     "start": "next start",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "capture:design-reference": "node e2e/capture-design-reference.mjs",
     "test:e2e:chromium": "playwright test --project=chromium",
     "typecheck": "tsc --noEmit"
   },

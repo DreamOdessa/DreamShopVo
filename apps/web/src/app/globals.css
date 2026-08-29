@@ -1253,15 +1253,15 @@ input:focus-visible {
   background: #f4f8f7;
 }
 
-.admin-dashboard-metrics dt {
-  color: #718487;
+.admin-dashboard-metric-label {
+  color: #536a6e;
   font-size: 0.67rem;
   font-weight: 700;
   line-height: 1.35;
   text-transform: uppercase;
 }
 
-.admin-dashboard-metrics dd {
+.admin-dashboard-metric-value {
   margin: 0;
   overflow-wrap: anywhere;
   color: #174c58;
@@ -1489,7 +1489,7 @@ input:focus-visible {
 
 .admin-dashboard-order-row span:not(.admin-order-status) {
   overflow-wrap: anywhere;
-  color: #76898b;
+  color: #536a6e;
   font-size: 0.68rem;
 }
 
@@ -3291,17 +3291,25 @@ input:focus-visible {
 }
 
 .store-primary-nav a {
-  padding: 0.75rem 0;
-  border-bottom: 2px solid transparent;
+  display: inline-flex;
+  min-height: 44px;
+  padding: 0 1.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.035);
   color: rgba(255, 255, 255, 0.92);
   font-size: 0.88rem;
   font-weight: 720;
   text-decoration: none;
+  transition: background var(--motion-fast) ease, border-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
 .store-primary-nav a:hover,
 .store-primary-nav a:focus-visible {
-  border-bottom-color: #fff;
+  border-color: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.14);
   color: #fff;
 }
 
@@ -3393,7 +3401,7 @@ input:focus-visible {
 .store-home-hero {
   position: relative;
   display: grid;
-  min-height: min(78svh, 760px);
+  min-height: max(760px, calc(100svh - 76px));
   overflow: hidden;
   place-items: center;
   isolation: isolate;
@@ -3642,7 +3650,7 @@ input:focus-visible {
 .store-home-empty {
   margin: 0;
   padding: 2rem 0;
-  color: #637b7e;
+  color: var(--color-text-muted);
 }
 
 @keyframes store-hero-reveal {
@@ -3687,7 +3695,7 @@ input:focus-visible {
   display: block;
   max-width: 660px;
   margin-top: 0.8rem;
-  color: #617679;
+  color: var(--color-text-muted);
   font-size: 0.98rem;
   line-height: 1.65;
 }
@@ -3709,7 +3717,7 @@ input:focus-visible {
   position: relative;
   flex: 0 0 auto;
   padding: 0.8rem 0;
-  color: #63777a;
+  color: var(--color-text-muted);
   font-size: 0.84rem;
   font-weight: 680;
   text-decoration: none;
@@ -3824,7 +3832,7 @@ input:focus-visible {
   grid-template-columns: auto 92px;
   align-items: center;
   gap: 0.45rem;
-  color: #60777a;
+  color: var(--color-text-muted);
   font-size: 0.72rem;
   font-weight: 650;
 }
@@ -3904,7 +3912,7 @@ input:focus-visible {
 }
 
 .catalog-section-heading > span {
-  color: #758689;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   font-weight: 700;
 }
@@ -3970,7 +3978,7 @@ input:focus-visible {
   display: -webkit-box;
   margin: 0.4rem 0 0;
   overflow: hidden;
-  color: #6a7d7f;
+  color: var(--color-text-muted);
   font-size: 0.78rem;
   line-height: 1.45;
   -webkit-box-orient: vertical;
@@ -4210,7 +4218,7 @@ input:focus-visible {
   overflow: hidden;
   align-items: center;
   gap: 0.55rem;
-  color: #748587;
+  color: var(--color-text-muted);
   font-size: 0.74rem;
   white-space: nowrap;
 }
@@ -4505,7 +4513,7 @@ input:focus-visible {
   min-height: 180px;
   border-top: 1px solid #dbe3df;
   place-items: center;
-  color: #758588;
+  color: var(--color-text-muted);
   text-align: center;
 }
 
@@ -4570,7 +4578,7 @@ input:focus-visible {
   place-items: center;
   align-content: center;
   gap: 0.65rem;
-  color: #748587;
+  color: var(--color-text-muted);
   text-align: center;
 }
 
@@ -4709,7 +4717,7 @@ input:focus-visible {
   place-items: center;
   align-content: center;
   gap: 0.8rem;
-  color: #748587;
+  color: var(--color-text-muted);
   text-align: center;
 }
 
@@ -4752,7 +4760,7 @@ input:focus-visible {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  color: #748587;
+  color: var(--color-text-muted);
   font-size: 0.72rem;
 }
 

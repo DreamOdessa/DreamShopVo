@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User } from '../types';
 import { signInWithGoogle, signOutUser, onAuthStateChange } from '../firebase/auth';
 import { userService } from '../firebase/services';
+import { clonePreviewData, isLegacyLocalPreview, legacyPreviewAdmin } from '../legacy-local-preview';
 
 interface AuthContextType {
   user: User | null;
@@ -29,6 +30,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isLegacyLocalPreview) {
+      setUser(clonePreviewData(legacyPreviewAdmin));
+      setLoading(false);
+      return;
+    }
+
     // Проверяем redirect result при первой загрузке
     const initAuth = async () => {
       console.log('🔐 Инициализация Auth...');
@@ -100,6 +107,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [loading]);
 
   const login = async () => {
+    if (isLegacyLocalPreview) {
+      setUser(clonePreviewData(legacyPreviewAdmin));
+      setLoading(false);
+      return;
+    }
+
     try {
       console.log('🔑 Login initiated from UI');
       setLoading(true);
@@ -147,6 +160,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const logout = async () => {
+    if (isLegacyLocalPreview) {
+      setUser(clonePreviewData(legacyPreviewAdmin));
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       await signOutUser();

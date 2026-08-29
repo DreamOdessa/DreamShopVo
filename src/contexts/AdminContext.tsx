@@ -2,6 +2,14 @@ import React, { createContext, useCallback, useContext, useState, useEffect, Rea
 import { useLocation } from 'react-router-dom';
 import { Product, User, Order, Category } from '../types';
 import { productService, userService, orderService, categoryService } from '../firebase/services';
+import {
+  clonePreviewData,
+  isLegacyLocalPreview,
+  legacyPreviewCategories,
+  legacyPreviewOrders,
+  legacyPreviewProducts,
+  legacyPreviewUsers,
+} from '../legacy-local-preview';
 import toast from 'react-hot-toast';
 import { useAuth } from './AuthContext';
 
@@ -50,6 +58,15 @@ export const AdminProvider: React.FC<AdminProviderProps> = ({ children }) => {
 
   // Загрузка данных
   const loadData = useCallback(async () => {
+    if (isLegacyLocalPreview) {
+      setProducts(clonePreviewData(legacyPreviewProducts));
+      setCategories(clonePreviewData(legacyPreviewCategories));
+      setUsers(clonePreviewData(legacyPreviewUsers));
+      setOrders(clonePreviewData(legacyPreviewOrders));
+      setLoading(false);
+      return;
+    }
+
     try {
       console.log('🔄 Завантаження даних...');
       setLoading(true);

@@ -19,6 +19,15 @@ import {
 import { db } from './config';
 import { Product, User, Order, Category } from '../types';
 import { BugReport } from '../types/bugReport';
+import {
+  blockLegacyPreviewWrite,
+  clonePreviewData,
+  isLegacyLocalPreview,
+  legacyPreviewCategories,
+  legacyPreviewOrders,
+  legacyPreviewProducts,
+  legacyPreviewUsers,
+} from '../legacy-local-preview';
 
 // Коллекции
 const PRODUCTS_COLLECTION = 'products';
@@ -40,6 +49,7 @@ const hasExcludedCatalogName = (item: Record<string, any> | null | undefined): b
 export const productService = {
   // Получить все товары
   async getAll(): Promise<Product[]> {
+    if (isLegacyLocalPreview) return clonePreviewData(legacyPreviewProducts);
     const snapshot = await getDocs(collection(db, PRODUCTS_COLLECTION));
     console.log(`📦 productService.getAll(): Получено ${snapshot.size} товарів`);
     
@@ -62,6 +72,9 @@ export const productService = {
 
   // Получить ограниченное число товаров (для быстрой публичной загрузки)
   async getLimited(limitCount: number = 60): Promise<Product[]> {
+    if (isLegacyLocalPreview) {
+      return clonePreviewData(legacyPreviewProducts.slice(0, limitCount));
+    }
     const q = query(
       collection(db, PRODUCTS_COLLECTION),
       orderBy('createdAt', 'desc'),
@@ -78,6 +91,9 @@ export const productService = {
 
   // Получить товар по ID
   async getById(id: string): Promise<Product | null> {
+    if (isLegacyLocalPreview) {
+      return clonePreviewData(legacyPreviewProducts.find((product) => product.id === id) ?? null);
+    }
     const docRef = doc(db, PRODUCTS_COLLECTION, id);
     const docSnap = await getDoc(docRef);
     
@@ -94,6 +110,7 @@ export const productService = {
 
   // Добавить товар
   async create(product: Omit<Product, 'id' | 'createdAt'>): Promise<string> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     try {
       console.log('Creating product in Firestore...', product);
       const docRef = await addDoc(collection(db, PRODUCTS_COLLECTION), {
@@ -111,6 +128,7 @@ export const productService = {
 
   // Обновить товар
   async update(id: string, product: Partial<Product>): Promise<void> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     const docRef = doc(db, PRODUCTS_COLLECTION, id);
     // Удаляем undefined поля, т.к. Firestore их не принимает
     const cleanedData = Object.fromEntries(
@@ -121,12 +139,16 @@ export const productService = {
 
   // Удалить товар
   async delete(id: string): Promise<void> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     const docRef = doc(db, PRODUCTS_COLLECTION, id);
     await deleteDoc(docRef);
   },
 
   // Получить товары по категории
   async getByCategory(category: string): Promise<Product[]> {
+    if (isLegacyLocalPreview) {
+      return clonePreviewData(legacyPreviewProducts.filter((product) => product.category === category));
+    }
     const q = query(
       collection(db, PRODUCTS_COLLECTION),
       where('category', '==', category)
@@ -141,6 +163,9 @@ export const productService = {
 
   // Получить товары с пагинацией (для каталога)
   async getPaginated(limitCount: number = 20, lastDoc?: DocumentSnapshot): Promise<{ products: Product[]; lastDoc: DocumentSnapshot | null }> {
+    if (isLegacyLocalPreview) {
+      return { products: clonePreviewData(legacyPreviewProducts.slice(0, limitCount)), lastDoc: null };
+    }
     let q = query(
       collection(db, PRODUCTS_COLLECTION),
       orderBy('createdAt', 'desc'),
@@ -169,6 +194,12 @@ export const productService = {
 
   // Получить товары по категории с пагинацией
   async getByCategoryPaginated(category: string, limitCount: number = 20, lastDoc?: DocumentSnapshot): Promise<{ products: Product[]; lastDoc: DocumentSnapshot | null }> {
+    if (isLegacyLocalPreview) {
+      return {
+        products: clonePreviewData(legacyPreviewProducts.filter((product) => product.category === category).slice(0, limitCount)),
+        lastDoc: null,
+      };
+    }
     let q = query(
       collection(db, PRODUCTS_COLLECTION),
       where('category', '==', category),
@@ -202,6 +233,7 @@ export const productService = {
 export const categoryService = {
   // Получить все категории
   async getAll(): Promise<Category[]> {
+    if (isLegacyLocalPreview) return clonePreviewData(legacyPreviewCategories);
     const snapshot = await getDocs(collection(db, CATEGORIES_COLLECTION));
     return snapshot.docs.map(doc => ({
       id: doc.id,
@@ -211,12 +243,14 @@ export const categoryService = {
 
   // Добавить категорию
   async create(category: Omit<Category, 'id'>): Promise<string> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     const docRef = await addDoc(collection(db, CATEGORIES_COLLECTION), category);
     return docRef.id;
   },
 
   // Обновить категорию
   async update(id: string, category: Partial<Category>): Promise<void> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     const docRef = doc(db, CATEGORIES_COLLECTION, id);
     const cleanedData = Object.fromEntries(
       Object.entries(category).filter(([_, value]) => value !== undefined)
@@ -226,6 +260,7 @@ export const categoryService = {
 
   // Удалить категорию
   async delete(id: string): Promise<void> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     const docRef = doc(db, CATEGORIES_COLLECTION, id);
     await deleteDoc(docRef);
   }
@@ -235,6 +270,9 @@ export const categoryService = {
 export const userService = {
   // Получить пользователя по ID
   async getById(id: string): Promise<User | null> {
+    if (isLegacyLocalPreview) {
+      return clonePreviewData(legacyPreviewUsers.find((user) => user.id === id) ?? null);
+    }
     const docRef = doc(db, USERS_COLLECTION, id);
     const docSnap = await getDoc(docRef);
     
@@ -249,6 +287,7 @@ export const userService = {
 
   // Создать или обновить пользователя
   async createOrUpdate(user: User): Promise<void> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     const docRef = doc(db, USERS_COLLECTION, user.id);
     const userData = { ...user };
     const cleanedData = Object.fromEntries(
@@ -273,12 +312,14 @@ export const userService = {
 
   // Обновить скидку пользователя
   async updateDiscount(userId: string, discount: number): Promise<void> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     const docRef = doc(db, USERS_COLLECTION, userId);
     await updateDoc(docRef, { discount });
   },
 
   // Обновить пользователя (универсальный метод)
   async update(userId: string, updates: Partial<User>): Promise<void> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     const docRef = doc(db, USERS_COLLECTION, userId);
     const cleanedData = Object.fromEntries(
       Object.entries(updates).filter(([_, value]) => value !== undefined)
@@ -288,6 +329,7 @@ export const userService = {
 
   // Получить всех пользователей (только для админов)
   async getAll(): Promise<User[]> {
+    if (isLegacyLocalPreview) return clonePreviewData(legacyPreviewUsers);
     const snapshot = await getDocs(collection(db, USERS_COLLECTION));
     return snapshot.docs.map(doc => ({
       id: doc.id,
@@ -300,6 +342,7 @@ export const userService = {
 export const orderService = {
   // Получить все заказы
   async getAll(): Promise<Order[]> {
+    if (isLegacyLocalPreview) return clonePreviewData(legacyPreviewOrders);
     const q = query(collection(db, ORDERS_COLLECTION), orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({
@@ -310,12 +353,16 @@ export const orderService = {
   },
   // Удалить заказ полностью
   async delete(id: string): Promise<void> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     const docRef = doc(db, ORDERS_COLLECTION, id);
     await deleteDoc(docRef);
   },
 
   // Получить заказы пользователя
   async getByUserId(userId: string): Promise<Order[]> {
+    if (isLegacyLocalPreview) {
+      return clonePreviewData(legacyPreviewOrders.filter((order) => order.userId === userId));
+    }
     if (!userId) {
       throw new Error('ID пользователя не указан');
     }
@@ -349,6 +396,7 @@ export const orderService = {
 
   // Создать заказ
   async create(order: Omit<Order, 'id' | 'createdAt'>): Promise<string> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     // Очищаем объект от undefined значений
     const cleanOrder = JSON.parse(JSON.stringify(order, (key, value) => {
       return value === undefined ? null : value;
@@ -369,6 +417,7 @@ export const orderService = {
 
   // Обновить статус заказа
   async updateStatus(id: string, status: Order['status']): Promise<void> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     const docRef = doc(db, ORDERS_COLLECTION, id);
     
     // Получаем данные заказа для уведомления
@@ -387,6 +436,7 @@ export const orderService = {
 // === ПРОСМОТРЫ ТОВАРОВ ===
 export const productViewsService = {
   async incrementView(productId: string): Promise<void> {
+    if (isLegacyLocalPreview) return;
     if (!productId) return;
     const docRef = doc(db, PRODUCT_VIEWS_COLLECTION, productId);
     const snap = await getDoc(docRef);
@@ -397,12 +447,19 @@ export const productViewsService = {
     }
   },
   async getTopViewed(limitCount: number = 5): Promise<{ productId: string; viewCount: number }[]> {
+    if (isLegacyLocalPreview) {
+      return legacyPreviewProducts.slice(0, limitCount).map((product, index) => ({
+        productId: product.id,
+        viewCount: (limitCount - index) * 3,
+      }));
+    }
     // Firestore не позволяет orderBy по несуществующему индексу без создания - предполагаем что index создан или будет создан
     const q = query(collection(db, PRODUCT_VIEWS_COLLECTION), orderBy('viewCount', 'desc'), limit(limitCount));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ productId: d.id, viewCount: d.data().viewCount || 0 }));
   },
   async getViewCount(productId: string): Promise<number> {
+    if (isLegacyLocalPreview) return productId === legacyPreviewProducts[0]?.id ? 15 : 0;
     const snap = await getDoc(doc(db, PRODUCT_VIEWS_COLLECTION, productId));
     return snap.exists() ? (snap.data().viewCount || 0) : 0;
   }
@@ -411,6 +468,7 @@ export const productViewsService = {
 // === УНИКАЛЬНЫЕ ПОСЕТИТЕЛИ ===
 export const visitorService = {
   async logVisit(visitorId: string): Promise<void> {
+    if (isLegacyLocalPreview) return;
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
     const monthStr = now.toISOString().slice(0, 7); // YYYY-MM
@@ -423,6 +481,7 @@ export const visitorService = {
     }
   },
   async getCounts(): Promise<{ today: number; month: number }> {
+    if (isLegacyLocalPreview) return { today: 4, month: 31 };
     const now = new Date();
     const dateStr = now.toISOString().slice(0, 10);
     const monthStr = now.toISOString().slice(0, 7);
@@ -436,6 +495,9 @@ export const visitorService = {
 // === НАСТРОЙКИ САЙТА (CMS) ===
 export const siteSettingsService = {
   async getMain(): Promise<{ heroSubtitle: string } | null> {
+    if (isLegacyLocalPreview) {
+      return { heroSubtitle: 'Демонстраційні дані локального перегляду.' };
+    }
     const docRef = doc(db, SITE_SETTINGS_COLLECTION, 'main');
     const snap = await getDoc(docRef);
     if (snap.exists()) {
@@ -445,6 +507,7 @@ export const siteSettingsService = {
     return null;
   },
   async updateMain(values: { heroSubtitle: string }): Promise<void> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     const docRef = doc(db, SITE_SETTINGS_COLLECTION, 'main');
     await setDoc(docRef, { heroSubtitle: values.heroSubtitle, updatedAt: serverTimestamp() }, { merge: true });
   }
@@ -454,6 +517,7 @@ export const siteSettingsService = {
 export const bugReportService = {
   // Create a new bug report
   async create(data: Omit<BugReport, 'id' | 'createdAt' | 'status'>): Promise<string> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     try {
       // Спроба 1: Використовуємо serverTimestamp()
       const docRef = await addDoc(collection(db, BUG_REPORTS_COLLECTION), {
@@ -480,6 +544,7 @@ export const bugReportService = {
 
   // Get all bug reports (for admin panel)
   async getAll(): Promise<BugReport[]> {
+    if (isLegacyLocalPreview) return [];
     const q = query(
       collection(db, BUG_REPORTS_COLLECTION),
       orderBy('createdAt', 'desc')
@@ -495,6 +560,7 @@ export const bugReportService = {
 
   // Get a single bug report by ID
   async getById(id: string): Promise<BugReport | null> {
+    if (isLegacyLocalPreview) return null;
     const docRef = doc(db, BUG_REPORTS_COLLECTION, id);
     const snapshot = await getDoc(docRef);
     if (!snapshot.exists()) return null;
@@ -509,6 +575,7 @@ export const bugReportService = {
 
   // Update bug report status
   async updateStatus(id: string, status: BugReport['status']): Promise<void> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     const docRef = doc(db, BUG_REPORTS_COLLECTION, id);
     await updateDoc(docRef, { 
       status, 
@@ -518,6 +585,7 @@ export const bugReportService = {
 
   // Delete bug report
   async delete(id: string): Promise<void> {
+    if (isLegacyLocalPreview) return blockLegacyPreviewWrite();
     await deleteDoc(doc(db, BUG_REPORTS_COLLECTION, id));
   }
 };

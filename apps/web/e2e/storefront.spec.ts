@@ -1,6 +1,8 @@
 import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 
+import { authenticateAsFixtureAdmin } from "./authenticated-fixture";
+
 test.setTimeout(90_000);
 
 const viewports = [
@@ -15,12 +17,35 @@ async function openPublicPage(page: Page, path = "/") {
   expect(response?.ok()).toBe(true);
 }
 
-async function expectNoHorizontalOverflow(page: Page) {
-  await expect
-    .poll(() =>
-      page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
-    )
-    .toBe(true);
+async function expectNoHorizontalOverflow(page: Page, path: string) {
+  const overflow = await page.evaluate(() => ({
+    documentWidth: document.documentElement.scrollWidth,
+    offenders:
+      document.documentElement.scrollWidth > window.innerWidth
+        ? Array.from(document.querySelectorAll<HTMLElement>("body *"))
+            .map((element) => {
+              const rect = element.getBoundingClientRect();
+              return {
+                className:
+                  typeof element.className === "string"
+                    ? element.className
+                    : element.getAttribute("class") ?? "",
+                right: Math.round(rect.right),
+                tag: element.tagName,
+                width: Math.round(rect.width),
+              };
+            })
+            .filter((element) => element.right > window.innerWidth + 1)
+            .slice(0, 8)
+        : [],
+    viewportWidth: window.innerWidth,
+  }));
+
+  expect(overflow, `Horizontal overflow at ${path}`).toEqual({
+    documentWidth: overflow.viewportWidth,
+    offenders: [],
+    viewportWidth: overflow.viewportWidth,
+  });
 }
 
 for (const viewport of viewports) {
@@ -40,7 +65,47 @@ for (const viewport of viewports) {
       await expect(
         page.getByRole("heading", { level: 1, name: screen.heading }),
       ).toBeVisible();
-      await expectNoHorizontalOverflow(page);
+      await expectNoHorizontalOverflow(page, screen.path);
+    }
+  });
+
+  test(`authenticated and admin screens are usable at ${viewport.name}`, async ({
+    context,
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await authenticateAsFixtureAdmin(context);
+    await page.goto("/");
+    await page.evaluate((item) => {
+      localStorage.setItem("dreamshop_cart_v1", JSON.stringify([item]));
+    }, {
+      id: "22222222-2222-4222-8222-222222222222",
+      imageObjectKey: null,
+      inStock: true,
+      name: "Мангові чипси",
+      price: 180,
+      quantity: 2,
+      slug: "mango-chips",
+      stockQuantity: 9,
+    });
+
+    const screens = [
+      { heading: "Оформлення замовлення", path: "/checkout" },
+      { heading: "Вітаємо, Олена", path: "/account" },
+      { heading: "Огляд роботи", path: "/admin/dashboard" },
+      {
+        heading: "Мангові чипси",
+        path: "/admin/products/22222222-2222-4222-8222-222222222222",
+      },
+      { heading: "Замовлення", path: "/admin/orders" },
+    ];
+
+    for (const screen of screens) {
+      await openPublicPage(page, screen.path);
+      await expect(
+        page.getByRole("heading", { level: 1, name: screen.heading }),
+      ).toBeVisible();
+      await expectNoHorizontalOverflow(page, screen.path);
     }
   });
 }
@@ -66,7 +131,57 @@ test("public storefront has no serious or critical axe violations", async ({ pag
     );
 
     expect(
-      blockingViolations.map(({ id, nodes }) => ({ id, nodes: nodes.length })),
+      blockingViolations.map(({ id, nodes }) => ({
+        id,
+        nodes: nodes.map(({ failureSummary, target }) => ({ failureSummary, target })),
+      })),
+      `Accessibility violations at ${path}`,
+    ).toEqual([]);
+  }
+});
+
+test("authenticated and admin references have no serious or critical axe violations", async ({
+  context,
+  page,
+}) => {
+  await authenticateAsFixtureAdmin(context);
+  await page.goto("/");
+  await page.evaluate((item) => {
+    localStorage.setItem("dreamshop_cart_v1", JSON.stringify([item]));
+  }, {
+    id: "22222222-2222-4222-8222-222222222222",
+    imageObjectKey: null,
+    inStock: true,
+    name: "Мангові чипси",
+    price: 180,
+    quantity: 2,
+    slug: "mango-chips",
+    stockQuantity: 9,
+  });
+
+  const authenticatedPaths = [
+    "/checkout",
+    "/account",
+    "/admin/dashboard",
+    "/admin/products/22222222-2222-4222-8222-222222222222",
+    "/admin/orders",
+  ];
+
+  for (const path of authenticatedPaths) {
+    await openPublicPage(page, path);
+    const results = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa"])
+      .analyze();
+    const blockingViolations = results.violations.filter(
+      (violation) => violation.impact === "serious" || violation.impact === "critical",
+    );
+
+    expect(
+      blockingViolations.map(({ id, nodes }) => ({
+        id,
+        nodes: nodes.map(({ failureSummary, target }) => ({ failureSummary, target })),
+      })),
+      `Accessibility violations at ${path}`,
     ).toEqual([]);
   }
 });

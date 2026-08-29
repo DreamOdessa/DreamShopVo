@@ -3,6 +3,8 @@ import { dirname, resolve } from "node:path";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { authenticateAsFixtureAdmin } from "./authenticated-fixture";
+
 test.setTimeout(90_000);
 
 const captureEnabled = process.env.CAPTURE_DESIGN_REFERENCE === "1";
@@ -81,6 +83,32 @@ test.describe("design-reference fixture capture", () => {
       await openPage(page, "/cart");
       await expect(page.getByRole("heading", { level: 1, name: "Кошик" })).toBeVisible();
       await capture(page, "cart-populated", viewport);
+
+      await authenticateAsFixtureAdmin(page.context());
+      const authenticatedScreens = [
+        { heading: "Оформлення замовлення", name: "checkout", path: "/checkout" },
+        { heading: "Вітаємо, Олена", name: "account", path: "/account" },
+        { heading: "Огляд роботи", name: "admin-dashboard", path: "/admin/dashboard" },
+        {
+          heading: "Мангові чипси",
+          name: "admin-product-editor",
+          path: "/admin/products/22222222-2222-4222-8222-222222222222",
+        },
+        { heading: "Замовлення", name: "admin-orders", path: "/admin/orders" },
+      ];
+
+      for (const screen of authenticatedScreens) {
+        await openPage(page, screen.path);
+        await expect(
+          page.getByRole("heading", { level: 1, name: screen.heading }),
+        ).toBeVisible();
+        if (screen.name === "checkout") {
+          await expect(
+            page.getByRole("heading", { level: 2, name: "Одержувач" }),
+          ).toBeVisible();
+        }
+        await capture(page, screen.name, viewport);
+      }
     });
   }
 });

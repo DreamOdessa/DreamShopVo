@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="768" height="1024" viewBox="0 0 768 1024" role="img" aria-labelledby="title description">
+    <title id="title">admin-dashboard wireframe at 768 by 1024</title>
+    <desc id="description">Annotated structural wireframe for DreamShop visual parity review.</desc>
+    <style>
+      .title { fill: #143f45; font: 700 16px Inter, Arial, sans-serif; }
+      .meta { fill: #315d62; font: 500 12px Inter, Arial, sans-serif; }
+      .label { fill: #143f45; font: 650 12px Inter, Arial, sans-serif; }
+      .number { fill: white; font: 700 12px Inter, Arial, sans-serif; }
+    </style>
+    <rect width="768" height="1024" fill="#edf7f6"/>
+    <rect width="768" height="76" fill="#c8e9eb"/>
+    <text x="20" y="32" class="title">DreamShop · admin-dashboard</text>
+    <text x="20" y="54" class="meta">768×1024 · numbered annotations map to the comparison register</text>
+    <rect x="20" y="96" width="728" height="215" rx="12" fill="#f8fbfb" stroke="#50868b" stroke-width="2" stroke-dasharray="7 5"/>
+      <circle cx="38" cy="121" r="12" fill="#145f68"/>
+      <text x="38" y="125" text-anchor="middle" class="number">1</text>
+      <text x="64" y="125" class="label">Admin header / navigation</text>
+      <line x1="38" y1="144" x2="730" y2="144" stroke="#b9d1d3"/>
+      <rect x="38" y="160" width="203" height="14" rx="7" fill="#dceff0"/>
+      <rect x="38" y="184" width="422" height="10" rx="5" fill="#e9dddd"/>
+<rect x="20" y="327" width="728" height="215" rx="12" fill="#f8fbfb" stroke="#50868b" stroke-width="2" stroke-dasharray="7 5"/>
+      <circle cx="38" cy="352" r="12" fill="#145f68"/>
+      <text x="38" y="356" text-anchor="middle" class="number">2</text>
+      <text x="64" y="356" class="label">Operational metrics</text>
+      <line x1="38" y1="375" x2="730" y2="375" stroke="#b9d1d3"/>
+      <rect x="38" y="391" width="203" height="14" rx="7" fill="#dceff0"/>
+      <rect x="38" y="415" width="422" height="10" rx="5" fill="#e9dddd"/>
+<rect x="20" y="558" width="728" height="215" rx="12" fill="#f8fbfb" stroke="#50868b" stroke-width="2" stroke-dasharray="7 5"/>
+      <circle cx="38" cy="583" r="12" fill="#145f68"/>
+      <text x="38" y="587" text-anchor="middle" class="number">3</text>
+      <text x="64" y="587" class="label">Recent orders / inventory attention</text>
+      <line x1="38" y1="606" x2="730" y2="606" stroke="#b9d1d3"/>
+      <rect x="38" y="622" width="203" height="14" rx="7" fill="#dceff0"/>
+      <rect x="38" y="646" width="422" height="10" rx="5" fill="#e9dddd"/>
+<rect x="20" y="789" width="728" height="215" rx="12" fill="#f8fbfb" stroke="#50868b" stroke-width="2" stroke-dasharray="7 5"/>
+      <circle cx="38" cy="814" r="12" fill="#145f68"/>
+      <text x="38" y="818" text-anchor="middle" class="number">4</text>
+      <text x="64" y="818" class="label">Integration health and retry states</text>
+      <line x1="38" y1="837" x2="730" y2="837" stroke="#b9d1d3"/>
+      <rect x="38" y="853" width="203" height="14" rx="7" fill="#dceff0"/>
+      <rect x="38" y="877" width="422" height="10" rx="5" fill="#e9dddd"/>
+  </svg>

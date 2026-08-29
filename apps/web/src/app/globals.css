@@ -676,7 +676,7 @@ input:focus-visible {
 }
 
 .account-details dt {
-  color: #6f8385;
+  color: #536d70;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -733,7 +733,7 @@ input:focus-visible {
 .account-section-heading p {
   max-width: 280px;
   margin: 0.65rem 0 0;
-  color: #6a7f82;
+  color: #536d70;
   font-size: 0.85rem;
   line-height: 1.55;
 }
@@ -833,7 +833,7 @@ input:focus-visible {
 
 .account-address-details p {
   margin: 0.3rem 0 0;
-  color: #62797c;
+  color: #536d70;
   font-size: 0.76rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -929,7 +929,7 @@ input:focus-visible {
 
 .account-notification-copy p {
   margin: 0.25rem 0 0;
-  color: #5f777a;
+  color: #536d70;
   font-size: 0.76rem;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -938,7 +938,7 @@ input:focus-visible {
 .account-notification-copy time {
   display: block;
   margin-top: 0.35rem;
-  color: #839294;
+  color: #536d70;
   font-size: 0.68rem;
 }
 
@@ -1007,7 +1007,7 @@ input:focus-visible {
 }
 
 .account-order-row > div span {
-  color: #76898b;
+  color: #536d70;
   font-size: 0.72rem;
 }
 
@@ -1124,7 +1124,7 @@ input:focus-visible {
   display: flex;
   align-items: baseline;
   gap: 0.65rem;
-  color: #6c7e80;
+  color: #536d70;
   font-size: 0.78rem;
 }
 
@@ -1212,7 +1212,7 @@ input:focus-visible {
 }
 
 .admin-counts dt {
-  color: #718487;
+  color: #536d70;
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -1323,7 +1323,7 @@ input:focus-visible {
 }
 
 .admin-integration-metrics dt {
-  color: #718487;
+  color: #536d70;
   font-size: 0.67rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -1338,7 +1338,7 @@ input:focus-visible {
 
 .admin-integration-oldest {
   margin: 0.75rem 0 0;
-  color: #75888a;
+  color: #536d70;
   font-size: 0.72rem;
 }
 
@@ -1376,7 +1376,7 @@ input:focus-visible {
 }
 
 .admin-integration-row span {
-  color: #75888a;
+  color: #536d70;
   font-size: 0.68rem;
 }
 
@@ -1523,7 +1523,7 @@ input:focus-visible {
 
 .admin-inventory-row > div span {
   overflow-wrap: anywhere;
-  color: #76898b;
+  color: #536d70;
   font-size: 0.66rem;
 }
 
@@ -1704,7 +1704,7 @@ input:focus-visible {
 
 .admin-list-row div > span {
   overflow-wrap: anywhere;
-  color: #76898b;
+  color: #536d70;
   font-size: 0.75rem;
 }
 
@@ -2138,7 +2138,7 @@ input:focus-visible {
   flex: 0 0 auto;
   align-items: center;
   gap: 0.4rem;
-  color: #647a7d;
+  color: #536d70;
   font-size: 0.76rem;
   font-weight: 690;
   text-decoration: none;
@@ -2201,7 +2201,7 @@ input:focus-visible {
 
 .admin-order-row > div span {
   overflow-wrap: anywhere;
-  color: #76898b;
+  color: #536d70;
   font-size: 0.7rem;
 }
 
@@ -2215,7 +2215,7 @@ input:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  color: #6b8083;
+  color: #536d70;
   font-size: 0.72rem;
 }
 
@@ -2291,7 +2291,7 @@ input:focus-visible {
 .admin-customer-contact > span,
 .admin-customer-discount > span {
   overflow-wrap: anywhere;
-  color: #76898b;
+  color: #536d70;
   font-size: 0.7rem;
 }
 
@@ -2484,7 +2484,7 @@ input:focus-visible {
 }
 
 .admin-order-item small {
-  color: #76898b;
+  color: #536d70;
   font-size: 0.7rem;
 }
 
@@ -2550,7 +2550,7 @@ input:focus-visible {
 }
 
 .admin-order-details dt {
-  color: #718487;
+  color: #536d70;
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -2640,7 +2640,7 @@ input:focus-visible {
 
 .admin-order-terminal {
   margin: 0;
-  color: #647a7d;
+  color: #536d70;
   font-size: 0.76rem;
   line-height: 1.5;
 }
@@ -2787,7 +2787,7 @@ input:focus-visible {
   place-items: center;
   align-content: center;
   gap: 0.65rem;
-  color: #819294;
+  color: #536d70;
   font-size: 0.78rem;
 }
 
@@ -2859,6 +2859,20 @@ input:focus-visible {
 
   .admin-catalog-selectors {
     grid-template-columns: minmax(130px, 1fr) minmax(150px, 1fr) 42px;
+  }
+
+  .admin-order-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .admin-order-row > div,
+  .admin-order-row > .admin-order-status {
+    grid-column: 1;
+  }
+
+  .admin-order-row > .admin-row-button {
+    grid-column: 2;
+    grid-row: 1;
   }
 }
 
@@ -4670,7 +4684,7 @@ input:focus-visible {
   min-width: 0;
   align-items: center;
   gap: 0.55rem;
-  color: #829092;
+  color: #516a6d;
   font-size: 0.72rem;
   text-decoration: none;
 }
@@ -4689,7 +4703,7 @@ input:focus-visible {
   border-radius: 50%;
   place-items: center;
   background: #f6f8f5;
-  color: #728587;
+  color: #516a6d;
   font-weight: 760;
 }
 
@@ -4954,7 +4968,7 @@ input:focus-visible {
 .order-details dt,
 .order-details dd {
   margin: 0;
-  color: #687d7f;
+  color: #5b7275;
   font-size: 0.76rem;
   line-height: 1.5;
 }
@@ -5214,7 +5228,7 @@ input:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 0.8rem;
-  color: #667e82;
+  color: #5b7275;
   font-size: 0.72rem;
   line-height: 1.4;
 }

@@ -10,6 +10,8 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "capture:design-reference": "node e2e/capture-design-reference.mjs",
+    "capture:legacy-reference": "node e2e/capture-legacy-reference.mjs",
+    "generate:design-wireframes": "node e2e/generate-design-wireframes.mjs",
     "test:e2e:chromium": "playwright test --project=chromium",
     "typecheck": "tsc --noEmit"
   },

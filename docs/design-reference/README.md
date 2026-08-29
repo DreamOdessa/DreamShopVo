@@ -17,6 +17,18 @@ The owner supplied access to the legacy preview on 2026-08-29. These captures co
 
 The legacy client intermittently showed loading or maintenance frames while changing viewport. Those transient frames were discarded; every file above was saved only after the expected route heading or product content was present. Missing legacy images are a limitation of the old runtime, not evidence for changing the current product-image treatment.
 
+## Read-only local legacy captures
+
+The preserved CRA application also exposes a guarded local preview with invented cart, account and admin data. `npm run capture:legacy-reference` from `apps/web` starts that preview and captures the five authenticated/administrative reference screens without Firebase writes or production credentials.
+
+| Screen | 1440×900 | 768×1024 | 390×844 | Review result |
+| --- | --- | --- | --- | --- |
+| Checkout | [PNG](legacy/checkout/desktop-1440x900.png) | [PNG](legacy/checkout/tablet-768x1024.png) | [PNG](legacy/checkout/mobile-390x844.png) | Preserves the legacy form hierarchy and summary placement using an invented local cart. |
+| Account | [PNG](legacy/account/desktop-1440x900.png) | [PNG](legacy/account/tablet-768x1024.png) | [PNG](legacy/account/mobile-390x844.png) | Records the legacy profile structure without opening a real user account. |
+| Admin dashboard | [PNG](legacy/admin-dashboard/desktop-1440x900.png) | [PNG](legacy/admin-dashboard/tablet-768x1024.png) | [PNG](legacy/admin-dashboard/mobile-390x844.png) | Records navigation, metrics and responsive sidebar behavior. |
+| Product editor | [PNG](legacy/admin-product-editor/desktop-1440x900.png) | [PNG](legacy/admin-product-editor/tablet-768x1024.png) | [PNG](legacy/admin-product-editor/mobile-390x844.png) | Records the legacy add/edit modal; mobile captures close the sidebar before the modal is saved. |
+| Admin orders | [PNG](legacy/admin-orders/desktop-1440x900.png) | [PNG](legacy/admin-orders/tablet-768x1024.png) | [PNG](legacy/admin-orders/mobile-390x844.png) | Records the legacy order-management hierarchy with local fixture rows only. |
+
 ## Current implementation captures
 
 | Screen | 1440×900 | 768×1024 | 390×844 | Review result |
@@ -41,19 +53,23 @@ Run `npm run capture:design-reference` from `apps/web` to generate a fresh, repe
 | Sign-in | [PNG](fixture/auth/desktop-1440x900.png) | [PNG](fixture/auth/tablet-768x1024.png) | [PNG](fixture/auth/mobile-390x844.png) |
 | Sign-in error | [PNG](fixture/auth-error/desktop-1440x900.png) | [PNG](fixture/auth-error/tablet-768x1024.png) | [PNG](fixture/auth-error/mobile-390x844.png) |
 | Sign-in success notice | [PNG](fixture/auth-success/desktop-1440x900.png) | [PNG](fixture/auth-success/tablet-768x1024.png) | [PNG](fixture/auth-success/mobile-390x844.png) |
+| Checkout | [PNG](fixture/checkout/desktop-1440x900.png) | [PNG](fixture/checkout/tablet-768x1024.png) | [PNG](fixture/checkout/mobile-390x844.png) |
+| Account | [PNG](fixture/account/desktop-1440x900.png) | [PNG](fixture/account/tablet-768x1024.png) | [PNG](fixture/account/mobile-390x844.png) |
+| Admin dashboard | [PNG](fixture/admin-dashboard/desktop-1440x900.png) | [PNG](fixture/admin-dashboard/tablet-768x1024.png) | [PNG](fixture/admin-dashboard/mobile-390x844.png) |
+| Product editor | [PNG](fixture/admin-product-editor/desktop-1440x900.png) | [PNG](fixture/admin-product-editor/tablet-768x1024.png) | [PNG](fixture/admin-product-editor/mobile-390x844.png) |
+| Admin orders | [PNG](fixture/admin-orders/desktop-1440x900.png) | [PNG](fixture/admin-orders/tablet-768x1024.png) | [PNG](fixture/admin-orders/mobile-390x844.png) |
 
-## Required before visual parity sign-off
+## Parity artifact status
 
-- Annotated old/new comparison wireframes for every required route.
-- Legacy captures for checkout, authenticated account, admin dashboard, product editor and orders at all three target viewports. Legacy product media needs a refreshed capture only once the old runtime serves it again.
-- New captures for checkout, account, admin dashboard, product editor and orders at all three target viewports.
-- Loading, empty, error, disabled and success states for each relevant flow.
-- Chrome, Firefox and WebKit review, including keyboard focus, contrast and reduced-motion checks.
+- [Annotated comparisons and 27 responsive wireframes](comparisons.md) cover all nine required screens.
+- Legacy and current evidence now covers checkout, account, admin dashboard, product editor and orders at all three target viewports.
+- The [interaction-state matrix](state-matrix.md) maps loading, empty, error, disabled and success evidence.
+- Chromium, Firefox and WebKit cover responsive overflow and serious/critical axe checks; keyboard mobile navigation and reduced motion have dedicated checks.
 
-The initial new-application captures were taken locally from the production build on 2026-08-20. The legacy captures above were taken read-only on 2026-08-29. Neither set alone is parity approval; the remaining comparison artefacts and state matrix still need review.
+The initial new-application captures were taken locally from the production build on 2026-08-20. The remote public legacy captures and guarded local-preview captures were taken read-only on 2026-08-29. This completes the technical RB-008 artifact set. Product-owner visual approval remains an explicit UAT/cutover decision, and legacy product media should be refreshed if the old runtime becomes able to serve it again.
 
 ## Reproducible public-state checks
 
-From `apps/web`, run `npm run test`, then `npm run test:e2e` after installing the Playwright browsers. The E2E suite starts an isolated local Supabase-compatible public-data fixture, makes a production build and runs `next start`; it needs no production secrets. It covers Chromium, Firefox and WebKit, and checks the three reference viewports, keyboard mobile navigation, reduced-motion behavior, horizontal overflow, guest redirects with a preserved return URL, and serious/critical axe violations. It deliberately does not authenticate, mutate data or access the closed legacy maintenance route.
+From `apps/web`, run `npm run test`, then `npm run test:e2e` after installing the Playwright browsers. The E2E suite starts an isolated local Supabase-compatible fixture, makes a production build and runs `next start`; it needs no production secrets. A synthetic local admin session extends the checks to checkout, account and the three required admin screens without authenticating against or mutating production. It covers Chromium, Firefox and WebKit, the three reference viewports, keyboard mobile navigation, reduced-motion behavior, horizontal overflow, guest redirects with a preserved return URL, and serious/critical axe violations.
 
-On 2026-08-29, all 21 browser checks passed (seven scenarios in each of Chromium, Firefox and WebKit). This records functional responsive/accessibility coverage only; it does not replace the missing approved legacy comparison materials and authenticated state captures listed above.
+On 2026-08-29, all 33 expanded browser checks passed (11 scenarios in each of Chromium, Firefox and WebKit). This records functional responsive/accessibility coverage and completes the technical reference set; it does not substitute for final product-owner UAT approval.

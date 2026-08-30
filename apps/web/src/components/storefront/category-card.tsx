@@ -30,6 +30,7 @@ export function CategoryCard({ category, eager = false }: CategoryCardProps) {
           ) : (
             <div className="catalog-image-fallback">
               <ImageIcon aria-hidden size={30} strokeWidth={1.4} />
+              <span>Фото готується</span>
             </div>
           )}
         </div>

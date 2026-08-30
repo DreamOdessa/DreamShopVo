@@ -46,7 +46,11 @@ test.describe("design-reference fixture capture", () => {
       await page.setViewportSize(viewport);
 
       const screens = [
-        { heading: "Ласкаво просимо до DreamShop", name: "home", path: "/" },
+        {
+          heading: "Фруктові чипси та прикраси для коктейлів",
+          name: "home",
+          path: "/",
+        },
         { heading: "Каталог", name: "catalog", path: "/catalog" },
         { heading: "Мангові чипси", name: "product", path: "/product/mango-chips" },
         {

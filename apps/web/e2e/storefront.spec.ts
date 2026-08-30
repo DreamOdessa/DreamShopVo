@@ -69,7 +69,7 @@ for (const viewport of viewports) {
   test(`public storefront screens are usable at ${viewport.name}`, async ({ page }) => {
     await page.setViewportSize(viewport);
     const screens = [
-      { heading: "Ласкаво просимо до DreamShop", path: "/" },
+      { heading: "Фруктові чипси та прикраси для коктейлів", path: "/" },
       { heading: "Каталог", path: "/catalog" },
       { heading: "Мангові чипси", path: "/product/mango-chips" },
       { heading: "Полуничні чипси", path: "/product/strawberry-chips" },

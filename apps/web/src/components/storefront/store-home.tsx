@@ -18,25 +18,28 @@ export async function StoreHome() {
   return (
     <main className="store-home">
       <section className="store-home-hero" aria-labelledby="store-home-title">
-        <div className="store-home-hero-shade" />
         <div className="store-home-hero-content">
+          <p className="store-home-eyebrow">DreamShop · Одеса</p>
+          <h1 id="store-home-title">
+            Фруктові чипси та прикраси для коктейлів
+          </h1>
+          <span>
+            Натуральні продукти для здорового харчування та гарної подачі.
+          </span>
+          <Link className="store-home-primary-action" href="/catalog">
+            До каталогу
+            <ArrowRight aria-hidden size={18} />
+          </Link>
+        </div>
+        <div className="store-home-hero-art" aria-hidden="true">
           <Image
-            alt="Логотип DreamShop"
+            alt=""
             className="store-home-hero-logo"
             height={945}
             priority
             src="/logo.png"
             width={1483}
           />
-          <h1 id="store-home-title">Ласкаво просимо до DreamShop</h1>
-          <span>
-            Фруктові чипси та прикраси для коктейлів. Натуральні продукти
-            для здорового харчування та гарної подачі.
-          </span>
-          <Link className="store-home-primary-action" href="/catalog">
-            Перейти до каталогу
-            <ArrowRight aria-hidden size={18} />
-          </Link>
         </div>
         <a className="store-home-scroll" href="#home-categories" aria-label="До категорій">
           <ArrowDown aria-hidden size={22} />

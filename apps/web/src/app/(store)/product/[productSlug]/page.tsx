@@ -168,7 +168,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             product.stockQuantity <= 5 ? (
               <span>Залишилось: {product.stockQuantity}</span>
             ) : null}
-            {product.organic ? <span>Organic</span> : null}
+            {product.organic ? <span>Органічний</span> : null}
             {product.weight ? <span>{product.weight}</span> : null}
           </div>
 

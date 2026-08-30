@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createClient } from "../../lib/supabase/client";
@@ -20,6 +21,7 @@ type StoreHeaderShellProps = {
 };
 
 export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentWishlistCount, setCurrentWishlistCount] =
     useState(wishlistCount);
@@ -175,8 +177,15 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
           </Link>
 
           <nav className="store-primary-nav" aria-label="Основна навігація">
-            <Link href="/">Головна</Link>
-            <Link href="/catalog">Каталог</Link>
+            <Link aria-current={pathname === "/" ? "page" : undefined} href="/">
+              Головна
+            </Link>
+            <Link
+              aria-current={pathname.startsWith("/catalog") ? "page" : undefined}
+              href="/catalog"
+            >
+              Каталог
+            </Link>
           </nav>
 
           <div className="store-header-actions">
@@ -250,11 +259,21 @@ export function StoreHeaderShell({ wishlistCount }: StoreHeaderShellProps) {
             <X aria-hidden size={22} />
           </button>
         </div>
-        <Link href="/" onClick={closeMenu} tabIndex={menuOpen ? 0 : -1}>
+        <Link
+          aria-current={pathname === "/" ? "page" : undefined}
+          href="/"
+          onClick={closeMenu}
+          tabIndex={menuOpen ? 0 : -1}
+        >
           <Home aria-hidden size={19} />
           Головна
         </Link>
-        <Link href="/catalog" onClick={closeMenu} tabIndex={menuOpen ? 0 : -1}>
+        <Link
+          aria-current={pathname.startsWith("/catalog") ? "page" : undefined}
+          href="/catalog"
+          onClick={closeMenu}
+          tabIndex={menuOpen ? 0 : -1}
+        >
           <LayoutGrid aria-hidden size={19} />
           Каталог
         </Link>

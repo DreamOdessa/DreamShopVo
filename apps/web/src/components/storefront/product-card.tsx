@@ -51,6 +51,7 @@ export function ProductCard({
         ) : (
           <div className="catalog-image-fallback">
             <PackageOpen aria-hidden size={32} strokeWidth={1.4} />
+            <span>Фото готується</span>
           </div>
         )}
         {product.organic ? (
@@ -64,9 +65,9 @@ export function ProductCard({
           {product.weight ? <span>{product.weight}</span> : null}
         </div>
 
-          <h2 className="product-card-title">
-            <Link href={`/product/${product.slug}`}>{product.name}</Link>
-          </h2>
+        <h2 className="product-card-title">
+          <Link href={`/product/${product.slug}`}>{product.name}</Link>
+        </h2>
 
         <div className="product-card-price-row">
           <strong>{priceFormatter.format(product.price)}</strong>

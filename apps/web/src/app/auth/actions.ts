@@ -6,7 +6,6 @@ import { getApiUrl } from "../../lib/env";
 import { safeNextPath } from "../../lib/auth/redirect";
 import { getAuthRedirectOrigin } from "../../lib/auth/request-origin";
 import { clearSupabaseAuthCookies } from "../../lib/auth/cookies";
-import { isInvalidSessionError } from "../../lib/auth/errors";
 import { sessionTokens } from "../../lib/auth/session-tokens";
 import { normalizePhone } from "../../lib/phone";
 import { createClient } from "../../lib/supabase/server";
@@ -98,19 +97,6 @@ export async function signIn(
   if (!userId) {
     await clearSupabaseAuthCookies();
     return errorState("Не вдалося створити сесію. Спробуйте ще раз.");
-  }
-
-  const { error: sessionError } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (sessionError && isInvalidSessionError(sessionError)) {
-    await clearSupabaseAuthCookies();
-    return errorState(
-      "Сервіс авторизації тимчасово не приймає нову сесію. Спробуйте ще раз пізніше.",
-    );
   }
 
   redirect(next);

@@ -14,7 +14,7 @@ const viewports = [
 async function openPublicPage(page: Page, path = "/") {
   const response = await page.goto(path, { waitUntil: "domcontentloaded" });
 
-  expect(response?.ok()).toBe(true);
+  expect(response?.ok(), `Expected ${path} to return a successful response`).toBe(true);
 }
 
 const fixtureCartItem = {
@@ -71,10 +71,13 @@ for (const viewport of viewports) {
     const screens = [
       { heading: "Фруктові чипси та прикраси для коктейлів", path: "/" },
       { heading: "Каталог", path: "/catalog" },
+      { heading: "Фруктові чипси", path: "/catalog/fruit-chips" },
       { heading: "Мангові чипси", path: "/product/mango-chips" },
       { heading: "Полуничні чипси", path: "/product/strawberry-chips" },
       { heading: "Кошик порожній", path: "/cart" },
       { heading: "Раді бачити знову", path: "/auth" },
+      { heading: "Відновлення пароля", path: "/auth/forgot-password" },
+      { heading: "Створіть новий пароль", path: "/auth/telegram" },
     ];
 
     for (const screen of screens) {
@@ -111,12 +114,19 @@ for (const viewport of viewports) {
     const screens = [
       { heading: "Оформлення замовлення", path: "/checkout" },
       { heading: "Вітаємо, Олена", path: "/account" },
+      { heading: "Обране", path: "/wishlist" },
+      { heading: "Замовлення в обробці", path: "/orders/66666666-6666-4666-8666-666666666666" },
       { heading: "Огляд роботи", path: "/admin/dashboard" },
+      { heading: "Каталог товарів", path: "/admin" },
+      { heading: "Фруктові чипси", path: "/admin/categories/11111111-1111-4111-8111-111111111111" },
       {
         heading: "Мангові чипси",
         path: "/admin/products/22222222-2222-4222-8222-222222222222",
       },
+      { heading: "Клієнти", path: "/admin/customers" },
+      { heading: "Марія Клієнт", path: "/admin/customers/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" },
       { heading: "Замовлення", path: "/admin/orders" },
+      { heading: "Замовлення №1042", path: "/admin/orders/66666666-6666-4666-8666-666666666666" },
     ];
 
     for (const screen of screens) {
@@ -197,6 +207,7 @@ test("authenticated and admin references have no serious or critical axe violati
 test("private storefront routes preserve the sign-in handoff", async ({ page }) => {
   for (const path of ["/checkout", "/account"]) {
     await openPublicPage(page, path);
+    await expect(page).toHaveURL(/\/auth(?:\?|$)/);
     const currentUrl = new URL(page.url());
     expect(currentUrl.pathname).toBe("/auth");
     expect(currentUrl.searchParams.get("next")).toBe(path);
@@ -208,6 +219,7 @@ test("private storefront routes preserve the sign-in handoff", async ({ page }) 
 
 test("unauthenticated admin routes require sign-in", async ({ page }) => {
   await openPublicPage(page, "/admin");
+  await expect(page).toHaveURL(/\/auth(?:\?|$)/);
   expect(new URL(page.url()).pathname).toBe("/auth");
   await expect(
     page.getByRole("heading", { level: 1, name: "Раді бачити знову" }),
@@ -369,6 +381,99 @@ test("homepage uses showcase and popular catalog flags", async ({ page }) => {
       name: "Полуничні чипси",
     }),
   ).toHaveCount(0);
+});
+
+test("narrow homepage keeps header and hero controls separated", async ({ page }) => {
+  await page.setViewportSize({ width: 720, height: 900 });
+  await openPublicPage(page);
+
+  const menu = page.locator(".store-menu-toggle");
+  const logo = page.locator(".store-logo-link");
+  const headerActions = page.locator(".store-header-actions > a");
+  const primaryAction = page.locator(".store-home-primary-action");
+  const scrollAction = page.locator(".store-home-scroll");
+
+  const [menuBox, logoBox, primaryBox, scrollBox] = await Promise.all([
+    menu.boundingBox(),
+    logo.boundingBox(),
+    primaryAction.boundingBox(),
+    scrollAction.boundingBox(),
+  ]);
+
+  expect(menuBox).not.toBeNull();
+  expect(logoBox).not.toBeNull();
+  expect(primaryBox).not.toBeNull();
+  expect(scrollBox).not.toBeNull();
+  expect((logoBox?.x ?? 0) - ((menuBox?.x ?? 0) + (menuBox?.width ?? 0))).toBeGreaterThanOrEqual(12);
+  expect((scrollBox?.y ?? 0) - ((primaryBox?.y ?? 0) + (primaryBox?.height ?? 0))).toBeGreaterThanOrEqual(12);
+
+  const actionBoxes = await headerActions.evaluateAll((actions) =>
+    actions.map((action) => {
+      const box = action.getBoundingClientRect();
+      return { left: box.left, right: box.right };
+    }),
+  );
+  for (let index = 1; index < actionBoxes.length; index += 1) {
+    expect(actionBoxes[index].left - actionBoxes[index - 1].right).toBeGreaterThanOrEqual(6);
+  }
+
+  await expect(page.locator(".store-logo-link span")).toBeVisible();
+  await expect.poll(() => page.locator(".store-home-eyebrow").evaluate((element) =>
+    getComputedStyle(element, "::before").display,
+  )).toBe("none");
+  await expectNoHorizontalOverflow(page, "/");
+});
+
+test("homepage showcase advances exactly one complete category per gesture", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openPublicPage(page);
+
+  const showcase = page.locator("#home-categories");
+  await showcase.evaluate((element) => window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY + 2));
+  await expect(showcase).toHaveClass(/is-motion-ready/);
+  await expect(showcase.locator(".orange-category-showcase-step strong")).toHaveText("01");
+
+  await page.evaluate(async () => {
+    for (let eventIndex = 0; eventIndex < 8; eventIndex += 1) {
+      window.dispatchEvent(new WheelEvent("wheel", { cancelable: true, deltaY: 120 }));
+      await new Promise((resolve) => window.setTimeout(resolve, 35));
+    }
+  });
+
+  await expect(showcase.locator(".orange-category-showcase-step strong")).toHaveText("02");
+  await expect(showcase.getByRole("heading", { name: "Фруктові пудри" })).toBeVisible();
+  await page.waitForTimeout(900);
+  await expect(showcase.locator(".orange-category-showcase-step strong")).toHaveText("02");
+
+  const nextButton = showcase.getByRole("button", { name: "Наступна категорія" });
+  for (const category of [
+    "Солодощі",
+    "Сиропи",
+    "Сухоцвіти",
+    "Натуральні чаї",
+    "Прикраси для коктейлів",
+  ]) {
+    await nextButton.click();
+    await expect(showcase.getByRole("heading", { name: category })).toBeVisible();
+  }
+
+  await expect(showcase.locator(".orange-category-showcase-step strong")).toHaveText("07");
+  await expect(nextButton).toBeDisabled();
+  await expect(showcase.locator('.orange-category-showcase-central-media.is-active img')).toHaveAttribute(
+    "src",
+    /cocktail-garnish/,
+  );
+});
+
+test("password fields expose an accessible visibility toggle", async ({ page }) => {
+  await openPublicPage(page, "/auth");
+
+  const password = page.locator('input[name="password"]');
+  const toggle = page.getByRole("button", { name: "Показати пароль" });
+  await expect(password).toHaveAttribute("type", "password");
+  await toggle.click();
+  await expect(password).toHaveAttribute("type", "text");
+  await expect(page.getByRole("button", { name: "Приховати пароль" })).toBeVisible();
 });
 
 test("mobile menu is keyboard-accessible and respects reduced motion", async ({ page }) => {

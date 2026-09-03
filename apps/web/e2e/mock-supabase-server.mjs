@@ -95,7 +95,9 @@ const fixtureAdmin = {
 };
 
 const profile = {
+  avatar_url: null,
   contact_phone: "+380670000000",
+  created_at: fixtureAdmin.created_at,
   discount_percent: 5,
   email: fixtureAdmin.email,
   first_name: "Олена",
@@ -103,6 +105,16 @@ const profile = {
   last_name: "Тестова",
   phone: "+380670000000",
   role: "admin",
+};
+
+const customerProfile = {
+  ...profile,
+  discount_percent: 7,
+  email: "customer@fixture.invalid",
+  first_name: "Марія",
+  id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  last_name: "Клієнт",
+  role: "customer",
 };
 
 const address = {
@@ -228,7 +240,11 @@ const mockSupabase = createServer((request, response) => {
   }
 
   if (url.pathname === "/rest/v1/profiles") {
-    sendJson(response, [profile]);
+    const exactId = url.searchParams.get("id")?.replace("eq.", "");
+    const rows = exactId
+      ? [profile, customerProfile].filter((item) => item.id === exactId)
+      : [customerProfile];
+    sendJson(response, rows, rows.length);
     return;
   }
 

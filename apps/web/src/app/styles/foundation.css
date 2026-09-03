@@ -1,0 +1,207 @@
+/* Final design-system layer. Keep page-specific rules out of this file. */
+:root {
+  --ds-canvas: #f4f0e6;
+  --ds-surface: #fffdf8;
+  --ds-surface-muted: #e7f2ed;
+  --ds-brand: #0d5b66;
+  --ds-brand-strong: #083f49;
+  --ds-accent: #93451f;
+  --ds-text: #173e45;
+  --ds-muted: #526d70;
+  --ds-border: rgba(12, 63, 73, 0.17);
+  --ds-danger: #a84258;
+  --ds-success: #2f7358;
+  --ds-page: 75rem;
+  --ds-gutter: clamp(1rem, 3vw, 2rem);
+  --ds-section: clamp(4rem, 8vw, 7rem);
+  --ds-radius: 0.5rem;
+  --ds-shadow: 0 18px 46px rgba(8, 63, 73, 0.09);
+}
+
+html {
+  overflow-x: clip;
+  scroll-padding-top: 6rem;
+}
+
+body {
+  min-width: 320px;
+  overflow-x: clip;
+  background: var(--ds-canvas);
+  color: var(--ds-text);
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid rgba(13, 91, 102, 0.38);
+  outline-offset: 3px;
+}
+
+:where(button, input, select, textarea) {
+  min-width: 0;
+}
+
+:where(button, [role="button"], input[type="button"], input[type="submit"]) {
+  touch-action: manipulation;
+}
+
+.store-page {
+  display: flex;
+  min-height: 100svh;
+  flex-direction: column;
+  background: var(--ds-surface);
+}
+
+.store-page > #main-content,
+.store-page > main {
+  min-width: 0;
+  flex: 1 0 auto;
+}
+
+.store-main,
+.store-home-section,
+.account-content {
+  width: min(calc(100% - (2 * var(--ds-gutter))), var(--ds-page));
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.store-main {
+  padding-top: clamp(2.5rem, 6vw, 5rem);
+  padding-bottom: var(--ds-section);
+}
+
+.catalog-heading h1,
+.account-title-row h1,
+.product-detail-copy h1,
+.admin-page-heading h1 {
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.catalog-empty,
+.cart-empty,
+.wishlist-empty {
+  width: min(100%, 42rem);
+  min-height: min(48svh, 28rem);
+  margin: 0 auto;
+  padding: clamp(2rem, 6vw, 4rem) var(--ds-gutter);
+  align-content: center;
+  text-align: center;
+}
+
+.route-loading {
+  overflow: hidden;
+}
+
+.route-loading-heading,
+.route-loading-card,
+.route-loading-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--ds-border);
+  background: #edf2ef;
+}
+
+.route-loading-heading::after,
+.route-loading-card::after,
+.route-loading-panel::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.78) 48%, transparent 76%);
+  content: "";
+  transform: translateX(-100%);
+  animation: route-loading-shimmer 1.25s ease-in-out infinite;
+}
+
+.route-loading-heading {
+  width: min(70%, 32rem);
+  height: clamp(4.5rem, 9vw, 7rem);
+}
+
+.route-loading-grid {
+  display: grid;
+  margin-top: clamp(2.5rem, 6vw, 5rem);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.route-loading-card {
+  min-height: 23rem;
+}
+
+.route-loading-panel {
+  min-height: 12rem;
+}
+
+.route-loading-account {
+  width: min(calc(100% - (2 * var(--ds-gutter))), var(--ds-page));
+  margin: 0 auto;
+  padding: var(--ds-section) 0;
+}
+
+.route-loading-account .route-loading-panel + .route-loading-panel {
+  margin-top: 1rem;
+}
+
+.admin-route-loading {
+  padding: clamp(2rem, 5vw, 4rem) var(--ds-gutter);
+}
+
+.route-loading-admin-grid {
+  display: grid;
+  margin-top: 2rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@keyframes route-loading-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (max-width: 760px) {
+  .route-loading-grid,
+  .route-loading-admin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .route-loading-card {
+    min-height: 18rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .route-loading-admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  :root {
+    --ds-section: 4rem;
+    --ds-gutter: 1rem;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .route-loading-heading::after,
+  .route-loading-card::after,
+  .route-loading-panel::after {
+    animation: none;
+  }
+}

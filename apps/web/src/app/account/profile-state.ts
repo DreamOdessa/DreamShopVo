@@ -1,6 +1,7 @@
 export type ProfileActionState = {
   message: string;
-  status: "error" | "idle" | "success";
+  pendingValue?: string;
+  status: "error" | "idle" | "pending" | "success";
 };
 
 export const initialProfileState: ProfileActionState = {

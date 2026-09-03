@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyRound, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 
 import { completeTelegramRegistration } from "./actions";
@@ -8,6 +8,7 @@ import {
   initialTelegramAuthState,
   type TelegramAuthState,
 } from "./telegram-state";
+import { PasswordField } from "../password-field";
 
 const TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
@@ -51,37 +52,8 @@ export function TelegramPasswordForm() {
     <form action={formAction} className="auth-form">
       <input name="token" type="hidden" value={token} />
 
-      <label className="auth-field">
-        <span>Новий пароль</span>
-        <span className="auth-input-wrap">
-          <KeyRound aria-hidden size={18} strokeWidth={1.8} />
-          <input
-            autoComplete="new-password"
-            maxLength={72}
-            minLength={10}
-            name="password"
-            placeholder="Щонайменше 10 символів"
-            required
-            type="password"
-          />
-        </span>
-      </label>
-
-      <label className="auth-field">
-        <span>Повторіть пароль</span>
-        <span className="auth-input-wrap">
-          <KeyRound aria-hidden size={18} strokeWidth={1.8} />
-          <input
-            autoComplete="new-password"
-            maxLength={72}
-            minLength={10}
-            name="passwordConfirmation"
-            placeholder="Повторіть пароль"
-            required
-            type="password"
-          />
-        </span>
-      </label>
+      <PasswordField autoComplete="new-password" label="Новий пароль" minLength={10} name="password" placeholder="Щонайменше 10 символів" />
+      <PasswordField autoComplete="new-password" label="Повторіть пароль" minLength={10} name="passwordConfirmation" placeholder="Повторіть пароль" />
 
       <div
         aria-live="polite"

@@ -225,7 +225,7 @@ const getCachedStorefrontHomeCatalog = unstable_cache(async () => {
     .eq("show_in_showcase", true)
     .order("sort_order")
     .order("name")
-    .limit(6);
+    .limit(8);
 
   if (categoryError) {
     throw new Error("Unable to load storefront showcase categories.");

@@ -85,6 +85,7 @@ export function MediaSlotEditor({
 }: MediaSlotEditorProps) {
   const router = useRouter();
   const fileInput = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState("");
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<MessageState>({
     message: "",
@@ -173,6 +174,7 @@ export function MediaSlotEditor({
         if (fileInput.current) {
           fileInput.current.value = "";
         }
+        setFileName("");
 
         router.refresh();
       } catch (error) {
@@ -251,17 +253,22 @@ export function MediaSlotEditor({
       </div>
 
       <form action={uploadImage} className="admin-form">
-        <label className="auth-field">
+        <div className="auth-field">
           <span>Файл</span>
-          <input
-            accept="image/jpeg,image/png,image/webp,image/avif"
-            className="admin-file-input"
-            name="image"
-            ref={fileInput}
-            required
-            type="file"
-          />
-        </label>
+          <label className="admin-file-picker">
+            <ImagePlus aria-hidden size={17} strokeWidth={1.8} />
+            <span>{fileName || "Обрати зображення"}</span>
+            <input
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              name="image"
+              onChange={(event) => setFileName(event.target.files?.[0]?.name ?? "")}
+              ref={fileInput}
+              required
+              type="file"
+            />
+          </label>
+          <small className="admin-file-note">JPEG, PNG, WebP або AVIF до 10 МБ</small>
+        </div>
 
         <label className="auth-field">
           <span>Опис фото</span>

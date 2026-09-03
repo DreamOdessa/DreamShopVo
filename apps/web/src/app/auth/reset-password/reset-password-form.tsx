@@ -1,10 +1,11 @@
 "use client";
 
-import { KeyRound, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useActionState } from "react";
 
 import { updatePassword } from "../actions";
 import { initialAuthState, type AuthActionState } from "../auth-state";
+import { PasswordField } from "../password-field";
 
 type ResetPasswordFormProps = {
   nextPath: string;
@@ -19,37 +20,8 @@ export function ResetPasswordForm({ nextPath }: ResetPasswordFormProps) {
   return (
     <form action={formAction} className="auth-form">
       <input name="next" type="hidden" value={nextPath} />
-      <label className="auth-field">
-        <span>Новий пароль</span>
-        <span className="auth-input-wrap">
-          <KeyRound aria-hidden size={18} strokeWidth={1.8} />
-          <input
-            autoComplete="new-password"
-            maxLength={72}
-            minLength={10}
-            name="password"
-            placeholder="Щонайменше 10 символів"
-            required
-            type="password"
-          />
-        </span>
-      </label>
-
-      <label className="auth-field">
-        <span>Повторіть пароль</span>
-        <span className="auth-input-wrap">
-          <KeyRound aria-hidden size={18} strokeWidth={1.8} />
-          <input
-            autoComplete="new-password"
-            maxLength={72}
-            minLength={10}
-            name="passwordConfirmation"
-            placeholder="Повторіть новий пароль"
-            required
-            type="password"
-          />
-        </span>
-      </label>
+      <PasswordField autoComplete="new-password" label="Новий пароль" minLength={10} name="password" placeholder="Щонайменше 10 символів" />
+      <PasswordField autoComplete="new-password" label="Повторіть пароль" minLength={10} name="passwordConfirmation" placeholder="Повторіть новий пароль" />
 
       <div
         aria-live="polite"

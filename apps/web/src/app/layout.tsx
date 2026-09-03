@@ -6,6 +6,10 @@ import { getSiteUrl } from "../lib/env";
 import { isStorefrontMaintenance } from "../lib/maintenance";
 
 import "./globals.css";
+import "./styles/foundation.css";
+import "./styles/storefront.css";
+import "./styles/account-auth.css";
+import "./styles/admin.css";
 
 const displayFont = Cormorant_Garamond({
   display: "swap",

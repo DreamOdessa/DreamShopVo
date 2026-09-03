@@ -47,6 +47,7 @@ export const metadata: Metadata = {
 };
 
 type Profile = {
+  avatar_url: string | null;
   contact_phone: string | null;
   discount_percent: number;
   email: string | null;
@@ -120,7 +121,7 @@ export default async function AccountPage() {
     supabase
       .from("profiles")
       .select(
-        "first_name,last_name,email,phone,contact_phone,discount_percent,role",
+        "first_name,last_name,email,phone,contact_phone,avatar_url,discount_percent,role",
       )
       .eq("id", userId)
       .maybeSingle(),
@@ -180,7 +181,7 @@ export default async function AccountPage() {
       const recoveredProfileResult = await supabase
         .from("profiles")
         .select(
-          "first_name,last_name,email,phone,contact_phone,discount_percent,role",
+          "first_name,last_name,email,phone,contact_phone,avatar_url,discount_percent,role",
         )
         .eq("id", userId)
         .maybeSingle();
@@ -348,9 +349,12 @@ export default async function AccountPage() {
             <p>Вони будуть використані для оформлення замовлень.</p>
           </div>
           <ProfileForm
+            avatarUrl={profile?.avatar_url ?? null}
             contactPhone={contactPhone}
+            email={visibleEmail ?? null}
             firstName={profile?.first_name ?? ""}
             lastName={profile?.last_name ?? ""}
+            verifiedPhone={profile?.phone ?? null}
           />
         </section>
 

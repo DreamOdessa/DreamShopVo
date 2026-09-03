@@ -132,6 +132,13 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
           )}
         </div>
 
+        {!googleEnabled || !telegramEnabled ? (
+          <p className="auth-provider-note">
+            Недоступні способи входу ще не підключені до магазину. Email працює
+            як основний спосіб входу.
+          </p>
+        ) : null}
+
         <div className="auth-divider">
           <span>або через email</span>
         </div>

@@ -26,6 +26,7 @@ export function CatalogToolbar({
     availableOnly ||
     minPrice !== null ||
     maxPrice !== null;
+  const filterCount = Number(availableOnly) + Number(minPrice !== null) + Number(maxPrice !== null);
 
   return (
     <form action={action} className="catalog-toolbar" method="get">
@@ -51,42 +52,48 @@ export function CatalogToolbar({
         </select>
       </label>
 
-      <fieldset className="catalog-filter-fields">
-        <legend className="sr-only">Фільтри товарів</legend>
-        <label className="catalog-availability-field">
-          <input
-            defaultChecked={availableOnly}
-            name="available"
-            type="checkbox"
-            value="1"
-          />
-          Тільки в наявності
-        </label>
-        <label className="catalog-price-field">
-          <span>Ціна від</span>
-          <input
-            defaultValue={minPrice ?? ""}
-            inputMode="decimal"
-            min={0}
-            name="min"
-            placeholder="0"
-            step="0.01"
-            type="number"
-          />
-        </label>
-        <label className="catalog-price-field">
-          <span>до</span>
-          <input
-            defaultValue={maxPrice ?? ""}
-            inputMode="decimal"
-            min={0}
-            name="max"
-            placeholder="∞"
-            step="0.01"
-            type="number"
-          />
-        </label>
-      </fieldset>
+      <details className="catalog-filter-disclosure" open={filterCount > 0}>
+        <summary>
+          Фільтри
+          {filterCount ? <span>{filterCount}</span> : null}
+        </summary>
+        <fieldset className="catalog-filter-fields">
+          <legend className="sr-only">Фільтри товарів</legend>
+          <label className="catalog-availability-field">
+            <input
+              defaultChecked={availableOnly}
+              name="available"
+              type="checkbox"
+              value="1"
+            />
+            Тільки в наявності
+          </label>
+          <label className="catalog-price-field">
+            <span>Ціна від</span>
+            <input
+              defaultValue={minPrice ?? ""}
+              inputMode="decimal"
+              min={0}
+              name="min"
+              placeholder="0"
+              step="0.01"
+              type="number"
+            />
+          </label>
+          <label className="catalog-price-field">
+            <span>до</span>
+            <input
+              defaultValue={maxPrice ?? ""}
+              inputMode="decimal"
+              min={0}
+              name="max"
+              placeholder="∞"
+              step="0.01"
+              type="number"
+            />
+          </label>
+        </fieldset>
+      </details>
 
       <button className="catalog-search-button" type="submit">
         <Search aria-hidden size={17} strokeWidth={1.8} />

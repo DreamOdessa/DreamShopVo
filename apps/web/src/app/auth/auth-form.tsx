@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyRound, LoaderCircle, Mail, UserRound } from "lucide-react";
+import { LoaderCircle, Mail, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useActionState } from "react";
 
@@ -9,6 +9,7 @@ import {
   signUp,
 } from "./actions";
 import { initialAuthState, type AuthActionState } from "./auth-state";
+import { PasswordField } from "./password-field";
 
 type AuthFormProps = {
   mode: "login" | "register";
@@ -62,21 +63,13 @@ export function AuthForm({ mode, nextPath }: AuthFormProps) {
         </span>
       </label>
 
-      <label className="auth-field">
-        <span>Пароль</span>
-        <span className="auth-input-wrap">
-          <KeyRound aria-hidden size={18} strokeWidth={1.8} />
-          <input
-            autoComplete={mode === "login" ? "current-password" : "new-password"}
-            maxLength={72}
-            minLength={mode === "login" ? 1 : 10}
-            name="password"
-            placeholder={mode === "register" ? "Щонайменше 10 символів" : "Ваш пароль"}
-            required
-            type="password"
-          />
-        </span>
-      </label>
+      <PasswordField
+        autoComplete={mode === "login" ? "current-password" : "new-password"}
+        label="Пароль"
+        minLength={mode === "login" ? 1 : 10}
+        name="password"
+        placeholder={mode === "register" ? "Щонайменше 10 символів" : "Ваш пароль"}
+      />
 
       {mode === "login" ? (
         <Link

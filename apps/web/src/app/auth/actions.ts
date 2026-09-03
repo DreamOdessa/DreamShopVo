@@ -2,8 +2,9 @@
 
 import { redirect } from "next/navigation";
 
-import { getApiUrl, getSiteUrl } from "../../lib/env";
+import { getApiUrl } from "../../lib/env";
 import { safeNextPath } from "../../lib/auth/redirect";
+import { getAuthRedirectOrigin } from "../../lib/auth/request-origin";
 import { clearSupabaseAuthCookies } from "../../lib/auth/cookies";
 import { isInvalidSessionError } from "../../lib/auth/errors";
 import { sessionTokens } from "../../lib/auth/session-tokens";
@@ -123,6 +124,7 @@ export async function signUp(
   const email = valueFrom(formData, "email").toLowerCase();
   const password = valueFrom(formData, "password", false);
   const next = safeNextPath(valueFrom(formData, "next"));
+  const authOrigin = await getAuthRedirectOrigin();
 
   if (firstName.length < 2 || firstName.length > 80) {
     return errorState("Вкажіть ім’я від 2 до 80 символів.");
@@ -144,7 +146,7 @@ export async function signUp(
       data: {
         first_name: firstName,
       },
-      emailRedirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
+      emailRedirectTo: `${authOrigin}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
 
@@ -164,12 +166,13 @@ export async function signUp(
 
 export async function signInWithGoogle(formData: FormData) {
   const next = safeNextPath(valueFrom(formData, "next"));
+  const authOrigin = await getAuthRedirectOrigin();
   await clearSupabaseAuthCookies();
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
+      redirectTo: `${authOrigin}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });
 
@@ -188,6 +191,7 @@ export async function requestPasswordReset(
 ): Promise<AuthActionState> {
   const email = valueFrom(formData, "email").toLowerCase();
   const next = safeNextPath(valueFrom(formData, "next"));
+  const authOrigin = await getAuthRedirectOrigin();
 
   if (!validEmail(email)) {
     return errorState("Вкажіть коректну адресу електронної пошти.");
@@ -197,7 +201,7 @@ export async function requestPasswordReset(
   const supabase = await createClient();
 
   await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent(resetPage)}`,
+    redirectTo: `${authOrigin}/auth/callback?next=${encodeURIComponent(resetPage)}`,
   });
 
   return {

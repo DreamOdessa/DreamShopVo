@@ -346,6 +346,7 @@ const appEnvironment = {
   NEXT_PUBLIC_SITE_URL: "https://dream-odessa.shop",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "playwright-public-key",
   NEXT_PUBLIC_SUPABASE_URL: `http://${host}:${mockPort}`,
+  NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: "DreamShopAuthBot",
   STOREFRONT_MAINTENANCE: "false",
 };
 

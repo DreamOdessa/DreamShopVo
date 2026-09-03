@@ -5,7 +5,7 @@ import Link from "next/link";
 import { TelegramPasswordForm } from "./telegram-password-form";
 
 export const metadata: Metadata = {
-  title: "Пароль Telegram-акаунта - DreamShop",
+  title: "Вхід через Telegram - DreamShop",
   robots: {
     index: false,
     follow: false,
@@ -28,10 +28,10 @@ export default function TelegramRegistrationPage() {
         </Link>
 
         <div className="auth-heading">
-          <h1 id="telegram-auth-title">Створіть новий пароль</h1>
+          <h1 id="telegram-auth-title">Вхід через Telegram</h1>
           <p>
-            Номер телефону підтверджено через Telegram. Новий пароль захистить
-            ваш акаунт і замінить попередній.
+            Перевіряємо одноразове посилання. Для наявного акаунта вхід
+            завершиться автоматично, а для нового потрібно створити пароль.
           </p>
         </div>
 

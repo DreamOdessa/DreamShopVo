@@ -77,7 +77,7 @@ for (const viewport of viewports) {
       { heading: "Кошик порожній", path: "/cart" },
       { heading: "Раді бачити знову", path: "/auth" },
       { heading: "Відновлення пароля", path: "/auth/forgot-password" },
-      { heading: "Створіть новий пароль", path: "/auth/telegram" },
+      { heading: "Вхід через Telegram", path: "/auth/telegram" },
     ];
 
     for (const screen of screens) {
@@ -474,6 +474,33 @@ test("password fields expose an accessible visibility toggle", async ({ page }) 
   await toggle.click();
   await expect(password).toHaveAttribute("type", "text");
   await expect(page.getByRole("button", { name: "Приховати пароль" })).toBeVisible();
+});
+
+test("Telegram provider keeps login and registration intents distinct", async ({ page }) => {
+  await openPublicPage(page, "/auth");
+  await expect(page.getByRole("link", { name: "Продовжити з Telegram" })).toHaveAttribute(
+    "href",
+    "https://t.me/DreamShopAuthBot?start=login",
+  );
+
+  await openPublicPage(page, "/auth?mode=register");
+  await expect(page.getByRole("link", { name: "Продовжити з Telegram" })).toHaveAttribute(
+    "href",
+    "https://t.me/DreamShopAuthBot?start=register",
+  );
+
+  const token = "a".repeat(43);
+  await openPublicPage(page, `/auth/telegram#token=${token}&mode=login`);
+  await expect(page.getByLabel("Новий пароль")).toHaveCount(0);
+  await expect(
+    page.getByText("Сервіс Telegram повернув некоректну відповідь."),
+  ).toBeVisible();
+
+  await openPublicPage(
+    page,
+    `/auth/telegram?flow=register#token=${token}&mode=register`,
+  );
+  await expect(page.getByLabel("Новий пароль")).toBeVisible();
 });
 
 test("mobile menu is keyboard-accessible and respects reduced motion", async ({ page }) => {

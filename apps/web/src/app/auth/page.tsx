@@ -113,7 +113,7 @@ export default async function AuthPage({ searchParams }: AuthPageProps) {
           {telegramEnabled ? (
             <a
               className="auth-provider-button"
-              href={`https://t.me/${telegramUsername}?start=register`}
+              href={`https://t.me/${telegramUsername}?start=${mode === "login" ? "login" : "register"}`}
               rel="noreferrer"
             >
               <Send aria-hidden size={19} strokeWidth={1.8} />

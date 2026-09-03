@@ -21,26 +21,9 @@ function errorState(message: string): TelegramAuthState {
   return { message, status: "error" };
 }
 
-export async function completeTelegramRegistration(
-  _previousState: TelegramAuthState,
-  formData: FormData,
+async function finishTelegramAuthentication(
+  payload: { password?: string; token: string },
 ): Promise<TelegramAuthState> {
-  const token = stringValue(formData, "token").trim();
-  const password = stringValue(formData, "password");
-  const passwordConfirmation = stringValue(formData, "passwordConfirmation");
-
-  if (!TOKEN_PATTERN.test(token)) {
-    return errorState("Посилання недійсне або пошкоджене.");
-  }
-
-  if (password.length < 10 || password.length > 72) {
-    return errorState("Пароль має містити від 10 до 72 символів.");
-  }
-
-  if (password !== passwordConfirmation) {
-    return errorState("Паролі не збігаються.");
-  }
-
   let response: Response;
 
   try {
@@ -52,7 +35,7 @@ export async function completeTelegramRegistration(
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ password, token }),
+        body: JSON.stringify(payload),
         redirect: "error",
       },
     );
@@ -62,9 +45,7 @@ export async function completeTelegramRegistration(
 
   if (!response.ok) {
     if (response.status === 409) {
-      return errorState(
-        "Цей номер пов’язаний з іншим способом входу.",
-      );
+      return errorState("Цей номер пов’язаний з іншим способом входу.");
     }
 
     if (response.status === 400) {
@@ -89,4 +70,40 @@ export async function completeTelegramRegistration(
   }
 
   redirect("/account");
+}
+
+export async function completeTelegramLogin(
+  _previousState: TelegramAuthState,
+  formData: FormData,
+): Promise<TelegramAuthState> {
+  const token = stringValue(formData, "token").trim();
+
+  if (!TOKEN_PATTERN.test(token)) {
+    return errorState("Посилання недійсне або пошкоджене.");
+  }
+
+  return finishTelegramAuthentication({ token });
+}
+
+export async function completeTelegramRegistration(
+  _previousState: TelegramAuthState,
+  formData: FormData,
+): Promise<TelegramAuthState> {
+  const token = stringValue(formData, "token").trim();
+  const password = stringValue(formData, "password");
+  const passwordConfirmation = stringValue(formData, "passwordConfirmation");
+
+  if (!TOKEN_PATTERN.test(token)) {
+    return errorState("Посилання недійсне або пошкоджене.");
+  }
+
+  if (password.length < 10 || password.length > 72) {
+    return errorState("Пароль має містити від 10 до 72 символів.");
+  }
+
+  if (password !== passwordConfirmation) {
+    return errorState("Паролі не збігаються.");
+  }
+
+  return finishTelegramAuthentication({ password, token });
 }

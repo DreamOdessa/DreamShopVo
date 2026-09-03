@@ -45,8 +45,14 @@ type ConsumedChallenge = {
 
 type TelegramAuthUser = {
   email?: string | null;
+  id?: string;
   user_metadata?: Record<string, unknown>;
 };
+
+type TelegramAccount =
+  | { kind: "new" }
+  | { kind: "conflict" }
+  | { email: string; kind: "returning"; user: TelegramAuthUser & { id: string } };
 
 function createSupabaseClient(url: string, key: string) {
   return createClient(url, key, {
@@ -139,10 +145,19 @@ export async function telegramLoginEmail(phone: string) {
 export function isMatchingTelegramIdentity(
   user: TelegramAuthUser | null | undefined,
   loginEmail: string,
+  telegramUserId?: number | string,
 ) {
-  return (
+  const identityMatches =
     user?.email === loginEmail &&
-    user.user_metadata?.auth_source === "telegram"
+    user.user_metadata?.auth_source === "telegram";
+
+  if (!identityMatches || telegramUserId === undefined) {
+    return identityMatches;
+  }
+
+  return (
+    String(user.user_metadata?.telegram_user_id ?? "") ===
+    String(telegramUserId)
   );
 }
 
@@ -154,6 +169,55 @@ export function normalizeTelegramPhone(value: string) {
   }
 
   return `+${digits}`;
+}
+
+async function findTelegramAccount(
+  adminClient: ReturnType<typeof createSupabaseClient>,
+  phone: string,
+  telegramUserId: number | string,
+): Promise<TelegramAccount> {
+  const { data: existingProfile, error: profileLookupError } =
+    await adminClient
+      .from("profiles")
+      .select("id")
+      .eq("phone", phone)
+      .maybeSingle();
+
+  if (profileLookupError) {
+    throw new HttpError(
+      503,
+      "service_unavailable",
+      "Telegram authentication is temporarily unavailable.",
+    );
+  }
+
+  if (!existingProfile) {
+    return { kind: "new" };
+  }
+
+  const email = await telegramLoginEmail(phone);
+  const { data: existing, error: existingUserError } =
+    await adminClient.auth.admin.getUserById(existingProfile.id);
+
+  if (existingUserError || !existing.user?.id) {
+    throw new HttpError(
+      503,
+      "service_unavailable",
+      "Telegram authentication is temporarily unavailable.",
+    );
+  }
+
+  if (
+    !isMatchingTelegramIdentity(existing.user, email, telegramUserId)
+  ) {
+    return { kind: "conflict" };
+  }
+
+  return {
+    email,
+    kind: "returning",
+    user: existing.user,
+  };
 }
 
 async function telegramRequest(
@@ -258,6 +322,22 @@ async function createChallenge(
     env.SUPABASE_URL,
     env.SUPABASE_SECRET_KEY,
   );
+  const account = await findTelegramAccount(
+    supabase,
+    phone,
+    telegramUserId,
+  );
+
+  if (account.kind === "conflict") {
+    await telegramRequest(env, "sendMessage", {
+      chat_id: chatId,
+      text: "Цей номер уже прив’язаний до іншого способу входу. Увійдіть на сайті через email або зверніться до підтримки.",
+      reply_markup: {
+        remove_keyboard: true,
+      },
+    });
+    return;
+  }
 
   const { error: insertError } = await supabase.rpc(
     "create_telegram_registration_challenge",
@@ -288,13 +368,19 @@ async function createChallenge(
 
   await telegramRequest(env, "sendMessage", {
     chat_id: chatId,
-    text: "Створіть або оновіть пароль на сайті. Посилання діє 10 хвилин.",
+    text:
+      account.kind === "returning"
+        ? "З поверненням! Ми знайшли ваш акаунт. Натисніть кнопку нижче — вхід на сайт відбудеться автоматично."
+        : "Створіть пароль на сайті. Посилання діє 10 хвилин.",
     reply_markup: {
       inline_keyboard: [
         [
           {
-            text: "Продовжити на сайті",
-            url: `${env.SITE_URL.replace(/\/+$/, "")}/auth/telegram#token=${encodeURIComponent(token)}`,
+            text:
+              account.kind === "returning"
+                ? "Увійти на сайт"
+                : "Завершити реєстрацію",
+            url: `${env.SITE_URL.replace(/\/+$/, "")}/auth/telegram#token=${encodeURIComponent(token)}&mode=${account.kind === "returning" ? "login" : "register"}`,
           },
         ],
       ],
@@ -353,8 +439,7 @@ export async function completeTelegramRegistration(
 
   if (
     !TELEGRAM_TOKEN_PATTERN.test(token) ||
-    password.length < 10 ||
-    password.length > 72
+    (password.length > 0 && (password.length < 10 || password.length > 72))
   ) {
     throw new HttpError(
       400,
@@ -392,50 +477,30 @@ export async function completeTelegramRegistration(
     );
   }
 
-  const email = await telegramLoginEmail(challenge.phone);
-  const { data: existingProfile, error: profileLookupError } =
-    await adminClient
-      .from("profiles")
-      .select("id")
-      .eq("phone", challenge.phone)
-      .maybeSingle();
+  const account = await findTelegramAccount(
+    adminClient,
+    challenge.phone,
+    challenge.telegram_user_id,
+  );
 
-  if (profileLookupError) {
+  if (account.kind === "conflict") {
     throw new HttpError(
-      503,
-      "service_unavailable",
-      "Registration is temporarily unavailable.",
+      409,
+      "conflict",
+      "This phone number belongs to another sign-in method.",
     );
   }
 
-  let authUserId: string;
-  let createdUser = false;
+  const publicClient = createSupabaseClient(
+    env.SUPABASE_URL,
+    env.SUPABASE_PUBLISHABLE_KEY,
+  );
 
-  if (existingProfile) {
-    const { data: existing, error: existingUserError } =
-      await adminClient.auth.admin.getUserById(existingProfile.id);
-
-    if (existingUserError || !existing.user) {
-      throw new HttpError(
-        503,
-        "service_unavailable",
-        "Registration is temporarily unavailable.",
-      );
-    }
-
-    if (!isMatchingTelegramIdentity(existing.user, email)) {
-      throw new HttpError(
-        409,
-        "conflict",
-        "This phone number belongs to another sign-in method.",
-      );
-    }
-
+  if (account.kind === "returning") {
     const { data: updated, error: updateError } =
-      await adminClient.auth.admin.updateUserById(existing.user.id, {
-        password,
+      await adminClient.auth.admin.updateUserById(account.user.id, {
         user_metadata: {
-          ...existing.user.user_metadata,
+          ...account.user.user_metadata,
           auth_source: "telegram",
           telegram_chat_id: String(challenge.telegram_chat_id),
           telegram_user_id: String(challenge.telegram_user_id),
@@ -450,66 +515,114 @@ export async function completeTelegramRegistration(
       );
     }
 
-    authUserId = updated.user.id;
-  } else {
-    const { data: created, error: createError } =
-      await adminClient.auth.admin.createUser({
-        app_metadata: {
-          role: "customer",
-        },
-        email,
-        email_confirm: true,
-        password,
-        user_metadata: {
-          auth_source: "telegram",
-          telegram_chat_id: String(challenge.telegram_chat_id),
-          telegram_user_id: String(challenge.telegram_user_id),
-        },
+    const { data: generated, error: generateError } =
+      await adminClient.auth.admin.generateLink({
+        email: account.email,
+        type: "magiclink",
+      });
+    const hashedToken = generated.properties?.hashed_token;
+
+    if (generateError || !hashedToken) {
+      throw new HttpError(
+        503,
+        "service_unavailable",
+        "Telegram authentication is temporarily unavailable.",
+      );
+    }
+
+    const { data: signedIn, error: signInError } =
+      await publicClient.auth.verifyOtp({
+        token_hash: hashedToken,
+        type: "magiclink",
       });
 
-    if (createError || !created.user) {
-      const conflict =
-        createError?.status === 422 ||
-        createError?.code === "phone_exists" ||
-        createError?.code === "user_already_exists";
-
+    if (signInError || !signedIn.session) {
       throw new HttpError(
-        conflict ? 409 : 503,
-        conflict ? "conflict" : "service_unavailable",
-        conflict
-          ? "An account with this phone number already exists."
-          : "Registration is temporarily unavailable.",
+        503,
+        "service_unavailable",
+        "Telegram authentication is temporarily unavailable.",
       );
     }
 
-    authUserId = created.user.id;
-    createdUser = true;
-
-    const { error: profileError } = await adminClient
-      .from("profiles")
-      .update({
-        email: null,
-        phone: challenge.phone,
-      })
-      .eq("id", authUserId);
-
-    if (profileError) {
-      await adminClient.auth.admin.deleteUser(authUserId);
-
-      throw new HttpError(
-        profileError.code === "23505" ? 409 : 503,
-        profileError.code === "23505" ? "conflict" : "service_unavailable",
-        profileError.code === "23505"
-          ? "An account with this phone number already exists."
-          : "Registration is temporarily unavailable.",
-      );
+    if (env.TELEGRAM_BOT_TOKEN) {
+      try {
+        await telegramRequest(env, "sendMessage", {
+          chat_id: challenge.telegram_chat_id,
+          text: "З поверненням! Ви успішно увійшли. Можете повертатися на сайт.",
+        });
+      } catch {
+        console.warn("Telegram login confirmation could not be delivered.");
+      }
     }
+
+    return json(request, env, {
+      access_token: signedIn.session.access_token,
+      refresh_token: signedIn.session.refresh_token,
+      returning_user: true,
+    });
   }
 
-  const publicClient = createSupabaseClient(
-    env.SUPABASE_URL,
-    env.SUPABASE_PUBLISHABLE_KEY,
-  );
+  if (password.length < 10 || password.length > 72) {
+    throw new HttpError(
+      400,
+      "invalid_request",
+      "A password is required to complete registration.",
+    );
+  }
+
+  const email = await telegramLoginEmail(challenge.phone);
+  const { data: created, error: createError } =
+    await adminClient.auth.admin.createUser({
+      app_metadata: {
+        role: "customer",
+      },
+      email,
+      email_confirm: true,
+      password,
+      user_metadata: {
+        auth_source: "telegram",
+        telegram_chat_id: String(challenge.telegram_chat_id),
+        telegram_user_id: String(challenge.telegram_user_id),
+      },
+    });
+
+  if (createError || !created.user) {
+    const conflict =
+      createError?.status === 422 ||
+      createError?.code === "phone_exists" ||
+      createError?.code === "user_already_exists";
+
+    throw new HttpError(
+      conflict ? 409 : 503,
+      conflict ? "conflict" : "service_unavailable",
+      conflict
+        ? "An account with this phone number already exists."
+        : "Registration is temporarily unavailable.",
+    );
+  }
+
+  const authUserId = created.user.id;
+
+  const { error: profileError } = await adminClient
+    .from("profiles")
+    .update({
+      email: null,
+      phone: challenge.phone,
+    })
+    .eq("id", authUserId);
+
+  if (profileError) {
+    await adminClient.auth.admin.deleteUser(authUserId);
+
+    throw new HttpError(
+      profileError.code === "23505" ? 409 : 503,
+      profileError.code === "23505" ? "conflict" : "service_unavailable",
+      profileError.code === "23505"
+        ? "An account with this phone number already exists."
+        : "Registration is temporarily unavailable.",
+    );
+  }
+
   const { data: signedIn, error: signInError } =
     await publicClient.auth.signInWithPassword({
       email,
@@ -517,9 +630,7 @@ export async function completeTelegramRegistration(
     });
 
   if (signInError || !signedIn.session) {
-    if (createdUser) {
-      await adminClient.auth.admin.deleteUser(authUserId);
-    }
+    await adminClient.auth.admin.deleteUser(authUserId);
 
     throw new HttpError(
       503,
@@ -531,6 +642,7 @@ export async function completeTelegramRegistration(
   return json(request, env, {
     access_token: signedIn.session.access_token,
     refresh_token: signedIn.session.refresh_token,
+    returning_user: false,
   });
 }
 

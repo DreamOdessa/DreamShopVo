@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { normalizePhone } from "../../lib/phone";
-import { getSiteUrl } from "../../lib/env";
+import { getAuthRedirectOrigin } from "../../lib/auth/request-origin";
 import { createClient } from "../../lib/supabase/server";
 import { isInvalidSessionError } from "../../lib/auth/errors";
 
@@ -175,10 +175,11 @@ export async function requestEmailChange(
     return errorState("Ця email-адреса вже використовується у профілі.");
   }
 
+  const authOrigin = await getAuthRedirectOrigin();
   const { error } = await supabase.auth.updateUser(
     { email },
     {
-      emailRedirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent("/account?contact=email-verified")}`,
+      emailRedirectTo: `${authOrigin}/auth/callback?next=${encodeURIComponent("/account?contact=email-verified")}`,
     },
   );
 

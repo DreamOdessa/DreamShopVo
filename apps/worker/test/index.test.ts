@@ -397,6 +397,91 @@ describe("DreamShop Worker", () => {
     expect(first).not.toContain(phone);
   });
 
+  it("offers an automatic sign-in link when the Telegram phone already exists", async () => {
+    const phone = "+380671234567";
+    const email = await telegramLoginEmail(phone);
+    const userId = "00000000-0000-4000-8000-000000000001";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
+      async (input) => {
+        const url = input instanceof Request ? input.url : String(input);
+
+        if (url.includes("/rest/v1/profiles?")) {
+          return Response.json({ id: userId });
+        }
+
+        if (url.endsWith(`/auth/v1/admin/users/${userId}`)) {
+          return Response.json({
+            id: userId,
+            email,
+            user_metadata: {
+              auth_source: "telegram",
+              telegram_user_id: "456",
+            },
+          });
+        }
+
+        if (url.includes("/rest/v1/rpc/create_telegram_registration_challenge")) {
+          return Response.json("10000000-0000-4000-8000-000000000001");
+        }
+
+        if (url.includes("api.telegram.org/botbot-token/sendMessage")) {
+          return Response.json({ ok: true });
+        }
+
+        throw new Error(`Unexpected request: ${url}`);
+      },
+    );
+
+    const response = await fetchRequest(
+      new Request("https://api.example.test/telegram/webhook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Telegram-Bot-Api-Secret-Token": "configured-secret",
+        },
+        body: JSON.stringify({
+          message: {
+            chat: { id: 123, type: "private" },
+            contact: { phone_number: phone, user_id: 456 },
+            from: { id: 456 },
+          },
+        }),
+      }),
+      createEnv({
+        SUPABASE_SECRET_KEY: "secret",
+        SUPABASE_URL: "https://project.supabase.co",
+        TELEGRAM_BOT_TOKEN: "bot-token",
+        TELEGRAM_WEBHOOK_SECRET: "configured-secret",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    const messages = fetchSpy.mock.calls
+      .filter(([input]) =>
+        (input instanceof Request ? input.url : String(input)).includes(
+          "api.telegram.org/botbot-token/sendMessage",
+        ),
+      )
+      .map(([, init]) => JSON.parse(String(init?.body)));
+    expect(messages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          text: expect.stringContaining("З поверненням"),
+          reply_markup: expect.objectContaining({
+            inline_keyboard: [
+              [
+                expect.objectContaining({
+                  text: "Увійти на сайт",
+                  url: expect.stringMatching(/#token=.+&mode=login$/),
+                }),
+              ],
+            ],
+          }),
+        }),
+      ]),
+    );
+  });
+
   it("accepts password recovery only for the matching Telegram identity", () => {
     const email =
       "telegram-1234567890abcdef@auth.dreamshop.invalid";
@@ -405,11 +490,28 @@ describe("DreamShop Worker", () => {
       isMatchingTelegramIdentity(
         {
           email,
-          user_metadata: { auth_source: "telegram" },
+          user_metadata: {
+            auth_source: "telegram",
+            telegram_user_id: "456",
+          },
         },
         email,
+        "456",
       ),
     ).toBe(true);
+    expect(
+      isMatchingTelegramIdentity(
+        {
+          email,
+          user_metadata: {
+            auth_source: "telegram",
+            telegram_user_id: "999",
+          },
+        },
+        email,
+        "456",
+      ),
+    ).toBe(false);
     expect(
       isMatchingTelegramIdentity(
         {
@@ -430,7 +532,7 @@ describe("DreamShop Worker", () => {
     ).toBe(false);
   });
 
-  it("recovers an existing Telegram account without creating a duplicate user", async () => {
+  it("logs an existing Telegram user in without replacing the password", async () => {
     const token = "a".repeat(43);
     const phone = "+380671234567";
     const email = await telegramLoginEmail(phone);
@@ -463,7 +565,10 @@ describe("DreamShop Worker", () => {
           return Response.json({
             id: userId,
             email,
-            user_metadata: { auth_source: "telegram" },
+            user_metadata: {
+              auth_source: "telegram",
+              telegram_user_id: "456",
+            },
           });
         }
 
@@ -482,7 +587,19 @@ describe("DreamShop Worker", () => {
           });
         }
 
-        if (url.includes("/auth/v1/token?grant_type=password")) {
+        if (url.endsWith("/auth/v1/admin/generate_link")) {
+          return Response.json({
+            action_link: "https://project.supabase.co/auth/v1/verify",
+            email_otp: "123456",
+            hashed_token: "hashed-login-token",
+            redirect_to: "",
+            verification_type: "magiclink",
+            id: userId,
+            email,
+          });
+        }
+
+        if (url.endsWith("/auth/v1/verify")) {
           return Response.json({
             access_token: "access-token",
             expires_in: 3600,
@@ -495,6 +612,10 @@ describe("DreamShop Worker", () => {
           });
         }
 
+        if (url.includes("api.telegram.org/botbot-token/sendMessage")) {
+          return Response.json({ ok: true });
+        }
+
         throw new Error(`Unexpected request: ${method} ${url}`);
       },
     );
@@ -505,6 +626,113 @@ describe("DreamShop Worker", () => {
         headers: {
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          token,
+        }),
+      }),
+      createEnv({
+        SUPABASE_PUBLISHABLE_KEY: "publishable",
+        SUPABASE_SECRET_KEY: "secret",
+        SUPABASE_URL: "https://project.supabase.co",
+        TELEGRAM_BOT_TOKEN: "bot-token",
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      access_token: "access-token",
+      refresh_token: "refresh-token",
+      returning_user: true,
+    });
+    expect(
+      fetchSpy.mock.calls.some(([input, init]) => {
+        const url = input instanceof Request ? input.url : String(input);
+        const method =
+          input instanceof Request ? input.method : (init?.method ?? "GET");
+
+        return url.endsWith("/auth/v1/admin/users") && method === "POST";
+      }),
+    ).toBe(false);
+    expect(
+      fetchSpy.mock.calls.some(([input, init]) => {
+        const url = input instanceof Request ? input.url : String(input);
+        const method =
+          input instanceof Request ? input.method : (init?.method ?? "GET");
+        const body =
+          input instanceof Request
+            ? undefined
+            : typeof init?.body === "string"
+              ? JSON.parse(init.body)
+              : undefined;
+
+        return (
+          url.endsWith(`/auth/v1/admin/users/${userId}`) &&
+          method === "PUT" &&
+          body &&
+          "password" in body
+        );
+      }),
+    ).toBe(false);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `https://api.telegram.org/botbot-token/sendMessage`,
+      expect.objectContaining({
+        body: expect.stringContaining("З поверненням"),
+      }),
+    );
+  });
+
+  it("keeps password creation for a new Telegram phone", async () => {
+    const token = "b".repeat(43);
+    const phone = "+380671234568";
+    const email = await telegramLoginEmail(phone);
+    const userId = "00000000-0000-4000-8000-000000000002";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
+      async (input, init) => {
+        const url = input instanceof Request ? input.url : String(input);
+        const method =
+          input instanceof Request ? input.method : (init?.method ?? "GET");
+
+        if (url.includes("/rest/v1/rpc/consume_telegram_registration_challenge")) {
+          return Response.json([
+            {
+              challenge_id: "10000000-0000-4000-8000-000000000002",
+              phone,
+              telegram_chat_id: "124",
+              telegram_user_id: "457",
+            },
+          ]);
+        }
+
+        if (url.includes("/rest/v1/profiles?") && method === "GET") {
+          return Response.json(null);
+        }
+
+        if (url.endsWith("/auth/v1/admin/users") && method === "POST") {
+          return Response.json({ id: userId, email });
+        }
+
+        if (url.includes("/rest/v1/profiles?") && method === "PATCH") {
+          return new Response(null, { status: 204 });
+        }
+
+        if (url.includes("/auth/v1/token?grant_type=password")) {
+          return Response.json({
+            access_token: "new-access-token",
+            expires_in: 3600,
+            refresh_token: "new-refresh-token",
+            token_type: "bearer",
+            user: { id: userId, email },
+          });
+        }
+
+        throw new Error(`Unexpected request: ${method} ${url}`);
+      },
+    );
+
+    const response = await fetchRequest(
+      new Request("https://api.example.test/auth/telegram/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           password: "new-secure-password",
           token,
@@ -519,18 +747,18 @@ describe("DreamShop Worker", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      access_token: "access-token",
-      refresh_token: "refresh-token",
+      access_token: "new-access-token",
+      refresh_token: "new-refresh-token",
+      returning_user: false,
     });
     expect(
       fetchSpy.mock.calls.some(([input, init]) => {
         const url = input instanceof Request ? input.url : String(input);
         const method =
           input instanceof Request ? input.method : (init?.method ?? "GET");
-
         return url.endsWith("/auth/v1/admin/users") && method === "POST";
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("rejects malformed Telegram registration tokens before database access", async () => {

@@ -102,7 +102,13 @@ const notificationDateFormatter = new Intl.DateTimeFormat("uk-UA", {
   timeZone: "Europe/Kyiv",
 });
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ session_repaired?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const sessionRepairAttempted = params.session_repaired === "1";
   const supabase = await createClient();
   const { data: claimsData, error: claimsError } =
     await supabase.auth.getClaims();
@@ -150,33 +156,49 @@ export default async function AccountPage() {
 
   if (initialProfileResult.error) {
     if (isInvalidSessionError(initialProfileResult.error)) {
-      redirect("/auth/session-reset?next=/account");
+      console.error("Account profile query rejected the authenticated session", {
+        code: initialProfileResult.error.code,
+        message: initialProfileResult.error.message,
+        repaired: sessionRepairAttempted,
+      });
+
+      if (!sessionRepairAttempted) {
+        redirect("/auth/session-repair?next=/account");
+      }
+    } else {
+      console.error("Account profile query failed", {
+        code: initialProfileResult.error.code,
+        message: initialProfileResult.error.message,
+      });
+
+      throw new Error("Unable to load the authenticated account.");
     }
-
-    console.error("Account profile query failed", {
-      code: initialProfileResult.error.code,
-      message: initialProfileResult.error.message,
-    });
-
-    throw new Error("Unable to load the authenticated account.");
   }
 
   let profileData = initialProfileResult.data;
 
-  if (!profileData) {
+  if (!profileData && !initialProfileResult.error) {
     const { error: ensureProfileError } = await supabase.rpc(
       "ensure_my_profile",
     );
 
     if (ensureProfileError) {
       if (isInvalidSessionError(ensureProfileError)) {
-        redirect("/auth/session-reset?next=/account");
-      }
+        console.error("Account profile recovery rejected the session", {
+          code: ensureProfileError.code,
+          message: ensureProfileError.message,
+          repaired: sessionRepairAttempted,
+        });
 
-      console.error("Account profile recovery failed", {
-        code: ensureProfileError.code,
-        message: ensureProfileError.message,
-      });
+        if (!sessionRepairAttempted) {
+          redirect("/auth/session-repair?next=/account");
+        }
+      } else {
+        console.error("Account profile recovery failed", {
+          code: ensureProfileError.code,
+          message: ensureProfileError.message,
+        });
+      }
     } else {
       const recoveredProfileResult = await supabase
         .from("profiles")
@@ -188,13 +210,21 @@ export default async function AccountPage() {
 
       if (recoveredProfileResult.error) {
         if (isInvalidSessionError(recoveredProfileResult.error)) {
-          redirect("/auth/session-reset?next=/account");
-        }
+          console.error("Recovered account profile query rejected the session", {
+            code: recoveredProfileResult.error.code,
+            message: recoveredProfileResult.error.message,
+            repaired: sessionRepairAttempted,
+          });
 
-        console.error("Recovered account profile query failed", {
-          code: recoveredProfileResult.error.code,
-          message: recoveredProfileResult.error.message,
-        });
+          if (!sessionRepairAttempted) {
+            redirect("/auth/session-repair?next=/account");
+          }
+        } else {
+          console.error("Recovered account profile query failed", {
+            code: recoveredProfileResult.error.code,
+            message: recoveredProfileResult.error.message,
+          });
+        }
       } else {
         profileData = recoveredProfileResult.data;
       }
